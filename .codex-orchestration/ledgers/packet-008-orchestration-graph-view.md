@@ -41,7 +41,7 @@ Status: active
 
 | Order | Chunk | Status | Owner/Audience | Product Spine Fit | Scope | Acceptance Criteria | Verification | Gates / Stop Conditions |
 |---|---|---|---|---|---|---|---|---|
-| Current | P8-C1: Graph Data Contract And Status Taxonomy | queued | Data-contract implementer | Defines the graph model needed before renderer work can proceed. | Node kinds, edge types, status taxonomy, source layers, missing-state behavior, Markdown extraction rules, runtime annotation boundary, and Git/worktree annotation boundary. | Contract represents current packet/chunk/handoff docs, keeps status taxonomy small, avoids old-layout parsing, avoids transcript inference, and prepares P8-C2. | `npm run lint`; `npm run build`; focused contract checks if code is added; docs review if docs-only. | Stop if graph semantics need private Codex state, old-layout parsing, JSON/frontmatter requirements, or architecture changes not in rolling notes. |
+| Current | P8-C1: Graph Data Contract And Status Taxonomy | in_progress | Data-contract implementer in pending visible worktree thread `local:57cd1a26-d913-4457-a69f-993195f4bcdd` | Defines the graph model needed before renderer work can proceed. | Node kinds, edge types, status taxonomy, source layers, missing-state behavior, Markdown extraction rules, runtime annotation boundary, and Git/worktree annotation boundary. | Contract represents current packet/chunk/handoff docs, keeps status taxonomy small, avoids old-layout parsing, avoids transcript inference, and prepares P8-C2. | `npm run lint`; `npm run build`; focused contract checks if code is added; docs review if docs-only. | Stop if graph semantics need private Codex state, old-layout parsing, JSON/frontmatter requirements, or architecture changes not in rolling notes. |
 | Next | P8-C2: Full-Canvas Graph Renderer | queued | UI implementer | Turns the contract into the main orchestration summary surface. | Full-canvas `react-force-graph-2d`, chunks as primary nodes, packets as color/group context, rolling legend, sequence/split/return/detour/verification edges. | Graph renders this repo's normalized docs, handles missing docs, retains chronology/lanes after physics settles, and shows visible packet legend only. | `npm run lint`; `npm run build`; browser preview verification. | Stop before overlay details, runtime/Git annotations, execution controls, or broad page IA changes. |
 | Next | P8-C3: Overlay Detail Panel And Markdown Sections | queued | UI/data implementer | Lets users inspect selected graph items without remaking Markdown editing. | Read-only overlay panel for chunk rows, handoff summaries, concern sections, thread metadata, recorded docs, and VS Code file actions. | Overlay opens/dismisses cleanly, shows incomplete data honestly, and never edits Markdown. | `npm run lint`; `npm run build`; browser preview verification. | Stop before `/editor`, save API, rich editor, or permanent extra side rail. |
 | Next | P8-C4: Runtime And Git/Worktree Annotations | queued | Runtime/Git annotation implementer | Shows live/completed agents and source-of-truth boundaries as annotations. | Codex thread status within accepted boundary, live/completed/archived/unknown labels, Git commit/worktree evidence, muted off-source branches. | Runtime/Git data is labeled as annotation/evidence; Markdown remains truth; no Codex mutation or transcript parsing. | `npm run lint`; `npm run build`; browser preview verification. | Stop before private runtime reads beyond accepted boundary, transcript parsing, env/secret exposure, or required Git dependency. |
@@ -58,6 +58,7 @@ Status: active
 |---|---|---|---|---|
 | 2026-06-09 | P8-C1 | Activate Packet 008 as a chunked packet starting with P8-C1. | The architecture plan is sufficiently bounded for the first data-contract chunk. | accepted |
 | 2026-06-09 | P8-C1 | Use visible worktree-backed Codex thread for mutating packet work. | Keeps implementation isolated while preserving visible orchestration. | accepted |
+| 2026-06-09 | P8-C1 | Queue worktree-backed thread `local:57cd1a26-d913-4457-a69f-993195f4bcdd`. | Starts P8-C1 in visible delegated work while preserving orchestrator control. | accepted |
 
 ## Verification Log
 
@@ -70,3 +71,7 @@ Status: active
 P8-C1 should produce a return handoff at:
 
 `.codex-orchestration/handoffs/packet-008-c1-graph-data-contract-return.md`
+
+Pending worktree thread:
+
+- `local:57cd1a26-d913-4457-a69f-993195f4bcdd`

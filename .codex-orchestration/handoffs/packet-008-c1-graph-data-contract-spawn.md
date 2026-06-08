@@ -1,10 +1,12 @@
 # Packet 008 C1 Spawn Handoff
 
-Status: ready_to_spawn
+Status: queued
 
 ## Target
 
 Visible Codex thread with isolated worktree.
+
+Pending worktree ID: `local:57cd1a26-d913-4457-a69f-993195f4bcdd`
 
 ## Workspace
 

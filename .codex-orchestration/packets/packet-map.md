@@ -13,7 +13,7 @@ Status: active
 | 005 | Recent workspace selector | verified | no | Implemented by spawned worker and verified by orchestrator. |
 | 006 | Investigate Codex project list integration | verified | no | Investigation returned; accepted narrow read-only `.codex-global-state.json` direction. |
 | 007 | Read-only Codex local projects source | verified | no | Consolidated existing implementation; no sidecar registry yet. |
-| 008 | Orchestration graph view | active | yes | P8-C1 ready to spawn as visible worktree-backed thread. |
+| 008 | Orchestration graph view | active | yes | P8-C1 queued as pending visible worktree thread `local:57cd1a26-d913-4457-a69f-993195f4bcdd`. |
 
 ## Human Gates
 
