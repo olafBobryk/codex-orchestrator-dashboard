@@ -1,6 +1,6 @@
 # Packet 008: Orchestration Graph View
 
-Status: planned
+Status: active
 
 ## Goal
 
@@ -32,6 +32,14 @@ Relevant implementation facts:
 - Existing UI is in `src/app/page.tsx`.
 - Reference graph implementation:
   `/Users/olafbobryk/Documents/Code/Mazi/2026/averlo-dashboard/src/components/ui/misc/GraphMap.tsx`.
+
+Active ledger:
+
+- `.codex-orchestration/ledgers/packet-008-orchestration-graph-view.md`
+
+P8-C1 spawn handoff:
+
+- `.codex-orchestration/handoffs/packet-008-c1-graph-data-contract-spawn.md`
 
 ## Outcome
 
