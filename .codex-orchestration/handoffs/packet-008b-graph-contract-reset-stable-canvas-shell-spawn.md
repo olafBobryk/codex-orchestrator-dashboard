@@ -1,6 +1,6 @@
 # Packet 008B Graph Contract Reset And Stable Canvas Shell Spawn Handoff
 
-Status: queued
+Status: rejected
 
 ## Spawned Agent Target
 
@@ -17,6 +17,14 @@ Starting branch:
 Pending worktree:
 
 - `local:953806ee-909b-4818-9ca8-02c8679899a0`
+
+Disposition:
+
+- Returned branch `codex/packet-008b-graph-shell` is rejected as a
+  reset-regression branch.
+- Do not merge, cherry-pick, or use it as the next graph baseline.
+- Packet 008C replaces this direction with a graph vision realignment
+  conversation.
 
 ## Packet
 
