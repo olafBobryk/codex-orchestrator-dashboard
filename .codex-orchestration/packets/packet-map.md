@@ -15,7 +15,7 @@ Status: active
 | 007 | Read-only Codex local projects source | verified | no | Consolidated existing implementation; no sidecar registry yet. |
 | 008 | Orchestration graph view | needs_human | yes | Returned branch went beyond delegated scope; paused behind Packet 008B before merge, cherry-pick, or further graph work. |
 | 008A | Graph value reset | verified | no | Returned recommendation accepted: do not merge prototype as-is; open Packet 008B for contract reset plus stable canvas shell. |
-| 008B | Graph contract reset and stable canvas shell | active | no | Current packet. Must start with contract reset direction and potential problems before implementation. |
+| 008B | Graph contract reset and stable canvas shell | active | no | Queued visible worktree thread `local:953806ee-909b-4818-9ca8-02c8679899a0`; must start with contract reset direction and potential problems before implementation. |
 
 ## Human Gates
 

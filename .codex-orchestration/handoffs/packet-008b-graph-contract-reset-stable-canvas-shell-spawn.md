@@ -1,6 +1,6 @@
 # Packet 008B Graph Contract Reset And Stable Canvas Shell Spawn Handoff
 
-Status: ready_to_spawn
+Status: queued
 
 ## Spawned Agent Target
 
@@ -13,6 +13,10 @@ Workspace main checkout:
 Starting branch:
 
 - `main`
+
+Pending worktree:
+
+- `local:953806ee-909b-4818-9ca8-02c8679899a0`
 
 ## Packet
 
