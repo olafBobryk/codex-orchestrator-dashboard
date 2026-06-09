@@ -1,6 +1,6 @@
 # Packet 008D: Prototype Polish And Acceptance Pass
 
-Status: ready
+Status: active
 
 ## Goal
 

@@ -64,6 +64,7 @@ Status: active
 | 2026-06-09 | 008B / 008C | Reject Packet 008B reset-regression and open Packet 008C. | The reset branch collapsed too much of the intended graph vision. The next step must recover the vision and make minimal corrections rather than reset again. | accepted |
 | 2026-06-09 | 008C | Accept graph realignment return framing. | The original prototype direction should be preserved as the intended graph surface; the next implementation move should be framed as prototype polish and acceptance, not another reset. Reject only procedural/orchestration drift such as unaccepted packet history and status mutations. | accepted |
 | 2026-06-09 | 008D | Write Packet 008D as the next implementation packet. | 008A-008C were a recovery detour that clarified the next move but did not advance the app. The next packet should polish the original prototype direction toward acceptance and avoid more reset/planning loops. | accepted |
+| 2026-06-09 | 008D | Activate Packet 008D for visible worktree implementation. | User explicitly requested split-off with immediate dev server. | accepted |
 
 ## Verification Log
 
