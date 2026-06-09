@@ -17,6 +17,7 @@ Status: active
 | 008A | Graph value reset | superseded | no | Diagnosed prototype scope drift but overcorrected toward reset. Keep as historical context, not current direction. |
 | 008B | Graph contract reset and stable canvas shell | rejected | no | Returned branch `codex/packet-008b-graph-shell` regressed the graph vision; do not merge or use as baseline. |
 | 008C | Graph vision realignment | fixed | no | Returned handoff recommends reframing the next graph move as prototype polish/acceptance, not reset. |
+| 008D | Prototype polish and acceptance pass | ready | no | Next implementation packet. Preserve the original graph prototype direction and polish toward acceptance; do not start until explicitly spawned or continued. |
 
 ## Human Gates
 
@@ -40,6 +41,9 @@ Status: active
   drift.
 - Frame the next graph implementation as prototype polish and acceptance, not
   another reset or reduced placeholder.
+- Treat 008A-008C as recovery/detour documentation, not product progress. Do
+  not add another planning packet before implementation unless a new human gate
+  appears.
 
 ## Concern Bubble-Up Path
 
