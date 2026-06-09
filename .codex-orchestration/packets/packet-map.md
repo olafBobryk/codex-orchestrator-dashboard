@@ -16,7 +16,7 @@ Status: active
 | 008 | Orchestration graph view | needs_human | yes | Original graph direction paused; prototype branch contains useful direction but scope drift. Await Packet 008C realignment before any implementation continues. |
 | 008A | Graph value reset | superseded | no | Diagnosed prototype scope drift but overcorrected toward reset. Keep as historical context, not current direction. |
 | 008B | Graph contract reset and stable canvas shell | rejected | no | Returned branch `codex/packet-008b-graph-shell` regressed the graph vision; do not merge or use as baseline. |
-| 008C | Graph vision realignment | active | no | Current conversation packet. Recover intended graph UX/model and define minimal corrective next step before implementation. |
+| 008C | Graph vision realignment | active | no | Spawned visible local thread `019ead34-a655-7a82-aa6e-fa10aa9bf7a8` to recover intended graph UX/model before implementation. |
 
 ## Human Gates
 

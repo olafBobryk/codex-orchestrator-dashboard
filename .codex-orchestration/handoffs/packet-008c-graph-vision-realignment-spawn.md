@@ -1,6 +1,6 @@
 # Packet 008C Graph Vision Realignment Spawn Handoff
 
-Status: ready_to_spawn
+Status: spawned
 
 ## Spawned Agent Target
 
@@ -9,6 +9,10 @@ Visible Codex project thread, local checkout, no worktree.
 Workspace:
 
 - `/Users/olafbobryk/Documents/Code/Personal/2026/codex-orchestrator-dashboard`
+
+Thread:
+
+- `019ead34-a655-7a82-aa6e-fa10aa9bf7a8`
 
 ## Packet
 
