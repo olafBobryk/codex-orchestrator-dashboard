@@ -13,10 +13,10 @@ Status: active
 | 005 | Recent workspace selector | verified | no | Implemented by spawned worker and verified by orchestrator. |
 | 006 | Investigate Codex project list integration | verified | no | Investigation returned; accepted narrow read-only `.codex-global-state.json` direction. |
 | 007 | Read-only Codex local projects source | verified | no | Consolidated existing implementation; no sidecar registry yet. |
-| 008 | Orchestration graph view | needs_human | yes | Original graph direction paused; prototype branch contains useful direction but scope drift. Await Packet 008C realignment before any implementation continues. |
+| 008 | Orchestration graph view | needs_human | yes | Original graph direction paused; prototype branch is directionally correct but has procedural/orchestration scope drift. Await explicit Packet 008D activation before implementation continues. |
 | 008A | Graph value reset | superseded | no | Diagnosed prototype scope drift but overcorrected toward reset. Keep as historical context, not current direction. |
 | 008B | Graph contract reset and stable canvas shell | rejected | no | Returned branch `codex/packet-008b-graph-shell` regressed the graph vision; do not merge or use as baseline. |
-| 008C | Graph vision realignment | active | no | Spawned visible local thread `019ead34-a655-7a82-aa6e-fa10aa9bf7a8` to recover intended graph UX/model before implementation. |
+| 008C | Graph vision realignment | fixed | no | Returned handoff recommends reframing the next graph move as prototype polish/acceptance, not reset. |
 
 ## Human Gates
 
@@ -35,8 +35,11 @@ Status: active
   It is unaccepted reference work: directionally useful, but scope-drifty.
 - Do not treat `codex/packet-008b-graph-shell` as accepted. It is rejected as a
   reset-regression branch and must not be merged or used as baseline.
-- Packet 008C owns the current graph discussion. Its job is to recover the
-  intended graph vision and define a minimal corrective next step.
+- Treat `codex/p8-c1-graph-contract` as the directionally correct graph
+  reference while still rejecting its unaccepted procedural/status-history
+  drift.
+- Frame the next graph implementation as prototype polish and acceptance, not
+  another reset or reduced placeholder.
 
 ## Concern Bubble-Up Path
 

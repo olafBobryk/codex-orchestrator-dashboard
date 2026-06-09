@@ -62,6 +62,7 @@ Status: active
 | 2026-06-09 | P8-C1 | Pause Packet 008 behind Packet 008A. | Returned branch completed P8-C1 through P8-C5 plus unaccepted polish passes, so the orchestrator needs a value reset before accepting work. | needs_human |
 | 2026-06-09 | P8-C1 / 008A | Accept Packet 008A recommendation and open Packet 008B. | The returned graph contract should not become the foundation; next work resets the contract and verifies a stable canvas shell from main. | accepted |
 | 2026-06-09 | 008B / 008C | Reject Packet 008B reset-regression and open Packet 008C. | The reset branch collapsed too much of the intended graph vision. The next step must recover the vision and make minimal corrections rather than reset again. | accepted |
+| 2026-06-09 | 008C | Accept graph realignment return framing. | The original prototype direction should be preserved as the intended graph surface; the next implementation move should be framed as prototype polish and acceptance, not another reset. Reject only procedural/orchestration drift such as unaccepted packet history and status mutations. | accepted |
 
 ## Verification Log
 
