@@ -14,7 +14,7 @@ Status: active
 | 006 | Investigate Codex project list integration | verified | no | Investigation returned; accepted narrow read-only `.codex-global-state.json` direction. |
 | 007 | Read-only Codex local projects source | verified | no | Consolidated existing implementation; no sidecar registry yet. |
 | 008 | Orchestration graph view | needs_human | yes | Returned branch went beyond delegated scope; paused behind Packet 008A before merge, cherry-pick, or further graph work. |
-| 008A | Graph value reset | active | no | Intermediate repass packet to decide what to keep from the graph prototype and what the next bounded graph packet should be. |
+| 008A | Graph value reset | active | no | Spawned visible local thread `019ead0e-bf55-7823-b70a-07c062dccc30` to decide what to keep from the graph prototype and what the next bounded graph packet should be. |
 
 ## Human Gates
 

@@ -1,6 +1,6 @@
 # Packet 008A Graph Value Reset Spawn Handoff
 
-Status: ready_to_spawn
+Status: spawned
 
 ## Spawned Agent Target
 
@@ -9,6 +9,10 @@ Visible Codex project thread, local checkout, no worktree required.
 Workspace:
 
 - `/Users/olafbobryk/Documents/Code/Personal/2026/codex-orchestrator-dashboard`
+
+Thread:
+
+- `019ead0e-bf55-7823-b70a-07c062dccc30`
 
 ## Packet
 
