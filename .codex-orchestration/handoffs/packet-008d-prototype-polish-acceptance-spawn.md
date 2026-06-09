@@ -1,6 +1,6 @@
 # Packet 008D Prototype Polish And Acceptance Pass Spawn Handoff
 
-Status: ready_to_spawn
+Status: queued
 
 ## Spawned Agent Target
 
@@ -13,6 +13,10 @@ Workspace main checkout:
 Starting branch:
 
 - `main`
+
+Pending worktree:
+
+- `local:cd9a3784-0135-4709-ae59-ef51d99e17b7`
 
 ## Packet
 

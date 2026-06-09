@@ -17,7 +17,7 @@ Status: active
 | 008A | Graph value reset | superseded | no | Diagnosed prototype scope drift but overcorrected toward reset. Keep as historical context, not current direction. |
 | 008B | Graph contract reset and stable canvas shell | rejected | no | Returned branch `codex/packet-008b-graph-shell` regressed the graph vision; do not merge or use as baseline. |
 | 008C | Graph vision realignment | fixed | no | Returned handoff recommends reframing the next graph move as prototype polish/acceptance, not reset. |
-| 008D | Prototype polish and acceptance pass | active | no | Current implementation packet. Preserve the original graph prototype direction, start a dev server immediately, and polish toward acceptance. |
+| 008D | Prototype polish and acceptance pass | active | no | Queued visible worktree thread `local:cd9a3784-0135-4709-ae59-ef51d99e17b7`; preserve the original graph prototype direction, start a dev server immediately, and polish toward acceptance. |
 
 ## Human Gates
 
