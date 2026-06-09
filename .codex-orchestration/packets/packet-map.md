@@ -13,7 +13,8 @@ Status: active
 | 005 | Recent workspace selector | verified | no | Implemented by spawned worker and verified by orchestrator. |
 | 006 | Investigate Codex project list integration | verified | no | Investigation returned; accepted narrow read-only `.codex-global-state.json` direction. |
 | 007 | Read-only Codex local projects source | verified | no | Consolidated existing implementation; no sidecar registry yet. |
-| 008 | Orchestration graph view | active | yes | P8-C1 queued as pending visible worktree thread `local:57cd1a26-d913-4457-a69f-993195f4bcdd`. |
+| 008 | Orchestration graph view | needs_human | yes | Returned branch went beyond delegated scope; paused behind Packet 008A before merge, cherry-pick, or further graph work. |
+| 008A | Graph value reset | active | no | Intermediate repass packet to decide what to keep from the graph prototype and what the next bounded graph packet should be. |
 
 ## Human Gates
 
@@ -28,6 +29,8 @@ Status: active
 - Do not add a sidecar-owned explicit registry file yet.
 - Do not read broader Codex runtime state for project selection without a new
   accepted packet.
+- Do not treat the `codex/p8-c1-graph-contract` prototype branch as accepted
+  until Packet 008A is returned and reviewed.
 
 ## Concern Bubble-Up Path
 
