@@ -13,8 +13,9 @@ Status: active
 | 005 | Recent workspace selector | verified | no | Implemented by spawned worker and verified by orchestrator. |
 | 006 | Investigate Codex project list integration | verified | no | Investigation returned; accepted narrow read-only `.codex-global-state.json` direction. |
 | 007 | Read-only Codex local projects source | verified | no | Consolidated existing implementation; no sidecar registry yet. |
-| 008 | Orchestration graph view | needs_human | yes | Returned branch went beyond delegated scope; paused behind Packet 008A before merge, cherry-pick, or further graph work. |
-| 008A | Graph value reset | active | no | Spawned visible local thread `019ead0e-bf55-7823-b70a-07c062dccc30` to decide what to keep from the graph prototype and what the next bounded graph packet should be. |
+| 008 | Orchestration graph view | needs_human | yes | Returned branch went beyond delegated scope; paused behind Packet 008B before merge, cherry-pick, or further graph work. |
+| 008A | Graph value reset | verified | no | Returned recommendation accepted: do not merge prototype as-is; open Packet 008B for contract reset plus stable canvas shell. |
+| 008B | Graph contract reset and stable canvas shell | active | no | Current packet. Must start with contract reset direction and potential problems before implementation. |
 
 ## Human Gates
 
@@ -31,6 +32,9 @@ Status: active
   accepted packet.
 - Do not treat the `codex/p8-c1-graph-contract` prototype branch as accepted
   until Packet 008A is returned and reviewed.
+- Packet 008A returned: do not merge the prototype branch as-is; do not accept
+  the returned P8-C1 graph contract as the foundation; do not accept Packet
+  009-014 prototype docs as project history.
 
 ## Concern Bubble-Up Path
 

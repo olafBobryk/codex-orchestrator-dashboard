@@ -60,6 +60,7 @@ Status: active
 | 2026-06-09 | P8-C1 | Use visible worktree-backed Codex thread for mutating packet work. | Keeps implementation isolated while preserving visible orchestration. | accepted |
 | 2026-06-09 | P8-C1 | Queue worktree-backed thread `local:57cd1a26-d913-4457-a69f-993195f4bcdd`. | Starts P8-C1 in visible delegated work while preserving orchestrator control. | accepted |
 | 2026-06-09 | P8-C1 | Pause Packet 008 behind Packet 008A. | Returned branch completed P8-C1 through P8-C5 plus unaccepted polish passes, so the orchestrator needs a value reset before accepting work. | needs_human |
+| 2026-06-09 | P8-C1 / 008A | Accept Packet 008A recommendation and open Packet 008B. | The returned graph contract should not become the foundation; next work resets the contract and verifies a stable canvas shell from main. | accepted |
 
 ## Verification Log
 
