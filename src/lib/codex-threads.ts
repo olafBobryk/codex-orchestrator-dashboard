@@ -10,6 +10,7 @@ export type CodexLiveThread = {
   agentName: string | null;
   agentRole: string | null;
   threadSource: string | null;
+  status: "running" | "archived" | "unknown";
   updatedAt: string | null;
 };
 
@@ -31,6 +32,7 @@ type SqliteThreadRow = {
   agent_nickname?: unknown;
   agent_role?: unknown;
   thread_source?: unknown;
+  archived?: unknown;
   updated_at_ms?: unknown;
 };
 
@@ -45,11 +47,25 @@ SELECT
   agent_nickname,
   agent_role,
   thread_source,
+  archived,
   updated_at_ms
 FROM threads
 WHERE archived = 0
 ORDER BY updated_at_ms DESC
 LIMIT 250;
+`;
+
+const THREADS_BY_ID_BASE_SQL = `
+SELECT
+  id,
+  cwd,
+  title,
+  agent_nickname,
+  agent_role,
+  thread_source,
+  archived,
+  updated_at_ms
+FROM threads
 `;
 
 export async function readCodexLiveThreads(
@@ -121,6 +137,82 @@ export async function readCodexLiveThreads(
   }
 }
 
+export async function readCodexThreadAnnotations(
+  threadIds: string[]
+): Promise<CodexLiveThreadsResult> {
+  const safeThreadIds = [...new Set(threadIds)]
+    .map((threadId) => threadId.trim())
+    .filter((threadId) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        threadId
+      )
+    );
+
+  if (safeThreadIds.length === 0) {
+    return liveThreadResult({
+      state: "ready",
+      message: "No recorded Codex thread IDs were found in Markdown.",
+      threads: [],
+    });
+  }
+
+  const quotedIds = safeThreadIds.map((threadId) => `'${threadId}'`).join(",");
+
+  try {
+    const { stdout } = await execFileAsync("sqlite3", [
+      "-json",
+      CODEX_STATE_DB_PATH,
+      `${THREADS_BY_ID_BASE_SQL} WHERE id IN (${quotedIds});`,
+    ]);
+    const rows: unknown = JSON.parse(stdout || "[]");
+
+    if (!Array.isArray(rows)) {
+      return liveThreadResult({
+        state: "error",
+        message: "Codex thread annotation state returned an unexpected shape.",
+        threads: [],
+      });
+    }
+
+    const threads = rows
+      .map(readThreadRow)
+      .filter((thread): thread is CodexLiveThread => Boolean(thread));
+
+    return liveThreadResult({
+      state: "ready",
+      message:
+        threads.length > 0
+          ? "Recorded Codex thread annotations loaded."
+          : "No recorded Codex thread IDs matched local runtime state.",
+      threads,
+    });
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return liveThreadResult({
+        state: "sqlite_missing",
+        message: "The sqlite3 command is not available.",
+        threads: [],
+      });
+    }
+
+    const message = error instanceof Error ? error.message : "";
+
+    if (message.includes("unable to open database file")) {
+      return liveThreadResult({
+        state: "missing_db",
+        message: "No Codex thread database was found.",
+        threads: [],
+      });
+    }
+
+    return liveThreadResult({
+      state: "error",
+      message: message || "Unable to read recorded Codex thread annotations.",
+      threads: [],
+    });
+  }
+}
+
 function liveThreadResult({
   state,
   message,
@@ -167,6 +259,12 @@ function readThreadRow(row: SqliteThreadRow): CodexLiveThread | null {
       typeof row.thread_source === "string" && row.thread_source.trim()
         ? row.thread_source.trim()
         : null,
+    status:
+      typeof row.archived === "number"
+        ? row.archived === 1
+          ? "archived"
+          : "running"
+        : "unknown",
     updatedAt:
       typeof row.updated_at_ms === "number"
         ? new Date(row.updated_at_ms).toISOString()

@@ -13,6 +13,7 @@ export function WorkspacePathMenu({ workspace }: { workspace: string }) {
       align="end"
       offset={8}
       menuMinWidth={320}
+      positionStrategy="fixed"
       pinOnClick={false}
       renderTrigger={({
         ref,

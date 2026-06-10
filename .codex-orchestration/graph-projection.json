@@ -1,0 +1,194 @@
+{
+  "title": "Dashboard Contract Prototype",
+  "legend": [
+    {
+      "key": "stewardship",
+      "label": "Stewardship",
+      "color": "#2563eb"
+    },
+    {
+      "key": "adapter",
+      "label": "Adapter Layer",
+      "color": "#0f766e"
+    },
+    {
+      "key": "dashboard",
+      "label": "Dashboard Layer",
+      "status": "complete",
+      "color": "#d97706"
+    },
+    {
+      "key": "retired",
+      "label": "Retired Surface",
+      "color": "#94a3b8",
+      "muted": true
+    }
+  ],
+  "nodes": [
+    {
+      "id": "steward-window",
+      "label": "Steward Rolling Window",
+      "legendKey": "stewardship",
+      "detail": [
+        {
+          "id": "source",
+          "name": "Docs",
+          "icon": "layers",
+          "summary": "2",
+          "color": "#2563eb",
+          "body": "Two project-local stewardship references define the current dashboard boundary. The dashboard should not need to understand the project's current methodology vocabulary; it only needs stable graph facts emitted by an adapter.",
+          "links": [
+            {
+              "label": "Architecture notes",
+              "relativePath": "architecture.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "projection-artifact",
+      "label": "Graph Projection Artifact",
+      "legendKey": "adapter",
+      "detail": [
+        {
+          "id": "contract",
+          "name": "Tests",
+          "icon": "file-json",
+          "summary": "3/3",
+          "color": "#0f766e",
+          "body": "All tests passed safely: nodes, edges, legend colors, marker descriptions, detail blocks, and reference links render without freezing a final schema.",
+          "links": [
+            {
+              "label": "Contract notes",
+              "relativePath": "dashboard-contract-notes.md"
+            },
+            {
+              "label": "Projection fixture",
+              "relativePath": "graph-projection.json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "canvas-consumer",
+      "label": "Rigid Visual Consumer",
+      "legendKey": "dashboard",
+      "status": "complete",
+      "detail": [
+        {
+          "id": "read-only",
+          "name": "Execution controls",
+          "icon": "eye",
+          "summary": "0",
+          "color": "#d97706",
+          "body": "Zero execution controls are present. Links navigate to references while the graph canvas stays small, local-only, and read-only.",
+          "links": [
+            {
+              "label": "Canvas component",
+              "href": "vscode://file/Users/olafbobryk/.codex/worktrees/a002/codex-orchestrator-dashboard/src/components/domain/workspace/canvas/workspace-canvas.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "retired-packets",
+      "label": "Retired Packet Surface",
+      "legendKey": "retired",
+      "muted": true,
+      "detail": [
+        {
+          "id": "boundary",
+          "name": "Legacy refs",
+          "icon": "archive",
+          "summary": "1",
+          "color": "#94a3b8",
+          "body": "One muted reference demonstrates how legacy or superseded context can remain visible without becoming active workflow structure.",
+          "links": [
+            {
+              "label": "Architecture boundary",
+              "relativePath": "architecture.md"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-steward-to-projection",
+      "source": "steward-window",
+      "target": "projection-artifact",
+      "label": "project docs interpreted by adapter",
+      "style": "solid",
+      "directional": true,
+      "detail": [
+        {
+          "id": "adapter-boundary",
+          "name": "Adapter Boundary",
+          "icon": "split",
+          "summary": "1",
+          "color": "#0f766e",
+          "body": "The dashboard does not run the adapter in this prototype; it only reads the artifact."
+        }
+      ]
+    },
+    {
+      "id": "edge-projection-to-canvas",
+      "source": "projection-artifact",
+      "target": "canvas-consumer",
+      "label": "projection consumed by dashboard",
+      "style": "dashed",
+      "directional": false,
+      "detail": [
+        {
+          "id": "dash",
+          "name": "Dashed Non-directional Edge",
+          "icon": "route",
+          "summary": "0",
+          "color": "#d97706",
+          "body": "The graph can show relationship style without implying command flow."
+        }
+      ]
+    },
+    {
+      "id": "edge-retired-context",
+      "source": "retired-packets",
+      "target": "steward-window",
+      "label": "legacy context only",
+      "style": "dotted",
+      "directional": false
+    }
+  ],
+  "markers": [
+    {
+      "id": "marker-contract",
+      "targetId": "projection-artifact",
+      "label": "Contract",
+      "description": "Authored projection fields that the dashboard can render without understanding project-local methodology.",
+      "color": "#0f766e",
+      "muted": false,
+      "icon": "file-json"
+    },
+    {
+      "id": "marker-readonly",
+      "targetId": "canvas-consumer",
+      "label": "Read-only",
+      "description": "The dashboard may inspect references, but it should not execute adapters, prompts, or state mutation.",
+      "color": "#d97706",
+      "muted": false,
+      "icon": "lock"
+    },
+    {
+      "id": "marker-muted",
+      "targetId": "retired-packets",
+      "label": "Legacy",
+      "description": "Retired packet context remains visible only as background provenance, not as the active model.",
+      "color": "#94a3b8",
+      "muted": true,
+      "icon": "archive"
+    }
+  ]
+}
