@@ -9,6 +9,7 @@ import {
 } from "@/lib/codex-projects";
 import { readCodexLiveThreads } from "@/lib/codex-threads";
 import {
+  GraphProjectionQualityToast,
   WorkspaceCanvas,
   WorkspacePathMenu,
   WorkspaceSidebar,
@@ -51,6 +52,8 @@ export default async function Home({ searchParams }: PageProps) {
     projection?.state === "ready"
       ? projection.graph
       : await buildMarkdownGraph(result.docs, resolvedWorkspace, liveThreads);
+  const projectionQualityWarnings =
+    projection.state === "ready" ? projection.qualityWarnings : [];
 
   return (
     <main className="relative min-h-screen bg-background lg:h-screen lg:overflow-hidden">
@@ -61,6 +64,10 @@ export default async function Home({ searchParams }: PageProps) {
       />
 
       <div className="min-h-screen min-w-0 bg-background lg:h-screen lg:overflow-hidden">
+        <GraphProjectionQualityToast
+          workspace={resolvedWorkspace}
+          warnings={projectionQualityWarnings}
+        />
         <WorkspaceCanvas
           graph={graph}
           workspace={resolvedWorkspace}

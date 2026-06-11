@@ -27,9 +27,24 @@ Run locally:
 npm run dev
 ```
 
+Initialize the current shape strategy in another repo:
+
+```bash
+npm run init:shape-strategy -- /absolute/path/to/target-repo
+```
+
+Use `--force` only when intentionally replacing an existing
+`.codex-orchestration/strategies/shape-strategy/` folder.
+
+Migrating older orchestration docs should be a prep-ledger pass, not an
+automatic conversion. Use `goal-ledger-prep` to create a temporary ignored
+ledger, inventory old packet/chunk/handoff docs, map them into shape strategy
+artifacts, and produce a goal-ready migration prompt.
+
 Useful docs:
 
 - `docs/architecture.md`
 - `docs/implementation-plan.md`
 - `docs/discussion-handoff.md`
-- `.codex-orchestration/packets/packet-map.md`
+- `.codex-orchestration/strategies/shape-strategy/meta/orchestration-shape-strategy.md`
+- `.codex-orchestration/strategies/shape-strategy/map.md`

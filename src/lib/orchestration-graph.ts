@@ -42,6 +42,8 @@ export type GraphStatus =
   | "deferred"
   | "unknown";
 
+export type GraphNodeChronology = "start" | null;
+
 export type GraphMissingState =
   | "missing_packet"
   | "missing_chunk_status"
@@ -64,6 +66,7 @@ export type GraphDetailLink = {
   label: string;
   href: string;
   relativePath: string | null;
+  kind: "artifact" | "meta_template" | "reference";
 };
 
 export type GraphDetailBlock = {
@@ -84,6 +87,20 @@ export type GraphMarker = {
   color: string;
   muted: boolean;
   icon: string | null;
+  loader: boolean;
+  links: GraphDetailLink[];
+};
+
+export type GraphRegion = {
+  id: string;
+  label: string;
+  category: string | null;
+  color: string;
+  muted: boolean;
+  nodeIds: string[];
+  regionIds: string[];
+  detail: GraphDetailBlock[];
+  links: GraphDetailLink[];
 };
 
 export type GraphPacketGroup = {
@@ -130,6 +147,9 @@ export type GraphNode = {
   kind: GraphNodeKind;
   primary: boolean;
   label: string;
+  color: string | null;
+  icon: string | null;
+  chronology: GraphNodeChronology;
   packetId: string | null;
   chunkId: string | null;
   status: GraphStatus;
@@ -140,6 +160,7 @@ export type GraphNode = {
   lane: "main" | "spawned" | "detour" | "returned" | "annotation";
   sources: GraphEvidence[];
   missing: GraphMissingState[];
+  links: GraphDetailLink[];
   detail: {
     title: string;
     summary: string | null;
@@ -196,6 +217,7 @@ export type OrchestrationGraph = {
   nodes: GraphNode[];
   edges: GraphEdge[];
   markers: GraphMarker[];
+  regions: GraphRegion[];
   missing: Array<{
     state: GraphMissingState;
     relativePath: string | null;
@@ -369,6 +391,7 @@ export function buildOrchestrationGraph(
     nodes: [...nodes.values()].sort((a, b) => a.order - b.order),
     edges: [...edges.values()].sort((a, b) => a.id.localeCompare(b.id)),
     markers: [],
+    regions: [],
     missing,
     counts: {
       packets: packets.size,
@@ -604,6 +627,9 @@ function readHandoffDoc(
     kind: "handoff",
     primary: false,
     label: doc.title,
+    color: null,
+    icon: null,
+    chronology: null,
     packetId: packetNumber ? packetId(packetNumber) : null,
     chunkId: chunkRef?.chunkId ?? null,
     status: normalizeStatus(rawStatus),
@@ -622,6 +648,7 @@ function readHandoffDoc(
       },
     ],
     missing,
+    links: [],
     detail: {
       title: doc.title,
       summary: createHandoffSummary(summary, doc.excerpt),
@@ -794,6 +821,9 @@ function readConcernRecords(
       kind: "concern",
       primary: false,
       label: concern,
+      color: null,
+      icon: null,
+      chronology: null,
       packetId: packetNumber ? packetId(packetNumber) : null,
       chunkId: chunkRef?.chunkId ?? fallbackChunkId ?? null,
       status: normalizeStatus(rawStatus),
@@ -812,6 +842,7 @@ function readConcernRecords(
         },
       ],
       missing: [],
+      links: [],
       detail: {
         title: concern,
         summary: fields["why it matters"] ?? null,
@@ -857,6 +888,9 @@ function upsertChunkNode(
       kind: "chunk",
       primary: true,
       label: input.label,
+      color: null,
+      icon: null,
+      chronology: null,
       packetId: input.packetId,
       chunkId: input.chunkId,
       status: input.status,
@@ -867,6 +901,7 @@ function upsertChunkNode(
       lane: "main",
       sources: [input.source],
       missing: input.status === "unknown" ? ["missing_chunk_status"] : [],
+      links: [],
       detail: {
         title: input.label,
         summary: input.summary,

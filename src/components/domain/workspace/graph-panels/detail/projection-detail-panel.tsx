@@ -1,9 +1,9 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
-import type { GraphDetailBlock } from "@/lib/orchestration-graph";
+import type { GraphDetailBlock, GraphMarker } from "@/lib/orchestration-graph";
 import { getNodeProvenanceFiles } from "../../canvas/graph-adapter";
-import { DetailBlockCard, DetailSection } from "../shared";
+import { DetailBlockCard, DetailField, DetailSection, EntityLinks } from "../shared";
 import { GraphDetailHeader } from "./header";
-import { GraphPanelPreviewContent, MarkerIsland } from "../preview";
+import { GraphPanelPreviewContent, MarkerGlyph, MarkerIsland } from "../preview";
 import { ProjectionProvenanceFooter } from "./provenance-footer";
 import { ProjectionRelationshipList } from "./relationships";
 import type { GraphDetailOverlayProps } from "../shared";
@@ -15,6 +15,7 @@ export function ProjectionDetailPanel({
   edges,
   relatedNodes,
   workspace,
+  onOpenMarkdownReference,
   onSelectMarker,
   onClose,
 }: GraphDetailOverlayProps) {
@@ -50,6 +51,23 @@ export function ProjectionDetailPanel({
                   />
                 ))}
               </div>
+              {selectedMarker ? (
+                <MarkerDetailCard
+                  marker={selectedMarker}
+                  workspace={workspace}
+                  onOpenMarkdownReference={onOpenMarkdownReference}
+                />
+              ) : null}
+            </DetailSection>
+          ) : null}
+
+          {node.links.length > 0 ? (
+            <DetailSection title="Entity files">
+              <EntityLinks
+                links={node.links}
+                workspace={workspace}
+                onOpenMarkdownReference={onOpenMarkdownReference}
+              />
             </DetailSection>
           ) : null}
 
@@ -83,6 +101,7 @@ export function ProjectionDetailPanel({
                     block={block}
                     workspace={workspace}
                     domId={getDetailBlockDomId(block)}
+                    onOpenMarkdownReference={onOpenMarkdownReference}
                   />
                 ))}
               </div>
@@ -103,6 +122,47 @@ export function ProjectionDetailPanel({
         <ProjectionProvenanceFooter files={provenanceFiles} workspace={workspace} />
       </aside>
     </TooltipProvider>
+  );
+}
+
+function MarkerDetailCard({
+  marker,
+  workspace,
+  onOpenMarkdownReference,
+}: {
+  marker: GraphMarker;
+  workspace: string;
+  onOpenMarkdownReference: GraphDetailOverlayProps["onOpenMarkdownReference"];
+}) {
+  return (
+    <div
+      className="mt-2 min-w-0 rounded-md border border-border px-2.5 py-2"
+      style={{ borderColor: marker.color }}
+    >
+      <div className="flex min-w-0 items-center gap-2">
+        <MarkerGlyph marker={marker} size="sm" />
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium text-foreground">
+            {marker.label}
+          </p>
+          {marker.description ? (
+            <p className="truncate text-xs text-muted-foreground">
+              {marker.description}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <DetailField label="Loader" value={marker.loader ? "Active" : "Off"} />
+        <DetailField label="Muted" value={marker.muted ? "Yes" : "No"} />
+      </div>
+      <EntityLinks
+        className="mt-2"
+        links={marker.links}
+        workspace={workspace}
+        onOpenMarkdownReference={onOpenMarkdownReference}
+      />
+    </div>
   );
 }
 

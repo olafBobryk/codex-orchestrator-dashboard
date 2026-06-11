@@ -7,9 +7,11 @@ import {
   type ComponentType,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
 } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,13 +23,23 @@ import {
 } from "./graph-adapter";
 import { installGraphForces } from "./physics";
 import {
+  drawRegionOverlays,
   drawLink,
   drawNode,
   drawNodePointerArea,
+  drawRegions,
+  getClickedRegion,
   getClickedNodeMarker,
+  getRegionAtScreenPoint,
+  isLinkCoveredByActiveRegions,
+  isNodeCoveredByActiveRegion,
+  isNodeInsideCoveredRegion,
   readCanvasTheme,
 } from "./drawing";
 import type {
+  CanvasNode,
+  CanvasRegion,
+  GraphMarkdownReference,
   GraphMethods,
   GraphProps,
   OrchestrationGraphCanvasProps,
@@ -37,28 +49,47 @@ export type { GraphCanvasStats } from "./types";
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
   ssr: false,
-  loading: () => (
-    <div className="grid h-full place-items-center text-sm text-muted-foreground">
-      Preparing graph
-    </div>
-  ),
+  loading: () => <GraphLoadingState />,
 }) as ComponentType<GraphProps>;
 
+const INITIAL_FOCUS_ZOOM = 0.52;
+
+type HoveredNodeTooltip = {
+  node: CanvasNode;
+  x: number;
+  y: number;
+};
+
+type HoveredRegionTooltip = {
+  region: CanvasRegion;
+  x: number;
+  y: number;
+};
 
 export function OrchestrationGraphCanvas({
   graph,
   workspace,
   stats,
   renderDetailPanel,
+  renderRegionPanel,
+  renderMarkdownViewer,
   renderStatusPanel,
 }: OrchestrationGraphCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<GraphMethods | undefined>(undefined);
+  const initialFocusAppliedKeyRef = useRef<string | null>(null);
   const [size, setSize] = useState({ width: 960, height: 620 });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
+  const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
+  const [markdownReference, setMarkdownReference] =
+    useState<GraphMarkdownReference | null>(null);
   const [statusPanelOpen, setStatusPanelOpen] = useState(true);
   const [graphMountVersion, setGraphMountVersion] = useState(0);
+  const [hoveredNodeTooltip, setHoveredNodeTooltip] =
+    useState<HoveredNodeTooltip | null>(null);
+  const [hoveredRegionTooltip, setHoveredRegionTooltip] =
+    useState<HoveredRegionTooltip | null>(null);
   const canvasTheme = useMemo(() => readCanvasTheme(), []);
   const bindGraphRef = useCallback((instance: GraphMethods | null) => {
     graphRef.current = instance ?? undefined;
@@ -68,15 +99,22 @@ export function OrchestrationGraphCanvas({
     }
   }, []);
 
-  const { data, packetColors, visiblePackets } = useMemo(
-    () => createCanvasGraph(graph),
-    [graph]
-  );
+  const {
+    data,
+    regions,
+    packetColors,
+    visiblePackets,
+    layoutKey,
+    initialFocusNodeId,
+  } = useMemo(() => createCanvasGraph(graph), [graph]);
   const runtimeAnnotationCount = countRuntimeAnnotations(graph);
   const sourceStatus = getVisibleSourceStatus(graph);
   const flowSignalCounts = countFlowSignals(graph.edges);
   const supportNodeCount = data.nodes.filter((node) => !node.primary).length;
   const primaryChunkCount = data.nodes.filter((node) => node.primary).length;
+  const hasLoadingMarkers = data.nodes.some((node) =>
+    node.markers.some((marker) => marker.loader)
+  );
 
   const selectedDetailNode = selectedNodeId
     ? graph.nodes.find((node) => node.id === selectedNodeId)
@@ -91,17 +129,121 @@ export function OrchestrationGraphCanvas({
     selectedMarkerId && selectedDetailNode
       ? selectedNodeMarkers.find((marker) => marker.id === selectedMarkerId) ?? null
       : null;
+  const selectedRegion = selectedRegionId
+    ? regions.find((region) => region.id === selectedRegionId) ?? null
+    : null;
   const selectedNodeEdges = selectedDetailNode
     ? graph.edges.filter(
         (edge) =>
           edge.source === selectedDetailNode.id || edge.target === selectedDetailNode.id
       )
     : [];
-  const sidePanelMode = selectedDetailNode
-    ? "detail"
-    : statusPanelOpen
-      ? "status"
-      : null;
+  const sidePanelMode = markdownReference
+    ? "markdown"
+    : selectedDetailNode
+      ? "detail"
+      : selectedRegion
+        ? "region"
+        : statusPanelOpen
+          ? "status"
+          : null;
+  const initialFocusKey = `${layoutKey}:${initialFocusNodeId ?? ""}`;
+
+  const focusInitialNode = useCallback(
+    () => {
+      const instance = graphRef.current;
+      const focusNode = data.nodes.find(
+        (node) => node.id === initialFocusNodeId
+      );
+
+      if (!instance || !focusNode) {
+        return false;
+      }
+
+      instance.zoom(INITIAL_FOCUS_ZOOM, 0);
+      instance.centerAt(focusNode.guideX, focusNode.guideY, 0);
+
+      return true;
+    },
+    [data.nodes, initialFocusNodeId]
+  );
+
+  const isNodeInteractionBlocked = useCallback(
+    (node: CanvasNode) =>
+      isNodeInsideCoveredRegion({
+        node,
+        regions,
+        nodes: data.nodes,
+        graph: graphRef.current,
+        viewportWidth: size.width,
+        viewportHeight: size.height,
+      }),
+    [data.nodes, regions, size.height, size.width]
+  );
+
+  const refreshHoveredNodeTooltip = useCallback(
+    (node: CanvasNode | null) => {
+      if (!node || isNodeInteractionBlocked(node)) {
+        setHoveredNodeTooltip(null);
+        return;
+      }
+
+      const instance = graphRef.current;
+
+      if (!instance) {
+        setHoveredNodeTooltip(null);
+        return;
+      }
+
+      const point = instance.graph2ScreenCoords(
+        node.x ?? node.guideX,
+        node.y ?? node.guideY
+      );
+
+      setHoveredRegionTooltip(null);
+      setHoveredNodeTooltip({
+        node,
+        x: point.x,
+        y: point.y,
+      });
+    },
+    [isNodeInteractionBlocked]
+  );
+
+  const refreshHoveredRegionTooltip = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>) => {
+      if (hoveredNodeTooltip) {
+        return;
+      }
+
+      const container = containerRef.current;
+      const instance = graphRef.current;
+
+      if (!container || !instance) {
+        setHoveredRegionTooltip(null);
+        return;
+      }
+
+      const rect = container.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const region = getRegionAtScreenPoint({
+        regions,
+        nodes: data.nodes,
+        graph: instance,
+        x,
+        y,
+      });
+
+      if (!region) {
+        setHoveredRegionTooltip(null);
+        return;
+      }
+
+      setHoveredRegionTooltip({ region, x, y });
+    },
+    [data.nodes, hoveredNodeTooltip, regions]
+  );
 
   useEffect(() => {
     const element = containerRef.current;
@@ -125,6 +267,16 @@ export function OrchestrationGraphCanvas({
     return () => observer.disconnect();
   }, []);
 
+  useLayoutEffect(() => {
+    if (initialFocusAppliedKeyRef.current === initialFocusKey) {
+      return;
+    }
+
+    if (focusInitialNode()) {
+      initialFocusAppliedKeyRef.current = initialFocusKey;
+    }
+  }, [focusInitialNode, graphMountVersion, initialFocusKey]);
+
   useEffect(() => {
     const instance = graphRef.current;
 
@@ -132,8 +284,8 @@ export function OrchestrationGraphCanvas({
       return;
     }
 
-    return installGraphForces({ instance, sizeWidth: size.width });
-  }, [data, graphMountVersion, size.width]);
+    return installGraphForces({ instance });
+  }, [data, graphMountVersion]);
 
   return (
     <section
@@ -143,100 +295,221 @@ export function OrchestrationGraphCanvas({
       <div
         ref={containerRef}
         className="relative h-full min-h-[520px] bg-background"
+        onMouseMove={refreshHoveredRegionTooltip}
+        onMouseLeave={() => {
+          setHoveredNodeTooltip(null);
+          setHoveredRegionTooltip(null);
+        }}
       >
         {data.nodes.length > 0 ? (
-          <ForceGraph2D
-            ref={bindGraphRef}
-            graphData={data}
-            width={size.width}
-            height={size.height}
-            backgroundColor="rgba(0,0,0,0)"
-            nodeId="id"
-            nodeRelSize={1}
-            nodeVal={(node) => (node.primary ? 14 : 7)}
-            nodeLabel={(node) =>
-              `${node.chunkId ?? node.kind}: ${node.label} (${node.status})`
-            }
-            nodeCanvasObject={(node, context) =>
-              drawNode({
-                node,
-                context,
-                selected: node.id === selectedNodeId,
-                selectedMarkerId,
-                theme: canvasTheme,
-              })
-            }
-            nodePointerAreaPaint={(node, color, context) =>
-              drawNodePointerArea(node, color, context)
-            }
-            linkCanvasObject={(link, context) => drawLink(link, context)}
-            linkCanvasObjectMode={() => "replace"}
-            linkColor={(link) => link.color}
-            linkWidth={(link) => link.width}
-            linkLineDash={(link) => link.dash}
-            linkDirectionalArrowLength={(link) =>
-              link.directional === false
-                ? 0
-                : link.directional === true
-                  ? 5
-                  : link.type === "sequence"
-                    ? 5
-                    : 3
-            }
-            linkDirectionalArrowRelPos={1}
-            linkDirectionalParticles={(link) =>
-              link.type === "sequence" && link.status === "in_progress" ? 1 : 0
-            }
-            linkDirectionalParticleWidth={2}
-            d3VelocityDecay={0.28}
-            cooldownTicks={320}
-            onNodeClick={(node, event) => {
-              event.stopPropagation();
-              const marker = getClickedNodeMarker({
-                node,
-                event,
-                graph: graphRef.current,
-              });
+          <div className="h-full">
+            <ForceGraph2D
+              key={layoutKey}
+              ref={bindGraphRef}
+              graphData={data}
+              width={size.width}
+              height={size.height}
+              backgroundColor="rgba(0,0,0,0)"
+              nodeId="id"
+              autoPauseRedraw={!hasLoadingMarkers}
+              nodeRelSize={1}
+              nodeVal={(node) => (node.primary ? 14 : 7)}
+              nodeLabel={() => ""}
+              onRenderFramePre={(context, globalScale) => {
+                drawRegions({
+                  regions,
+                  nodes: data.nodes,
+                  context,
+                  globalScale,
+                });
+              }}
+              onRenderFramePost={(context, globalScale) =>
+                {
+                  drawRegionOverlays({
+                    regions,
+                    nodes: data.nodes,
+                    context,
+                    theme: canvasTheme,
+                    globalScale,
+                  });
+                }
+              }
+              nodeCanvasObject={(node, context, globalScale) => {
+                if (
+                  isNodeCoveredByActiveRegion({
+                    node,
+                    regions,
+                    nodes: data.nodes,
+                    context,
+                    globalScale,
+                  })
+                ) {
+                  return;
+                }
 
-              setSelectedNodeId(node.id);
-              setSelectedMarkerId(marker?.id ?? null);
-            }}
-            onBackgroundClick={() => {
-              setSelectedNodeId(null);
-              setSelectedMarkerId(null);
-            }}
-            enableNodeDrag
-          />
-        ) : (
-          <div className="grid h-full place-items-center px-6 text-center text-sm text-muted-foreground">
-            No graph nodes are available for this workspace.
+                drawNode({
+                  node,
+                  context,
+                  selected: node.id === selectedNodeId,
+                  selectedMarkerId,
+                  theme: canvasTheme,
+                  globalScale,
+                });
+              }}
+              nodePointerAreaPaint={(node, color, context) =>
+                drawNodePointerArea(node, color, context)
+              }
+              linkCanvasObject={(link, context, globalScale) => {
+                if (
+                  isLinkCoveredByActiveRegions({
+                    link,
+                    regions,
+                    nodes: data.nodes,
+                    context,
+                    globalScale,
+                  })
+                ) {
+                  return;
+                }
+
+                drawLink(link, context);
+              }}
+              linkCanvasObjectMode={() => "replace"}
+              linkColor={(link) => link.color}
+              linkWidth={(link) => link.width}
+              linkLineDash={(link) => link.dash}
+              linkDirectionalArrowLength={(link) =>
+                link.directional === false
+                  ? 0
+                  : link.directional === true
+                    ? 5
+                    : link.type === "sequence"
+                      ? 5
+                      : 3
+              }
+              linkDirectionalArrowRelPos={1}
+              linkDirectionalParticles={(link) =>
+                link.type === "sequence" && link.status === "in_progress" ? 1 : 0
+              }
+              linkDirectionalParticleWidth={2}
+              d3VelocityDecay={0.46}
+              cooldownTicks={320}
+              onNodeHover={(node) => refreshHoveredNodeTooltip(node)}
+              onNodeClick={(node, event) => {
+                event.stopPropagation();
+                if (isNodeInteractionBlocked(node)) {
+                  const region = getClickedRegion({
+                    regions,
+                    nodes: data.nodes,
+                    event,
+                    graph: graphRef.current,
+                  });
+
+                  if (region) {
+                    setSelectedNodeId(null);
+                    setSelectedMarkerId(null);
+                    setSelectedRegionId(region.id);
+                    setMarkdownReference(null);
+                  }
+
+                  return;
+                }
+
+                const marker = getClickedNodeMarker({
+                  node,
+                  event,
+                  graph: graphRef.current,
+                });
+
+                setSelectedNodeId(node.id);
+                setSelectedMarkerId(marker?.id ?? null);
+                setSelectedRegionId(null);
+                setMarkdownReference(null);
+              }}
+              onBackgroundClick={(event) => {
+                const region = getClickedRegion({
+                  regions,
+                  nodes: data.nodes,
+                  event,
+                  graph: graphRef.current,
+                });
+
+                if (region) {
+                  event.stopPropagation();
+                  setSelectedNodeId(null);
+                  setSelectedMarkerId(null);
+                  setSelectedRegionId(region.id);
+                  setMarkdownReference(null);
+                  return;
+                }
+
+                setSelectedNodeId(null);
+                setSelectedMarkerId(null);
+                setSelectedRegionId(null);
+                setMarkdownReference(null);
+              }}
+              enableNodeDrag
+            />
           </div>
+        ) : (
+          <GraphLoadingState />
         )}
+
+        <AnimatePresence>
+          {hoveredNodeTooltip ? (
+            <GraphNodeTooltip tooltip={hoveredNodeTooltip} />
+          ) : hoveredRegionTooltip ? (
+            <GraphRegionTooltip tooltip={hoveredRegionTooltip} />
+          ) : null}
+        </AnimatePresence>
+
+        {/*
+        <div className="pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-md border border-border/70 bg-background/86 px-2.5 py-1 text-[11px] font-medium tabular-nums text-muted-foreground shadow-sm backdrop-blur">
+          zoom {zoomLevel.toFixed(2)}x
+        </div>
+        */}
 
         <AnimatePresence mode="wait">
           {sidePanelMode ? (
             <motion.div
-              key={sidePanelMode === "detail" ? "graph-detail-panel" : "graph-status-panel"}
+              key={
+                sidePanelMode === "detail"
+                  ? "graph-detail-panel"
+                  : sidePanelMode === "markdown"
+                    ? "graph-markdown-panel"
+                    : sidePanelMode === "region"
+                      ? "graph-region-panel"
+                      : "graph-status-panel"
+              }
               data-graph-side-panel={sidePanelMode}
               initial={{ x: "calc(100% + 16px)", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "calc(100% + 16px)", opacity: 0 }}
               transition={{ type: "spring", stiffness: 360, damping: 34 }}
               className={`absolute right-3 top-3 z-10 ${
-                sidePanelMode === "detail"
+                sidePanelMode === "markdown"
+                  ? "bottom-3 w-[min(560px,calc(100%_-_1.5rem))]"
+                  : sidePanelMode === "detail" || sidePanelMode === "region"
                   ? "bottom-3 w-[min(390px,calc(100%_-_1.5rem))]"
                   : "w-[min(340px,calc(100%_-_1.5rem))]"
               }`}
               style={{
                 maxHeight:
-                  sidePanelMode === "detail"
+                  sidePanelMode === "detail" || sidePanelMode === "markdown"
+                  || sidePanelMode === "region"
                     ? "calc(100vh - 1.5rem)"
                     : "min(520px, calc(100vh - 1.5rem))",
               }}
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => event.stopPropagation()}
             >
-              {sidePanelMode === "detail" && selectedDetailNode ? (
+              {sidePanelMode === "markdown" && markdownReference ? (
+                renderMarkdownViewer({
+                  workspace,
+                  reference: markdownReference,
+                  onBack: () => setMarkdownReference(null),
+                })
+              ) : sidePanelMode === "detail" && selectedDetailNode ? (
                 renderDetailPanel({
                   node: selectedDetailNode,
                   markers: selectedNodeMarkers,
@@ -244,10 +517,22 @@ export function OrchestrationGraphCanvas({
                   edges: selectedNodeEdges,
                   relatedNodes: relatedDetailNodes,
                   workspace,
+                  onOpenMarkdownReference: setMarkdownReference,
                   onSelectMarker: setSelectedMarkerId,
                   onClose: () => {
                     setSelectedNodeId(null);
                     setSelectedMarkerId(null);
+                    setMarkdownReference(null);
+                  },
+                })
+              ) : sidePanelMode === "region" && selectedRegion ? (
+                renderRegionPanel({
+                  region: selectedRegion,
+                  workspace,
+                  onOpenMarkdownReference: setMarkdownReference,
+                  onClose: () => {
+                    setSelectedRegionId(null);
+                    setMarkdownReference(null);
                   },
                 })
               ) : (
@@ -266,6 +551,7 @@ export function OrchestrationGraphCanvas({
                   onSelectNode: (nodeId) => {
                     setSelectedNodeId(nodeId);
                     setSelectedMarkerId(null);
+                    setSelectedRegionId(null);
                   },
                   onClose: () => setStatusPanelOpen(false),
                 })
@@ -274,7 +560,7 @@ export function OrchestrationGraphCanvas({
           ) : null}
         </AnimatePresence>
 
-        {!selectedDetailNode && !statusPanelOpen ? (
+        {!selectedDetailNode && !selectedRegion && !statusPanelOpen ? (
           <Button
             type="button"
             variant="secondary"
@@ -289,5 +575,63 @@ export function OrchestrationGraphCanvas({
         ) : null}
       </div>
     </section>
+  );
+}
+
+function GraphLoadingState() {
+  return (
+    <div className="absolute inset-0 z-10 grid place-items-center bg-background/72 backdrop-blur-[1px]">
+      <span
+        aria-label="Loading graph"
+        className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground/25 border-t-muted-foreground"
+      />
+    </div>
+  );
+}
+
+function GraphNodeTooltip({ tooltip }: { tooltip: HoveredNodeTooltip }) {
+  return (
+    <motion.div
+      key={tooltip.node.id}
+      data-graph-tooltip="node"
+      className="pointer-events-none absolute z-30 max-w-[260px]"
+      style={{ left: tooltip.x, top: tooltip.y }}
+      initial={{ opacity: 0, scale: 0.96, y: -4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.98, y: -3 }}
+      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className="-translate-x-1/2 -translate-y-[calc(100%+14px)] rounded-md border border-border/80 bg-popover/95 px-3 py-2 text-xs text-popover-foreground shadow-lg shadow-black/10 backdrop-blur">
+        <div className="max-w-[220px] truncate font-medium leading-snug">
+          {tooltip.node.label}
+        </div>
+        <div className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-border/80 bg-popover/95" />
+      </div>
+    </motion.div>
+  );
+}
+
+function GraphRegionTooltip({ tooltip }: { tooltip: HoveredRegionTooltip }) {
+  return (
+    <motion.div
+      key={tooltip.region.id}
+      data-graph-tooltip="region"
+      className="pointer-events-none absolute z-30 max-w-[260px]"
+      style={{ left: tooltip.x, top: tooltip.y }}
+      initial={{ opacity: 0, scale: 0.96, y: -4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.98, y: -3 }}
+      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className="-translate-x-1/2 -translate-y-[calc(100%+14px)] rounded-md border border-border/80 bg-popover/95 px-3 py-2 text-xs text-popover-foreground shadow-lg shadow-black/10 backdrop-blur">
+        <div className="max-w-[220px] truncate font-medium leading-snug">
+          {tooltip.region.label}
+        </div>
+        <div className="mt-1 text-[11px] leading-none text-muted-foreground">
+          region
+        </div>
+        <div className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-border/80 bg-popover/95" />
+      </div>
+    </motion.div>
   );
 }

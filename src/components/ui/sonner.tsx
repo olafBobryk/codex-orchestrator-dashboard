@@ -15,13 +15,21 @@ function Toaster({ ...props }: ToasterProps) {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
+          "--toast-icon-margin-start": "0px",
+          "--toast-icon-margin-end": "12px",
+          "--toast-svg-margin-start": "0px",
+          "--toast-svg-margin-end": "0px",
         } as CSSProperties
       }
       toastOptions={{
         classNames: {
           toast:
             "group toast group-[.toaster]:bg-popover group-[.toaster]:text-popover-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
+          icon: "!mt-0.5 !size-4 !shrink-0",
+          content: "min-w-0 flex-1",
+          title: "min-w-0 break-words",
+          description:
+            "min-w-0 break-words group-[.toast]:text-muted-foreground",
           actionButton:
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton:

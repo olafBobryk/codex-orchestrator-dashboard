@@ -150,27 +150,4 @@ export const GRAPH_EDGE_SIGNAL_ORDER: GraphEdge["type"][] = [
   "annotates",
 ];
 
-export const LANE_X = {
-  main: -120,
-  spawned: -680,
-  detour: 420,
-  returned: 300,
-  annotation: 40,
-} as const;
-
-export const LANE_Y_OFFSET = {
-  main: 0,
-  spawned: -150,
-  detour: -84,
-  returned: 150,
-  annotation: 220,
-} as const;
-
-export const NODE_TIMELINE_CENTER_Y = 820;
-export const NODE_RANK_SPACING = 360;
-export const NODE_RANK_STRETCH = 130;
-export const NODE_TIMELINE_MIN_GAP = 520;
-export const NODE_TIMELINE_SEPARATION_STRENGTH = 0.42;
-export const SUPPORT_SLOT_SPACING = 210;
-export const SIDE_EDGE_X_OFFSET = 560;
-export const SIDE_EDGE_Y_OFFSET = 150;
+export const GRAPH_VERTICAL_CENTER_Y = 820;

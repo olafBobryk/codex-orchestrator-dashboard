@@ -112,11 +112,14 @@ export async function readWorkspace(
     });
   }
 
-  const resolvedWorkspace = path.resolve(workspace);
-  const orchestrationPath = path.join(resolvedWorkspace, ORCHESTRATION_DIR);
+  const resolvedWorkspace = path.resolve(/*turbopackIgnore: true*/ workspace);
+  const orchestrationPath = path.join(
+    /*turbopackIgnore: true*/ resolvedWorkspace,
+    ORCHESTRATION_DIR
+  );
 
   try {
-    const directory = await stat(orchestrationPath);
+    const directory = await stat(/*turbopackIgnore: true*/ orchestrationPath);
 
     if (!directory.isDirectory()) {
       return emptyResult({
@@ -249,12 +252,15 @@ async function readOptionalDoc({
   group: DocGroup;
   label: string;
 }): Promise<OrchestrationDoc | null> {
-  const targetPath = path.join(orchestrationPath, relativePath);
+  const targetPath = path.join(
+    /*turbopackIgnore: true*/ orchestrationPath,
+    relativePath
+  );
 
   try {
     const [content, fileStat] = await Promise.all([
-      readFile(targetPath, "utf8"),
-      stat(targetPath),
+      readFile(/*turbopackIgnore: true*/ targetPath, "utf8"),
+      stat(/*turbopackIgnore: true*/ targetPath),
     ]);
 
     return createDoc({
@@ -290,10 +296,15 @@ async function readDirectoryDocs({
   group: DocGroup;
   label: string;
 }): Promise<OrchestrationDoc[]> {
-  const directoryPath = path.join(orchestrationPath, directory);
+  const directoryPath = path.join(
+    /*turbopackIgnore: true*/ orchestrationPath,
+    directory
+  );
 
   try {
-    const entries = await readdir(directoryPath, { withFileTypes: true });
+    const entries = await readdir(/*turbopackIgnore: true*/ directoryPath, {
+      withFileTypes: true,
+    });
     const markdownFiles = entries
       .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
       .map((entry) => path.join(directory, entry.name))

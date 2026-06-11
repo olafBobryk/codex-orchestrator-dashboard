@@ -9,15 +9,16 @@ import type {
   GraphMarker,
   GraphNode,
   GraphPacketGroup,
+  GraphRegion,
   OrchestrationGraph,
 } from "@/lib/orchestration-graph";
 
 export type CanvasNode = GraphNode & {
   color: string;
   markers: GraphMarker[];
+  regionIds: string[];
   guideX: number;
   guideY: number;
-  edgeAnchored: boolean;
   radius: number;
   visualRadius: number;
   boxWidth: number;
@@ -35,6 +36,10 @@ export type CanvasLink = GraphEdge & {
   color: string;
   width: number;
   dash: number[] | null;
+};
+
+export type CanvasRegion = GraphRegion & {
+  color: string;
 };
 
 export type GraphMethods = ForceGraphMethods<CanvasNode, CanvasLink>;
@@ -59,6 +64,8 @@ export type OrchestrationGraphCanvasProps = {
   workspace: string;
   stats: GraphCanvasStats;
   renderDetailPanel: (props: GraphDetailPanelProps) => ReactNode;
+  renderRegionPanel: (props: GraphRegionPanelProps) => ReactNode;
+  renderMarkdownViewer: (props: GraphMarkdownViewerProps) => ReactNode;
   renderStatusPanel: (props: GraphStatusPanelProps) => ReactNode;
 };
 
@@ -86,8 +93,27 @@ export type GraphDetailPanelProps = {
   edges: GraphEdge[];
   relatedNodes: GraphNode[];
   workspace: string;
+  onOpenMarkdownReference: (reference: GraphMarkdownReference) => void;
   onSelectMarker: (markerId: string | null) => void;
   onClose: () => void;
+};
+
+export type GraphMarkdownReference = {
+  label: string;
+  relativePath: string;
+};
+
+export type GraphRegionPanelProps = {
+  region: CanvasRegion;
+  workspace: string;
+  onOpenMarkdownReference: (reference: GraphMarkdownReference) => void;
+  onClose: () => void;
+};
+
+export type GraphMarkdownViewerProps = {
+  workspace: string;
+  reference: GraphMarkdownReference;
+  onBack: () => void;
 };
 
 export type GraphStatusPanelProps = {

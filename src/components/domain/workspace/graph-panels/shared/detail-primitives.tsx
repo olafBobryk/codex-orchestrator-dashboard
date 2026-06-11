@@ -2,8 +2,9 @@ import { ExternalLink } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip } from "@/components/ui/tooltip";
-import type { GraphDetailBlock } from "@/lib/orchestration-graph";
+import type { GraphDetailBlock, GraphDetailLink } from "@/lib/orchestration-graph";
 import { createVsCodeDocHref } from "../../canvas/graph-adapter";
+import type { GraphMarkdownReference } from "../../canvas/types";
 import type { SignalIcon } from "./types";
 
 export function SignalToken({
@@ -110,10 +111,12 @@ export function DetailBlockCard({
   block,
   workspace,
   domId,
+  onOpenMarkdownReference,
 }: {
   block: GraphDetailBlock;
   workspace: string;
   domId?: string;
+  onOpenMarkdownReference?: (reference: GraphMarkdownReference) => void;
 }) {
   return (
     <div
@@ -140,28 +143,110 @@ export function DetailBlockCard({
           {block.body}
         </p>
       ) : null}
-      {block.links.length > 0 ? (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {block.links.map((link) => {
-            const href = link.relativePath
-              ? createVsCodeDocHref(workspace, link.relativePath)
-              : link.href;
-
-            return (
-              <a
-                key={`${link.label}:${href}`}
-                href={href}
-                className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-              >
-                <ExternalLink className="h-3 w-3 shrink-0" />
-                <span className="truncate">{link.label}</span>
-              </a>
-            );
-          })}
-        </div>
-      ) : null}
+      <EntityLinks
+        className="mt-2"
+        links={block.links}
+        workspace={workspace}
+        onOpenMarkdownReference={onOpenMarkdownReference}
+      />
     </div>
   );
+}
+
+export function EntityLinks({
+  links,
+  workspace,
+  onOpenMarkdownReference,
+  className = "",
+}: {
+  links: GraphDetailLink[];
+  workspace: string;
+  onOpenMarkdownReference?: (reference: GraphMarkdownReference) => void;
+  className?: string;
+}) {
+  if (links.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${className}`}>
+      {links.map((link) => (
+        <EntityLinkButton
+          key={`${link.kind}:${link.label}:${link.relativePath ?? link.href}`}
+          link={link}
+          workspace={workspace}
+          onOpenMarkdownReference={onOpenMarkdownReference}
+        />
+      ))}
+    </div>
+  );
+}
+
+function EntityLinkButton({
+  link,
+  workspace,
+  onOpenMarkdownReference,
+}: {
+  link: GraphDetailLink;
+  workspace: string;
+  onOpenMarkdownReference?: (reference: GraphMarkdownReference) => void;
+}) {
+  const href = link.relativePath
+    ? createVsCodeDocHref(workspace, link.relativePath)
+    : link.href;
+  const canOpenMarkdown =
+    Boolean(link.relativePath) &&
+    link.relativePath?.toLowerCase().endsWith(".md") === true &&
+    Boolean(onOpenMarkdownReference);
+  const children = (
+    <>
+      <ExternalLink className="h-3 w-3 shrink-0" />
+      <span className="truncate">{link.label}</span>
+      <Badge variant="outline" className="h-5 shrink-0 px-1.5 text-[10px]">
+        {formatEntityLinkKind(link.kind)}
+      </Badge>
+    </>
+  );
+
+  if (canOpenMarkdown && link.relativePath) {
+    const markdownPath = link.relativePath;
+
+    return (
+      <button
+        type="button"
+        className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+        onClick={() =>
+          onOpenMarkdownReference?.({
+            label: link.label,
+            relativePath: markdownPath,
+          })
+        }
+      >
+        {children}
+      </button>
+    );
+  }
+
+  return (
+    <a
+      href={href}
+      className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+    >
+      {children}
+    </a>
+  );
+}
+
+function formatEntityLinkKind(kind: GraphDetailLink["kind"]) {
+  if (kind === "artifact") {
+    return "Artifact";
+  }
+
+  if (kind === "meta_template") {
+    return "Meta";
+  }
+
+  return "Ref";
 }
 
 export function DetailSection({

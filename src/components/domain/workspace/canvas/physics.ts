@@ -1,210 +1,222 @@
-import { forceCollide, forceManyBody, forceX, forceY } from "d3-force";
-import type { Force } from "d3-force";
-import type { GraphEdge } from "@/lib/orchestration-graph";
-import {
-  LANE_Y_OFFSET,
-  NODE_RANK_SPACING,
-  NODE_RANK_STRETCH,
-  NODE_TIMELINE_CENTER_Y,
-  NODE_TIMELINE_MIN_GAP,
-  NODE_TIMELINE_SEPARATION_STRENGTH,
-  SIDE_EDGE_X_OFFSET,
-  SIDE_EDGE_Y_OFFSET,
-  SUPPORT_SLOT_SPACING,
-} from "./constants";
+import type { Force, ForceLink } from "d3-force";
+import { forceCollide, forceManyBody, forceY } from "d3-force";
+import type { GraphEdge, GraphNodeChronology } from "@/lib/orchestration-graph";
+import { GRAPH_VERTICAL_CENTER_Y } from "./constants";
 import type { CanvasNode, GraphMethods } from "./types";
 
+const CHRONOLOGY_START_GUIDE_Y = GRAPH_VERTICAL_CENTER_Y - 700;
+const COLLISION_PADDING = 32;
+const REGION_BODY_PADDING = 72;
+const REGION_BODY_SEPARATION_MULTIPLIER = 1.02;
+const REGION_BODY_SEPARATION_STRENGTH = 0.055;
+const GRAVITY_Y_STRENGTH = 0.24;
+
 export function installGraphForces({
-  instance,
-  sizeWidth,
+	instance,
 }: {
-  instance: GraphMethods;
-  sizeWidth: number;
+	instance: GraphMethods;
 }) {
-  instance.d3Force(
-    "laneX",
-    forceX<CanvasNode>((node) => node.guideX).strength((node) =>
-      node.primary ? 0.9 : 1.35
-    )
-  );
-  instance.d3Force(
-    "chronologyY",
-    forceY<CanvasNode>((node) => node.guideY).strength((node) =>
-      node.primary ? 0.9 : 0.75
-    )
-  );
-  instance.d3Force("timelineSeparation", createTimelineSeparationForce());
-  instance.d3Force(
-    "collide",
-    forceCollide<CanvasNode>((node) => node.radius + 72)
-      .strength(1)
-      .iterations(4)
-  );
-  instance.d3Force(
-    "charge",
-    forceManyBody<CanvasNode>()
-      .strength((node) => (node.primary ? -140 : -100))
-      .distanceMax(420)
-  );
-  instance.d3Force("link", null);
-  instance.d3ReheatSimulation();
-
-  const fitTimer = window.setTimeout(() => {
-    if (sizeWidth < 640) {
-      instance.centerAt(-240, NODE_TIMELINE_CENTER_Y, 500);
-      instance.zoom(0.42, 500);
-      return;
-    }
-
-    instance.centerAt(-190, NODE_TIMELINE_CENTER_Y, 500);
-    instance.zoom(0.58, 500);
-  }, 250);
-  const settledFitTimer = window.setTimeout(() => {
-    instance.zoomToFit(650, sizeWidth < 640 ? 80 : 150);
-  }, 1400);
-
-  return () => {
-    window.clearTimeout(fitTimer);
-    window.clearTimeout(settledFitTimer);
-  };
+	instance.d3Force("laneX", null);
+	instance.d3Force("chronologyY", null);
+	instance.d3Force("timelineSeparation", null);
+	instance.d3Force("regionAxis", null);
+	instance.d3Force("edgeCrossing", null);
+	instance.d3Force("center", null);
+	instance.d3Force(
+		"collide",
+		forceCollide<CanvasNode>((node) => node.visualRadius + COLLISION_PADDING)
+			.strength(0.72)
+			.iterations(2),
+	);
+	instance.d3Force(
+		"charge",
+		forceManyBody<CanvasNode>()
+			.strength((node) => (node.primary ? -48 : -34))
+			.distanceMax(520),
+	);
+	configureLinkForce(instance);
+	instance.d3Force("regionSeparation", createRegionSeparationForce());
+	instance.d3Force("gravityY", createGravityYForce());
+	instance.d3ReheatSimulation();
 }
 
-export function getChronologyGuideY({
-  rank,
-  rankSpan,
-  lane,
-  supportSlot,
-}: {
-  rank: number;
-  rankSpan: number;
-  lane: CanvasNode["lane"];
-  supportSlot: number;
-}) {
-  const middle = rankSpan / 2;
-  const distanceFromMiddle = rank - middle;
-  const stretchedDistance =
-    distanceFromMiddle *
-    (NODE_RANK_SPACING + Math.abs(distanceFromMiddle) * NODE_RANK_STRETCH);
+function createGravityYForce() {
+	return forceY<CanvasNode>((node) => node.guideY).strength((node) => {
+		if (node.chronology === "start") {
+			return 0;
+		}
 
-  return (
-    NODE_TIMELINE_CENTER_Y +
-    stretchedDistance +
-    LANE_Y_OFFSET[lane] +
-    supportSlot * SUPPORT_SLOT_SPACING
-  );
+		return node.primary ? GRAVITY_Y_STRENGTH : GRAVITY_Y_STRENGTH * 0.78;
+	});
 }
 
-export function createEdgeSideLayouts({
-  edges,
-  nodeIds,
-  baseLayouts,
-}: {
-  edges: GraphEdge[];
-  nodeIds: Set<string>;
-  baseLayouts: Map<string, { x: number; y: number }>;
-}) {
-  const solidSpineNodeIds = new Set<string>();
-  const sideLayouts = new Map<string, { x: number; y: number }>();
-  const sideSlotsByAnchor = new Map<string, number>();
+function configureLinkForce(instance: GraphMethods) {
+	const linkForce = instance.d3Force("link") as
+		| ForceLink<CanvasNode, GraphEdge>
+		| undefined;
 
-  for (const edge of edges) {
-    if (!nodeIds.has(edge.source) || !nodeIds.has(edge.target)) {
-      continue;
-    }
-
-    if (isSolidSpineEdge(edge)) {
-      solidSpineNodeIds.add(edge.source);
-      solidSpineNodeIds.add(edge.target);
-    }
-  }
-
-  for (const edge of edges) {
-    if (
-      !nodeIds.has(edge.source) ||
-      !nodeIds.has(edge.target) ||
-      isSolidSpineEdge(edge)
-    ) {
-      continue;
-    }
-
-    const sourceOnSpine = solidSpineNodeIds.has(edge.source);
-    const targetOnSpine = solidSpineNodeIds.has(edge.target);
-    const anchorId = sourceOnSpine && !targetOnSpine ? edge.source : edge.target;
-    const sideNodeId = anchorId === edge.source ? edge.target : edge.source;
-    const anchor = baseLayouts.get(anchorId);
-
-    if (!anchor || sideLayouts.has(sideNodeId)) {
-      continue;
-    }
-
-    const sideSlot = sideSlotsByAnchor.get(anchorId) ?? 0;
-    sideSlotsByAnchor.set(anchorId, sideSlot + 1);
-    const direction = getSideEdgeDirection(edge);
-    const slotOffset =
-      sideSlot === 0
-        ? 0
-        : Math.ceil(sideSlot / 2) *
-          SIDE_EDGE_Y_OFFSET *
-          (sideSlot % 2 === 0 ? -1 : 1);
-
-    sideLayouts.set(sideNodeId, {
-      x: anchor.x + direction * SIDE_EDGE_X_OFFSET,
-      y: anchor.y + slotOffset,
-    });
-  }
-
-  return sideLayouts;
+	linkForce
+		?.strength((link) => getLinkForceConfig(link).strength)
+		.distance((link) => getLinkForceConfig(link).distance);
 }
 
-function isSolidSpineEdge(edge: GraphEdge) {
-  return edge.style !== "dashed" && edge.style !== "dotted" && edge.directional !== false;
+function getLinkForceConfig(link: GraphEdge) {
+	if (link.style === "dotted") {
+		return { strength: 0.018, distance: 430 };
+	}
+
+	if (link.style === "dashed") {
+		return { strength: 0.055, distance: 340 };
+	}
+
+	return { strength: 0.2, distance: 220 };
 }
 
-function getSideEdgeDirection(edge: GraphEdge) {
-  if (edge.style === "dotted") {
-    return -1;
-  }
+export function getChronologyGuideY(chronology: GraphNodeChronology) {
+	if (chronology === "start") {
+		return CHRONOLOGY_START_GUIDE_Y;
+	}
 
-  return 1;
+	return null;
 }
 
-function createTimelineSeparationForce(): Force<CanvasNode, undefined> {
-  let nodes: CanvasNode[] = [];
+type RegionBody = {
+	id: string;
+	nodes: CanvasNode[];
+	nodeIds: Set<string>;
+	x: number;
+	y: number;
+	radius: number;
+};
 
-  const force: Force<CanvasNode, undefined> = (alpha) => {
-    const sortedNodes = nodes
-      .filter((node) => !node.edgeAnchored)
-      .sort((left, right) => left.guideY - right.guideY);
+function createRegionSeparationForce(): Force<CanvasNode, undefined> {
+	let nodes: CanvasNode[] = [];
 
-    for (let index = 1; index < sortedNodes.length; index += 1) {
-      const previous = sortedNodes[index - 1];
-      const current = sortedNodes[index];
-      const previousY = previous.y ?? previous.guideY;
-      const currentY = current.y ?? current.guideY;
-      const currentGap = currentY - previousY;
-      const minimumGap = Math.max(
-        NODE_TIMELINE_MIN_GAP,
-        (previous.radius + current.radius) * 1.35
-      );
+	const force: Force<CanvasNode, undefined> = (alpha) => {
+		const regions = createRegionBodies(nodes);
 
-      if (currentGap >= minimumGap) {
-        continue;
-      }
+		for (let leftIndex = 0; leftIndex < regions.length; leftIndex += 1) {
+			const left = regions[leftIndex];
 
-      const push =
-        (minimumGap - currentGap) *
-        NODE_TIMELINE_SEPARATION_STRENGTH *
-        alpha *
-        0.5;
+			for (
+				let rightIndex = leftIndex + 1;
+				rightIndex < regions.length;
+				rightIndex += 1
+			) {
+				const right = regions[rightIndex];
 
-      previous.vy = (previous.vy ?? 0) - push;
-      current.vy = (current.vy ?? 0) + push;
-    }
-  };
+				if (regionsShareNode(left, right)) {
+					continue;
+				}
 
-  force.initialize = (initializedNodes) => {
-    nodes = initializedNodes;
-  };
+				const fallback = getStableDirection(left.id, right.id);
+				const dx = right.x - left.x || fallback.x;
+				const dy = right.y - left.y || fallback.y;
+				const distance = Math.hypot(dx, dy);
+				const minimumDistance =
+					(left.radius + right.radius) * REGION_BODY_SEPARATION_MULTIPLIER;
 
-  return force;
+				if (distance >= minimumDistance) {
+					continue;
+				}
+
+				const push =
+					((minimumDistance - distance) / distance) *
+					REGION_BODY_SEPARATION_STRENGTH *
+					alpha;
+				const pushX = dx * push;
+				const pushY = dy * push;
+				const totalMass = left.nodes.length + right.nodes.length;
+				const leftShare = right.nodes.length / totalMass;
+				const rightShare = left.nodes.length / totalMass;
+
+				for (const node of left.nodes) {
+					node.vx = (node.vx ?? 0) - pushX * leftShare;
+					node.vy = (node.vy ?? 0) - pushY * leftShare;
+				}
+
+				for (const node of right.nodes) {
+					node.vx = (node.vx ?? 0) + pushX * rightShare;
+					node.vy = (node.vy ?? 0) + pushY * rightShare;
+				}
+			}
+		}
+	};
+
+	force.initialize = (initializedNodes) => {
+		nodes = initializedNodes;
+	};
+
+	return force;
+}
+
+function createRegionBodies(nodes: CanvasNode[]): RegionBody[] {
+	const nodesByRegion = new Map<string, CanvasNode[]>();
+
+	for (const node of nodes) {
+		for (const regionId of node.regionIds) {
+			const existing = nodesByRegion.get(regionId) ?? [];
+			existing.push(node);
+			nodesByRegion.set(regionId, existing);
+		}
+	}
+
+	return [...nodesByRegion.entries()].flatMap(([id, regionNodes]) => {
+		if (regionNodes.length === 0) {
+			return [];
+		}
+
+		const x =
+			regionNodes.reduce((sum, node) => sum + (node.x ?? 0), 0) /
+			regionNodes.length;
+		const y =
+			regionNodes.reduce((sum, node) => sum + (node.y ?? 0), 0) /
+			regionNodes.length;
+		const radius = Math.max(
+			...regionNodes.map((node) => {
+				const dx = (node.x ?? 0) - x;
+				const dy = (node.y ?? 0) - y;
+
+				return Math.hypot(dx, dy) + node.visualRadius + REGION_BODY_PADDING;
+			}),
+		);
+
+		return [
+			{
+				id,
+				nodes: regionNodes,
+				nodeIds: new Set(regionNodes.map((node) => node.id)),
+				x,
+				y,
+				radius,
+			},
+		];
+	});
+}
+
+function regionsShareNode(left: RegionBody, right: RegionBody) {
+	for (const nodeId of left.nodeIds) {
+		if (right.nodeIds.has(nodeId)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function getStableDirection(leftId: string, rightId: string) {
+	let hash = 2166136261;
+	const key = `${leftId}:${rightId}`;
+
+	for (let index = 0; index < key.length; index += 1) {
+		hash ^= key.charCodeAt(index);
+		hash = Math.imul(hash, 16777619);
+	}
+
+	const angle = ((hash >>> 0) / 4294967295) * Math.PI * 2;
+
+	return {
+		x: Math.cos(angle) || 0.001,
+		y: Math.sin(angle) || 0.001,
+	};
 }

@@ -27,6 +27,7 @@ export function MarkdownDetailPanel({
   edges,
   relatedNodes,
   workspace,
+  onOpenMarkdownReference,
   onSelectMarker,
   onClose,
 }: GraphDetailOverlayProps) {
@@ -109,6 +110,7 @@ export function MarkdownDetailPanel({
                   key={block.id}
                   block={block}
                   workspace={workspace}
+                  onOpenMarkdownReference={onOpenMarkdownReference}
                 />
               ))}
             </div>
@@ -127,6 +129,7 @@ export function MarkdownDetailPanel({
                       name: `${edge.label}: ${block.name}`,
                     }}
                     workspace={workspace}
+                    onOpenMarkdownReference={onOpenMarkdownReference}
                   />
                 ))
               )}

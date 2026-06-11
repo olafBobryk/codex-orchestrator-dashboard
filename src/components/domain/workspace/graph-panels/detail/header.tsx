@@ -63,6 +63,10 @@ function NodeHeaderIcon({
 }
 
 function getNodeHeaderIcon(node: GraphNode, markers: GraphMarker[]) {
+  if (node.icon) {
+    return node.icon;
+  }
+
   if (node.detail.blocks[0]?.icon) {
     return node.detail.blocks[0].icon;
   }
