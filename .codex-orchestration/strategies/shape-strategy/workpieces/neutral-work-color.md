@@ -16,7 +16,7 @@ Keep ordinary workpieces visually neutral unless a category gives stronger meani
 
 ## Artifacts
 
-- `../meta/orchestration-shape-strategy.md`
+- `../_guides/orchestration-shape-strategy.md`
 
 ## Commit Evidence
 

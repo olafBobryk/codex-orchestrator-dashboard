@@ -2,6 +2,8 @@
 
 Status: provisional optional artifact
 
+Template: ../../_templates/agent.md
+
 This file sketches a possible Markdown agent document for the orchestration
 shape strategy. It is not final and should not be required by default.
 
@@ -66,6 +68,18 @@ Active run references list runs this agent is currently doing or supervising.
 Current position describes where the agent appears in the graph, usually through
 a node or marker.
 
+The dashboard can render this as a marker attached to the referenced node. The
+marker is visual position, not a workflow status bucket.
+
+### Runtime Identity
+
+Runtime identity records the local Codex thread or worker identity that can be
+used by a read-only dashboard adapter to infer live marker activity.
+
+Loader state is derived by the dashboard from the referenced runtime thread
+when available. The agent document should name the identity; it should not store
+ephemeral loader state as durable strategy truth.
+
 ### Evidence
 
 Evidence lists artifacts that identify or explain the agent.
@@ -105,9 +119,13 @@ writing | non-writing | review-only | unknown
 - Node: `<node-id>` | none
 - Marker: `<marker-id>` | none
 
+## Runtime Identity
+
+- Thread: <thread id or none>
+- Agent: <agent id, nickname, or none>
+
 ## Evidence
 
-- Thread: <thread id or link>
 - Worktree: <path or branch, if any>
 - Commit: <sha or branch/ref, if relevant>
 - Artifact: <handoff, return note, screenshot, preview, or doc>

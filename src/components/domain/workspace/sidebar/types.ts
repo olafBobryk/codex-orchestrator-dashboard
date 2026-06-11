@@ -4,4 +4,6 @@ export type WorkspaceSidebarProps = {
   codexProjects: CodexProjectReadResult;
   workspace: string;
   resolvedWorkspace: string | null;
+  onOpenCommand?: () => void;
+  commandOpen?: boolean;
 };

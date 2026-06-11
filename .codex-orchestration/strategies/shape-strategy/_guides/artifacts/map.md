@@ -2,6 +2,8 @@
 
 Status: accepted minimal doc idea
 
+Template: ../../_templates/map.md
+
 This file defines the smallest useful Markdown map document for the
 orchestration shape strategy. It is a documentation idea, not an adapter schema.
 
@@ -71,8 +73,8 @@ A map does not always need one visible trunk, but most stewarded project maps
 should make the main flow explicit when it exists.
 
 The minimal edge document is described in
-`orchestration-edge-minimal-doc.md`. Use an edge doc when a relationship needs
-its own explanation, evidence, or status.
+`edge.md`. Use an edge doc when a relationship needs its own explanation,
+evidence, or status.
 
 ### Intentional Disconnected Components
 

@@ -36,6 +36,7 @@ export type CanvasLink = GraphEdge & {
   color: string;
   width: number;
   dash: number[] | null;
+  crossesRegionBoundary: boolean;
 };
 
 export type CanvasRegion = GraphRegion & {
@@ -63,7 +64,9 @@ export type OrchestrationGraphCanvasProps = {
   graph: OrchestrationGraph;
   workspace: string;
   stats: GraphCanvasStats;
+  commandAction?: GraphCanvasCommandAction | null;
   renderDetailPanel: (props: GraphDetailPanelProps) => ReactNode;
+  renderEdgePanel: (props: GraphEdgePanelProps) => ReactNode;
   renderRegionPanel: (props: GraphRegionPanelProps) => ReactNode;
   renderMarkdownViewer: (props: GraphMarkdownViewerProps) => ReactNode;
   renderStatusPanel: (props: GraphStatusPanelProps) => ReactNode;
@@ -103,8 +106,44 @@ export type GraphMarkdownReference = {
   relativePath: string;
 };
 
+export type GraphCanvasCommandAction =
+  | {
+      commandId: string;
+      type: "show-status-panel";
+    }
+  | {
+      commandId: string;
+      type: "select-node";
+      nodeId: string;
+      markerId?: string | null;
+    }
+  | {
+      commandId: string;
+      type: "select-region";
+      regionId: string;
+    }
+  | {
+      commandId: string;
+      type: "select-edge";
+      edgeId: string;
+    }
+  | {
+      commandId: string;
+      type: "open-markdown-reference";
+      reference: GraphMarkdownReference;
+    };
+
 export type GraphRegionPanelProps = {
   region: CanvasRegion;
+  workspace: string;
+  onOpenMarkdownReference: (reference: GraphMarkdownReference) => void;
+  onClose: () => void;
+};
+
+export type GraphEdgePanelProps = {
+  edge: GraphEdge;
+  sourceNode: GraphNode | null;
+  targetNode: GraphNode | null;
   workspace: string;
   onOpenMarkdownReference: (reference: GraphMarkdownReference) => void;
   onClose: () => void;

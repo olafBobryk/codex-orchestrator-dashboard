@@ -2,6 +2,8 @@
 
 Status: accepted minimal doc idea
 
+Template: ../../_templates/checkpoint.md
+
 This file defines the smallest useful Markdown checkpoint document for the
 orchestration shape strategy. It is a documentation idea, not an adapter schema.
 

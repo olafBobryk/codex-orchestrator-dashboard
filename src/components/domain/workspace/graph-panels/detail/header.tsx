@@ -1,7 +1,11 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
-import type { GraphMarker, GraphNode } from "@/lib/orchestration-graph";
+import type {
+  GraphMarker,
+  GraphNode,
+  GraphRegion,
+} from "@/lib/orchestration-graph";
 import { KIND_META, STATUS_META } from "../../canvas/constants";
 import { renderGraphPanelIcon } from "../preview";
 
@@ -33,6 +37,46 @@ export function GraphDetailHeader({
         size="icon-sm"
         aria-label="Close details"
         title="Close details"
+        onClick={onClose}
+      >
+        <X />
+      </Button>
+    </div>
+  );
+}
+
+export function GraphRegionHeader({
+  region,
+  onClose,
+}: {
+  region: GraphRegion;
+  onClose: () => void;
+}) {
+  return (
+    <div className="flex min-w-0 items-start justify-between gap-3 border-b border-border px-3 py-3">
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2 pr-8">
+          <Tooltip
+            content={`${region.label} is a graph region.`}
+            className="shrink-0 rounded-sm"
+          >
+            {renderGraphPanelIcon(
+              "layers",
+              "h-4 w-4 shrink-0 text-muted-foreground"
+            )}
+          </Tooltip>
+          <h3 className="truncate text-sm font-semibold">{region.label}</h3>
+        </div>
+        <p className="mt-1 truncate text-xs text-muted-foreground">
+          {region.category ?? "Uncategorized region"} · {region.id}
+        </p>
+      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Close region details"
+        title="Close region details"
         onClick={onClose}
       >
         <X />

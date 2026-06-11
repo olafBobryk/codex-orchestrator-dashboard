@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -10,7 +11,7 @@ export type CodexLiveThread = {
   agentName: string | null;
   agentRole: string | null;
   threadSource: string | null;
-  status: "running" | "archived" | "unknown";
+  status: "open" | "archived" | "unknown";
   updatedAt: string | null;
 };
 
@@ -25,6 +26,13 @@ export type CodexLiveThreadsResult = {
   };
 };
 
+export type CodexThreadActivity = {
+  unread: boolean;
+  working: boolean;
+  status: CodexLiveThread["status"] | "missing";
+  updatedAt: string | null;
+};
+
 type SqliteThreadRow = {
   id?: unknown;
   cwd?: unknown;
@@ -37,7 +45,14 @@ type SqliteThreadRow = {
 };
 
 const execFileAsync = promisify(execFile);
+const RECENT_WORKING_ACTIVITY_SECONDS = 30;
+const CODEX_GLOBAL_STATE_PATH = path.join(
+  os.homedir(),
+  ".codex",
+  ".codex-global-state.json"
+);
 const CODEX_STATE_DB_PATH = path.join(os.homedir(), ".codex", "state_5.sqlite");
+const CODEX_LOGS_DB_PATH = path.join(os.homedir(), ".codex", "logs_2.sqlite");
 
 const ACTIVE_THREADS_SQL = `
 SELECT
@@ -213,6 +228,44 @@ export async function readCodexThreadAnnotations(
   }
 }
 
+export async function readCodexThreadActivity(threadIds: string[]) {
+  const safeThreadIds = normalizeThreadIds(threadIds);
+  const activity = new Map<string, CodexThreadActivity>(
+    safeThreadIds.map((threadId) => [
+      threadId,
+      {
+        unread: false,
+        working: false,
+        status: "missing",
+        updatedAt: null,
+      },
+    ])
+  );
+
+  if (safeThreadIds.length === 0) {
+    return activity;
+  }
+
+  const [annotations, unreadThreadIds, workingThreadIds] = await Promise.all([
+    readCodexThreadAnnotations(safeThreadIds),
+    readCodexUnreadThreadIds(),
+    readRecentWorkingThreadIds(),
+  ]);
+  const unread = new Set(unreadThreadIds);
+  const working = new Set(workingThreadIds);
+
+  for (const thread of annotations.threads) {
+    activity.set(thread.id, {
+      unread: unread.has(thread.id),
+      working: thread.status === "open" && working.has(thread.id),
+      status: thread.status,
+      updatedAt: thread.updatedAt,
+    });
+  }
+
+  return activity;
+}
+
 function liveThreadResult({
   state,
   message,
@@ -263,13 +316,106 @@ function readThreadRow(row: SqliteThreadRow): CodexLiveThread | null {
       typeof row.archived === "number"
         ? row.archived === 1
           ? "archived"
-          : "running"
+          : "open"
         : "unknown",
     updatedAt:
       typeof row.updated_at_ms === "number"
         ? new Date(row.updated_at_ms).toISOString()
         : null,
   };
+}
+
+function normalizeThreadIds(threadIds: string[]) {
+  return [...new Set(threadIds)]
+    .map((threadId) => threadId.trim())
+    .filter(isCodexThreadId);
+}
+
+function isCodexThreadId(threadId: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    threadId
+  );
+}
+
+async function readCodexUnreadThreadIds() {
+  try {
+    const content = await readFile(CODEX_GLOBAL_STATE_PATH, "utf8");
+    const parsedValue: unknown = JSON.parse(content);
+
+    if (!parsedValue || typeof parsedValue !== "object") {
+      return [];
+    }
+
+    const persistedState = (
+      parsedValue as Record<string, unknown>
+    )["electron-persisted-atom-state"];
+
+    if (!persistedState || typeof persistedState !== "object") {
+      return [];
+    }
+
+    const unreadByHost = (
+      persistedState as Record<string, unknown>
+    )["unread-thread-ids-by-host-v1"];
+
+    if (!unreadByHost || typeof unreadByHost !== "object") {
+      return [];
+    }
+
+    const ids = new Set<string>();
+
+    for (const value of Object.values(unreadByHost)) {
+      if (!Array.isArray(value)) {
+        continue;
+      }
+
+      for (const item of value) {
+        if (typeof item === "string" && isCodexThreadId(item.trim())) {
+          ids.add(item.trim());
+        }
+      }
+    }
+
+    return [...ids];
+  } catch {
+    return [];
+  }
+}
+
+async function readRecentWorkingThreadIds() {
+  try {
+    const sinceSeconds =
+      Math.floor(Date.now() / 1000) - RECENT_WORKING_ACTIVITY_SECONDS;
+    const { stdout } = await execFileAsync("sqlite3", [
+      "-json",
+      CODEX_LOGS_DB_PATH,
+      `
+SELECT thread_id AS id
+FROM logs
+WHERE thread_id IS NOT NULL
+  AND ts >= ${sinceSeconds}
+GROUP BY thread_id;
+`,
+    ]);
+    const rows: unknown = JSON.parse(stdout || "[]");
+
+    if (!Array.isArray(rows)) {
+      return [];
+    }
+
+    return rows
+      .map((row) =>
+        row &&
+        typeof row === "object" &&
+        "id" in row &&
+        typeof row.id === "string"
+          ? row.id.trim()
+          : ""
+      )
+      .filter(isCodexThreadId);
+  } catch {
+    return [];
+  }
 }
 
 function isAgentThread(thread: CodexLiveThread) {

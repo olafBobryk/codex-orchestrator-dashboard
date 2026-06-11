@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { FolderTree, HomeIcon, RefreshCw } from "lucide-react";
+import { HomeIcon } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { DashboardCommandTrigger } from "../dashboard-command";
 import { CodexProjectList } from "./project-list";
+import { ReloadButton } from "./reload-button";
 import { WorkspaceSidebarShell } from "./shell";
 import type { WorkspaceSidebarProps } from "./types";
 import { WorkspacePathMenu } from "./workspace-menu";
@@ -12,30 +14,28 @@ export function WorkspaceSidebar({
   codexProjects,
   workspace,
   resolvedWorkspace,
+  onOpenCommand,
+  commandOpen = false,
 }: WorkspaceSidebarProps) {
-  const refreshHref = workspace
-    ? `/?workspace=${encodeURIComponent(workspace)}&refresh=projects`
-    : "/?refresh=projects";
   const isHome = !workspace;
+  const currentWorkspace = resolvedWorkspace ?? workspace;
 
   return (
     <WorkspaceSidebarShell
       headerStart={
         <div className="flex min-w-0 items-center gap-2 group-data-[collapsed=true]/sidebar:hidden">
-          <FolderTree className="h-4 w-4 text-muted-foreground" />
-          <h2 className="truncate text-sm font-semibold">Projects</h2>
+          <h2 className="truncate text-sm font-semibold">Codex Orchestration</h2>
         </div>
       }
       headerActions={
         <>
-          <Link
-            href={refreshHref}
-            title="Refresh projects"
-            aria-label="Refresh projects"
-            className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-          </Link>
+          {onOpenCommand ? (
+            <DashboardCommandTrigger
+              open={commandOpen}
+              onOpen={onOpenCommand}
+            />
+          ) : null}
+          <ReloadButton />
           <WorkspacePathMenu workspace={workspace} />
         </>
       }
@@ -47,6 +47,7 @@ export function WorkspaceSidebar({
           <nav aria-label="Home" className="mb-3">
             <Link
               href="/"
+              prefetch={false}
               aria-current={isHome ? "page" : undefined}
               className={cn(
                 "flex min-w-0 items-center gap-2 rounded-md border px-2.5 py-2 text-sm font-medium transition-colors group-data-[collapsed=true]/sidebar:mx-auto group-data-[collapsed=true]/sidebar:size-9 group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:p-0",
@@ -62,7 +63,7 @@ export function WorkspaceSidebar({
           </nav>
           <CodexProjectList
             projects={codexProjects.projects}
-            currentWorkspace={resolvedWorkspace ?? workspace}
+            currentWorkspace={currentWorkspace}
           />
         </div>
       </ScrollArea>

@@ -7,7 +7,7 @@ accepted orchestration methodology.
 
 Accepted orchestration vocabulary now lives in:
 
-- `strategies/shape-strategy/meta/orchestration-shape-strategy.md`
+- `orchestration-shape-strategy.md`
 
 ## Direction
 
@@ -68,6 +68,10 @@ consume.
 - A marker attaches to a target node.
 - Markers need id, target id, label, color, muted state, and icon.
 - Markers do not need position for now.
+- Marker icons should render as icons, with a neutral default icon fallback.
+- Marker loader state is runtime adapter state. Strategy docs may reference the
+  agent/thread identity that lets the dashboard infer loading, but should not
+  treat loading as durable orchestration truth.
 
 ### Groups / Shapes
 

@@ -67,6 +67,7 @@ export type GraphDetailLink = {
   href: string;
   relativePath: string | null;
   kind: "artifact" | "meta_template" | "reference";
+  searchNames?: string[];
 };
 
 export type GraphDetailBlock = {
@@ -128,7 +129,7 @@ export type GraphVerificationEvidence = {
 export type RuntimeThreadAnnotation = {
   threadId: string;
   title: string | null;
-  status: "running" | "completed" | "archived" | "unknown";
+  status: "open" | "completed" | "archived" | "unknown";
   updatedAt: string | null;
   sourceLayer: "codex_runtime_annotation";
 };

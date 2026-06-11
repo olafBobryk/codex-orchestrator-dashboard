@@ -1,5 +1,5 @@
 import type { NodeObject } from "react-force-graph-2d";
-import type { GraphMarker, GraphNode } from "@/lib/orchestration-graph";
+import type { GraphNode } from "@/lib/orchestration-graph";
 import { DEFAULT_CANVAS_THEME } from "./constants";
 import type {
   CanvasLink,
@@ -27,7 +27,16 @@ const REGION_COVER_FULL_SCREEN_FILL = 0.06;
 const REGION_ABSTRACTION_SKIP_ALPHA = 0.5;
 const REGION_CHILD_PADDING = 76;
 const REGION_INSIDE_LABEL_FONT_SIZE = 18;
-const MARKER_LOADER_CYCLE_MS = 1600;
+const MARKER_LOADER_ROTATION_MS = 1200;
+const MARKER_LOADER_TRANSITION_MS = 620;
+
+type MarkerLoaderAnimationState = {
+  loader: boolean;
+  changedAt: number;
+  lastSeenAt: number;
+};
+
+const markerLoaderAnimationState = new Map<string, MarkerLoaderAnimationState>();
 
 export function readCanvasTheme(): CanvasTheme {
   if (typeof window === "undefined") {
@@ -398,6 +407,23 @@ export function isNodeInsideCoveredRegion({
     viewportWidth,
     viewportHeight,
   });
+  const nodeX = node.x ?? node.guideX ?? 0;
+  const nodeY = node.y ?? node.guideY ?? 0;
+
+  if (
+    regionState.regionFields.some((regionField) => {
+      if (
+        (regionState.coverAlphaByRegionId.get(regionField.region.id) ?? 0) <
+        REGION_ABSTRACTION_SKIP_ALPHA
+      ) {
+        return false;
+      }
+
+      return readMetaballValue(regionField.field, nodeX, nodeY) >= METABALL_THRESHOLD;
+    })
+  ) {
+    return true;
+  }
 
   return regions.some((region) => {
     if (
@@ -611,18 +637,25 @@ function drawNodeMarkers({
     const ringRadius = radius + ringGap + index * 5;
     const island = getMarkerIslandRect(node, index);
     const selected = selectedMarkerId === marker.id;
+    updateMarkerLoaderAnimationState(
+      marker.id,
+      marker.loader,
+      readAnimationNow()
+    );
 
     context.save();
     context.globalAlpha = marker.muted ? 0.48 : 1;
 
-    if (marker.loader) {
+    if (marker.loader || isMarkerLoaderTransitioning(marker.id)) {
       drawMarkerLoaderRing({
+        markerId: marker.id,
         context,
         x,
         y,
         radius: ringRadius,
         color: marker.color,
         lineWidth: selected ? 4.4 : 3.2,
+        loading: marker.loader,
       });
     } else {
       context.beginPath();
@@ -642,15 +675,14 @@ function drawNodeMarkers({
     drawRoundedRect(context, island.x + 8, island.y + 8, 34, 34, 9);
     context.fillStyle = marker.color;
     context.fill();
-    context.fillStyle = "#ffffff";
-    context.font = "700 13px ui-sans-serif, system-ui";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText(
-      getCanvasMarkerIcon(marker),
-      island.x + 25,
-      island.y + island.height / 2
-    );
+    drawCanvasIcon({
+      context,
+      icon: marker.icon,
+      x: island.x + 25,
+      y: island.y + island.height / 2,
+      size: 20,
+      color: "#ffffff",
+    });
 
     context.fillStyle = theme.surfaceForeground;
     context.font = "600 12px ui-sans-serif, system-ui";
@@ -665,31 +697,41 @@ function drawNodeMarkers({
 }
 
 function drawMarkerLoaderRing({
+  markerId,
   context,
   x,
   y,
   radius,
   color,
   lineWidth,
+  loading,
 }: {
+  markerId: string;
   context: CanvasRenderingContext2D;
   x: number;
   y: number;
   radius: number;
   color: string;
   lineWidth: number;
+  loading: boolean;
 }) {
-  const now =
-    typeof performance === "undefined" ? Date.now() : performance.now();
-  const progress = (now % MARKER_LOADER_CYCLE_MS) / MARKER_LOADER_CYCLE_MS;
-  const burstProgress = Math.min(1, progress / 0.5);
-  const transparentSpan = Math.PI * smoothStep(0, 1, burstProgress);
+  const now = readAnimationNow();
+  const animationState = updateMarkerLoaderAnimationState(markerId, loading, now);
+  const transitionProgress = Math.min(
+    1,
+    Math.max(0, (now - animationState.changedAt) / MARKER_LOADER_TRANSITION_MS)
+  );
+  const openness = loading
+    ? smoothStep(0, 1, transitionProgress)
+    : 1 - smoothStep(0, 1, transitionProgress);
+  const transparentSpan = Math.PI * openness;
   const solidSpan = Math.PI * 2 - transparentSpan;
-  const rotation = progress * Math.PI * 2;
-  const holdFade = 1 - smoothStep(0.78, 1, progress) * 0.32;
+  const rotation =
+    ((now % MARKER_LOADER_ROTATION_MS) / MARKER_LOADER_ROTATION_MS) *
+    Math.PI *
+    2;
 
   context.save();
-  context.globalAlpha *= holdFade;
   context.lineWidth = lineWidth;
   context.lineCap = "round";
 
@@ -722,6 +764,47 @@ function drawMarkerLoaderRing({
   }
 
   context.restore();
+}
+
+function updateMarkerLoaderAnimationState(
+  markerId: string,
+  loading: boolean,
+  now: number
+) {
+  const current = markerLoaderAnimationState.get(markerId);
+
+  if (!current) {
+    const next = {
+      loader: loading,
+      changedAt: loading ? now : now - MARKER_LOADER_TRANSITION_MS,
+      lastSeenAt: now,
+    };
+    markerLoaderAnimationState.set(markerId, next);
+    return next;
+  }
+
+  if (current.loader !== loading) {
+    current.loader = loading;
+    current.changedAt = now;
+  }
+
+  current.lastSeenAt = now;
+  return current;
+}
+
+function isMarkerLoaderTransitioning(markerId: string) {
+  const current = markerLoaderAnimationState.get(markerId);
+
+  if (!current || current.loader) {
+    return false;
+  }
+
+  const now = readAnimationNow();
+  return now - current.changedAt < MARKER_LOADER_TRANSITION_MS;
+}
+
+function readAnimationNow() {
+  return typeof performance === "undefined" ? Date.now() : performance.now();
 }
 
 export function drawNodePointerArea(
@@ -769,6 +852,78 @@ export function drawLink(
   context.setLineDash(link.dash ?? []);
   context.stroke();
   context.restore();
+}
+
+export function drawLinkPointerArea(
+  link: CanvasLink,
+  color: string,
+  context: CanvasRenderingContext2D
+) {
+  const source = getLinkEndpoint(link.source as unknown);
+  const target = getLinkEndpoint(link.target as unknown);
+
+  if (!source || !target) {
+    return;
+  }
+
+  context.save();
+  context.beginPath();
+  context.moveTo(source.x, source.y);
+  context.lineTo(target.x, target.y);
+  context.strokeStyle = color;
+  context.lineWidth = Math.max(14, link.width + 12);
+  context.lineCap = "round";
+  context.stroke();
+  context.restore();
+}
+
+export function getClickedLink({
+  links,
+  event,
+  graph,
+  maxDistance = 18,
+}: {
+  links: CanvasLink[];
+  event: MouseEvent;
+  graph: GraphMethods | undefined;
+  maxDistance?: number;
+}) {
+  if (!graph || links.length === 0) {
+    return null;
+  }
+
+  const eventWithOffset = event as MouseEvent & {
+    offsetX?: number;
+    offsetY?: number;
+  };
+  const offsetX = eventWithOffset.offsetX;
+  const offsetY = eventWithOffset.offsetY;
+
+  if (typeof offsetX !== "number" || typeof offsetY !== "number") {
+    return null;
+  }
+
+  const point = graph.screen2GraphCoords(offsetX, offsetY);
+  let closestLink: CanvasLink | null = null;
+  let closestDistance = maxDistance;
+
+  for (const link of links) {
+    const source = getLinkEndpoint(link.source as unknown);
+    const target = getLinkEndpoint(link.target as unknown);
+
+    if (!source || !target) {
+      continue;
+    }
+
+    const distance = getPointToSegmentDistance(point, source, target);
+
+    if (distance <= closestDistance) {
+      closestDistance = distance;
+      closestLink = link;
+    }
+  }
+
+  return closestLink;
 }
 
 export function getClickedNodeMarker({
@@ -905,6 +1060,32 @@ function getLinkEndpoint(endpoint: unknown): { x: number; y: number } | null {
   return null;
 }
 
+function getPointToSegmentDistance(
+  point: { x: number; y: number },
+  source: { x: number; y: number },
+  target: { x: number; y: number }
+) {
+  const dx = target.x - source.x;
+  const dy = target.y - source.y;
+  const lengthSquared = dx * dx + dy * dy;
+
+  if (lengthSquared === 0) {
+    return Math.hypot(point.x - source.x, point.y - source.y);
+  }
+
+  const t = Math.max(
+    0,
+    Math.min(
+      1,
+      ((point.x - source.x) * dx + (point.y - source.y) * dy) / lengthSquared
+    )
+  );
+  const projectedX = source.x + t * dx;
+  const projectedY = source.y + t * dy;
+
+  return Math.hypot(point.x - projectedX, point.y - projectedY);
+}
+
 function getLinkEndpointId(endpoint: unknown) {
   if (typeof endpoint === "string") {
     return endpoint;
@@ -938,21 +1119,6 @@ function getMarkerIslandRect(
     width,
     height,
   };
-}
-
-function getCanvasMarkerIcon(marker: GraphMarker) {
-  switch (marker.icon) {
-    case "archive":
-      return "A";
-    case "file-json":
-      return "{}";
-    case "lock":
-      return "L";
-    case "route":
-      return "R";
-    default:
-      return marker.label.slice(0, 1).toUpperCase();
-  }
 }
 
 function getCanvasNodeIconName(node: CanvasNode) {
@@ -1043,6 +1209,10 @@ function drawCanvasIcon({
       break;
     case "split":
       drawIconSplit(context, x, y, size);
+      break;
+    case "user":
+    case "user-cog":
+      drawIconUserCog(context, x, y, size, icon === "user-cog");
       break;
     default:
       context.beginPath();
@@ -1255,6 +1425,50 @@ function drawIconSplit(context: CanvasRenderingContext2D, x: number, y: number, 
   context.moveTo(x - size * 0.28, y - size * 0.04);
   context.quadraticCurveTo(x - size * 0.28, y + size * 0.18, x, y + size * 0.18);
   context.lineTo(x + size * 0.28, y + size * 0.18);
+  context.stroke();
+}
+
+function drawIconUserCog(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  withCog: boolean
+) {
+  context.beginPath();
+  context.arc(x - size * 0.06, y - size * 0.18, size * 0.17, 0, Math.PI * 2);
+  context.stroke();
+
+  context.beginPath();
+  context.arc(x - size * 0.06, y + size * 0.3, size * 0.32, Math.PI * 1.08, Math.PI * 1.92);
+  context.stroke();
+
+  if (!withCog) {
+    return;
+  }
+
+  const cogX = x + size * 0.25;
+  const cogY = y + size * 0.18;
+  const inner = size * 0.08;
+  const outer = size * 0.16;
+
+  context.beginPath();
+  for (let index = 0; index < 8; index += 1) {
+    const angle = -Math.PI / 2 + (index * Math.PI) / 4;
+    const radius = index % 2 === 0 ? outer : outer * 0.78;
+    const pointX = cogX + Math.cos(angle) * radius;
+    const pointY = cogY + Math.sin(angle) * radius;
+
+    if (index === 0) {
+      context.moveTo(pointX, pointY);
+    } else {
+      context.lineTo(pointX, pointY);
+    }
+  }
+  context.closePath();
+  context.stroke();
+  context.beginPath();
+  context.arc(cogX, cogY, inner, 0, Math.PI * 2);
   context.stroke();
 }
 

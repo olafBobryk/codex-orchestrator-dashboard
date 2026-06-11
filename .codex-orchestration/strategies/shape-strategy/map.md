@@ -30,7 +30,7 @@ follow.
 
 ## Agent References
 
-- none
+- `agents/shape-side-thread.md`: visible side Codex thread currently working on graph marker and activity behavior.
 
 ## Trunk / Flow
 

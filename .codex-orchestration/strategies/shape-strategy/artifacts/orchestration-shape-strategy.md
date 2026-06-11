@@ -12,7 +12,7 @@ doc
 
 ## Reference
 
-- `../meta/orchestration-shape-strategy.md`
+- `../_guides/orchestration-shape-strategy.md`
 
 ## Applies To
 

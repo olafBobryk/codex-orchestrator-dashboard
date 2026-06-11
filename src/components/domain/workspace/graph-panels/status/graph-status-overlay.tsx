@@ -1,4 +1,4 @@
-import { GitBranch, PanelRightClose } from "lucide-react";
+import { LayoutDashboard, PanelRightClose } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LINK_COLORS } from "../../canvas/constants";
@@ -29,8 +29,8 @@ export function GraphStatusOverlay({
     >
       <div className="border-b border-border px-3 py-3">
         <div className="flex min-w-0 items-center gap-2 pr-8">
-          <GitBranch className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <h2 className="truncate text-sm font-semibold">Orchestration Graph</h2>
+          <LayoutDashboard className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <h2 className="truncate text-sm font-semibold">Summary</h2>
           <Button
             type="button"
             variant="ghost"

@@ -14,6 +14,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import { Button } from "@/components/ui/button";
+import { Loader } from "@/components/ui/loader";
 import {
   countFlowSignals,
   countRuntimeAnnotations,
@@ -25,9 +26,11 @@ import { installGraphForces } from "./physics";
 import {
   drawRegionOverlays,
   drawLink,
+  drawLinkPointerArea,
   drawNode,
   drawNodePointerArea,
   drawRegions,
+  getClickedLink,
   getClickedRegion,
   getClickedNodeMarker,
   getRegionAtScreenPoint,
@@ -53,6 +56,7 @@ const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
 }) as ComponentType<GraphProps>;
 
 const INITIAL_FOCUS_ZOOM = 0.52;
+const MARKER_LOADER_TRANSITION_REDRAW_MS = 760;
 
 type HoveredNodeTooltip = {
   node: CanvasNode;
@@ -70,7 +74,9 @@ export function OrchestrationGraphCanvas({
   graph,
   workspace,
   stats,
+  commandAction,
   renderDetailPanel,
+  renderEdgePanel,
   renderRegionPanel,
   renderMarkdownViewer,
   renderStatusPanel,
@@ -80,6 +86,7 @@ export function OrchestrationGraphCanvas({
   const initialFocusAppliedKeyRef = useRef<string | null>(null);
   const [size, setSize] = useState({ width: 960, height: 620 });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [markdownReference, setMarkdownReference] =
@@ -90,6 +97,9 @@ export function OrchestrationGraphCanvas({
     useState<HoveredNodeTooltip | null>(null);
   const [hoveredRegionTooltip, setHoveredRegionTooltip] =
     useState<HoveredRegionTooltip | null>(null);
+  const [markerLoaderTransitionRedraw, setMarkerLoaderTransitionRedraw] =
+    useState(false);
+  const markerLoaderSnapshotRef = useRef<string | null>(null);
   const canvasTheme = useMemo(() => readCanvasTheme(), []);
   const bindGraphRef = useCallback((instance: GraphMethods | null) => {
     graphRef.current = instance ?? undefined;
@@ -115,6 +125,11 @@ export function OrchestrationGraphCanvas({
   const hasLoadingMarkers = data.nodes.some((node) =>
     node.markers.some((marker) => marker.loader)
   );
+  const markerLoaderSnapshot = data.nodes
+    .flatMap((node) =>
+      node.markers.map((marker) => `${marker.id}:${marker.loader ? 1 : 0}`)
+    )
+    .join("|");
 
   const selectedDetailNode = selectedNodeId
     ? graph.nodes.find((node) => node.id === selectedNodeId)
@@ -132,6 +147,15 @@ export function OrchestrationGraphCanvas({
   const selectedRegion = selectedRegionId
     ? regions.find((region) => region.id === selectedRegionId) ?? null
     : null;
+  const selectedEdge = selectedEdgeId
+    ? graph.edges.find((edge) => edge.id === selectedEdgeId) ?? null
+    : null;
+  const selectedEdgeSourceNode = selectedEdge
+    ? graph.nodes.find((node) => node.id === selectedEdge.source) ?? null
+    : null;
+  const selectedEdgeTargetNode = selectedEdge
+    ? graph.nodes.find((node) => node.id === selectedEdge.target) ?? null
+    : null;
   const selectedNodeEdges = selectedDetailNode
     ? graph.edges.filter(
         (edge) =>
@@ -140,7 +164,9 @@ export function OrchestrationGraphCanvas({
     : [];
   const sidePanelMode = markdownReference
     ? "markdown"
-    : selectedDetailNode
+    : selectedEdge
+      ? "edge"
+      : selectedDetailNode
       ? "detail"
       : selectedRegion
         ? "region"
@@ -245,6 +271,15 @@ export function OrchestrationGraphCanvas({
     [data.nodes, hoveredNodeTooltip, regions]
   );
 
+  const selectEdge = useCallback((edgeId: string) => {
+    setSelectedNodeId(null);
+    setSelectedEdgeId(edgeId);
+    setSelectedMarkerId(null);
+    setSelectedRegionId(null);
+    setMarkdownReference(null);
+    setStatusPanelOpen(false);
+  }, []);
+
   useEffect(() => {
     const element = containerRef.current;
 
@@ -287,6 +322,88 @@ export function OrchestrationGraphCanvas({
     return installGraphForces({ instance });
   }, [data, graphMountVersion]);
 
+  useEffect(() => {
+    if (!commandAction) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      if (commandAction.type === "show-status-panel") {
+        setSelectedNodeId(null);
+        setSelectedEdgeId(null);
+        setSelectedMarkerId(null);
+        setSelectedRegionId(null);
+        setMarkdownReference(null);
+        setStatusPanelOpen(true);
+        return;
+      }
+
+      if (commandAction.type === "select-node") {
+        setSelectedNodeId(commandAction.nodeId);
+        setSelectedEdgeId(null);
+        setSelectedMarkerId(commandAction.markerId ?? null);
+        setSelectedRegionId(null);
+        setMarkdownReference(null);
+        setStatusPanelOpen(false);
+        return;
+      }
+
+      if (commandAction.type === "select-region") {
+        setSelectedNodeId(null);
+        setSelectedEdgeId(null);
+        setSelectedMarkerId(null);
+        setSelectedRegionId(commandAction.regionId);
+        setMarkdownReference(null);
+        setStatusPanelOpen(false);
+        return;
+      }
+
+      if (commandAction.type === "select-edge") {
+        setSelectedNodeId(null);
+        setSelectedEdgeId(commandAction.edgeId);
+        setSelectedMarkerId(null);
+        setSelectedRegionId(null);
+        setMarkdownReference(null);
+        setStatusPanelOpen(false);
+        return;
+      }
+
+      setSelectedNodeId(null);
+      setSelectedEdgeId(null);
+      setSelectedMarkerId(null);
+      setSelectedRegionId(null);
+      setMarkdownReference(commandAction.reference);
+      setStatusPanelOpen(false);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [commandAction]);
+
+  useEffect(() => {
+    if (markerLoaderSnapshotRef.current === null) {
+      markerLoaderSnapshotRef.current = markerLoaderSnapshot;
+      return;
+    }
+
+    if (markerLoaderSnapshotRef.current === markerLoaderSnapshot) {
+      return;
+    }
+
+    markerLoaderSnapshotRef.current = markerLoaderSnapshot;
+
+    const startTimer = window.setTimeout(() => {
+      setMarkerLoaderTransitionRedraw(true);
+    }, 0);
+    const stopTimer = window.setTimeout(() => {
+      setMarkerLoaderTransitionRedraw(false);
+    }, MARKER_LOADER_TRANSITION_REDRAW_MS);
+
+    return () => {
+      window.clearTimeout(startTimer);
+      window.clearTimeout(stopTimer);
+    };
+  }, [markerLoaderSnapshot]);
+
   return (
     <section
       aria-label="Orchestration graph"
@@ -311,7 +428,7 @@ export function OrchestrationGraphCanvas({
               height={size.height}
               backgroundColor="rgba(0,0,0,0)"
               nodeId="id"
-              autoPauseRedraw={!hasLoadingMarkers}
+              autoPauseRedraw={!hasLoadingMarkers && !markerLoaderTransitionRedraw}
               nodeRelSize={1}
               nodeVal={(node) => (node.primary ? 14 : 7)}
               nodeLabel={() => ""}
@@ -375,6 +492,9 @@ export function OrchestrationGraphCanvas({
                 drawLink(link, context);
               }}
               linkCanvasObjectMode={() => "replace"}
+              linkPointerAreaPaint={(link, color, context) =>
+                drawLinkPointerArea(link, color, context)
+              }
               linkColor={(link) => link.color}
               linkWidth={(link) => link.width}
               linkLineDash={(link) => link.dash}
@@ -394,9 +514,24 @@ export function OrchestrationGraphCanvas({
               linkDirectionalParticleWidth={2}
               d3VelocityDecay={0.46}
               cooldownTicks={320}
+              onLinkClick={(link, event) => {
+                event.stopPropagation();
+                selectEdge(link.id);
+              }}
               onNodeHover={(node) => refreshHoveredNodeTooltip(node)}
               onNodeClick={(node, event) => {
                 event.stopPropagation();
+                const clickedLink = getClickedLink({
+                  links: data.links,
+                  event,
+                  graph: graphRef.current,
+                });
+
+                if (clickedLink) {
+                  selectEdge(clickedLink.id);
+                  return;
+                }
+
                 if (isNodeInteractionBlocked(node)) {
                   const region = getClickedRegion({
                     regions,
@@ -407,6 +542,7 @@ export function OrchestrationGraphCanvas({
 
                   if (region) {
                     setSelectedNodeId(null);
+                    setSelectedEdgeId(null);
                     setSelectedMarkerId(null);
                     setSelectedRegionId(region.id);
                     setMarkdownReference(null);
@@ -422,11 +558,24 @@ export function OrchestrationGraphCanvas({
                 });
 
                 setSelectedNodeId(node.id);
+                setSelectedEdgeId(null);
                 setSelectedMarkerId(marker?.id ?? null);
                 setSelectedRegionId(null);
                 setMarkdownReference(null);
               }}
               onBackgroundClick={(event) => {
+                const clickedLink = getClickedLink({
+                  links: data.links,
+                  event,
+                  graph: graphRef.current,
+                });
+
+                if (clickedLink) {
+                  event.stopPropagation();
+                  selectEdge(clickedLink.id);
+                  return;
+                }
+
                 const region = getClickedRegion({
                   regions,
                   nodes: data.nodes,
@@ -437,6 +586,7 @@ export function OrchestrationGraphCanvas({
                 if (region) {
                   event.stopPropagation();
                   setSelectedNodeId(null);
+                  setSelectedEdgeId(null);
                   setSelectedMarkerId(null);
                   setSelectedRegionId(region.id);
                   setMarkdownReference(null);
@@ -444,6 +594,7 @@ export function OrchestrationGraphCanvas({
                 }
 
                 setSelectedNodeId(null);
+                setSelectedEdgeId(null);
                 setSelectedMarkerId(null);
                 setSelectedRegionId(null);
                 setMarkdownReference(null);
@@ -452,7 +603,7 @@ export function OrchestrationGraphCanvas({
             />
           </div>
         ) : (
-          <GraphLoadingState />
+          <GraphEmptyState />
         )}
 
         <AnimatePresence>
@@ -477,6 +628,8 @@ export function OrchestrationGraphCanvas({
                   ? "graph-detail-panel"
                   : sidePanelMode === "markdown"
                     ? "graph-markdown-panel"
+                    : sidePanelMode === "edge"
+                      ? "graph-edge-panel"
                     : sidePanelMode === "region"
                       ? "graph-region-panel"
                       : "graph-status-panel"
@@ -486,17 +639,21 @@ export function OrchestrationGraphCanvas({
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "calc(100% + 16px)", opacity: 0 }}
               transition={{ type: "spring", stiffness: 360, damping: 34 }}
-              className={`absolute right-3 top-3 z-10 ${
+              className={`fixed right-3 top-3 z-10 ${
                 sidePanelMode === "markdown"
-                  ? "bottom-3 w-[min(560px,calc(100%_-_1.5rem))]"
-                  : sidePanelMode === "detail" || sidePanelMode === "region"
-                  ? "bottom-3 w-[min(390px,calc(100%_-_1.5rem))]"
-                  : "w-[min(340px,calc(100%_-_1.5rem))]"
+                  ? "bottom-3 w-[min(560px,calc(100vw_-_1.5rem))]"
+                  : sidePanelMode === "detail" ||
+                    sidePanelMode === "edge" ||
+                    sidePanelMode === "region"
+                  ? "bottom-3 w-[min(390px,calc(100vw_-_1.5rem))]"
+                  : "w-[min(340px,calc(100vw_-_1.5rem))]"
               }`}
               style={{
                 maxHeight:
-                  sidePanelMode === "detail" || sidePanelMode === "markdown"
-                  || sidePanelMode === "region"
+                  sidePanelMode === "detail" ||
+                  sidePanelMode === "edge" ||
+                  sidePanelMode === "markdown" ||
+                  sidePanelMode === "region"
                     ? "calc(100vh - 1.5rem)"
                     : "min(520px, calc(100vh - 1.5rem))",
               }}
@@ -521,7 +678,20 @@ export function OrchestrationGraphCanvas({
                   onSelectMarker: setSelectedMarkerId,
                   onClose: () => {
                     setSelectedNodeId(null);
+                    setSelectedEdgeId(null);
                     setSelectedMarkerId(null);
+                    setMarkdownReference(null);
+                  },
+                })
+              ) : sidePanelMode === "edge" && selectedEdge ? (
+                renderEdgePanel({
+                  edge: selectedEdge,
+                  sourceNode: selectedEdgeSourceNode,
+                  targetNode: selectedEdgeTargetNode,
+                  workspace,
+                  onOpenMarkdownReference: setMarkdownReference,
+                  onClose: () => {
+                    setSelectedEdgeId(null);
                     setMarkdownReference(null);
                   },
                 })
@@ -550,6 +720,7 @@ export function OrchestrationGraphCanvas({
                   primaryNodes: data.nodes.filter((node) => node.primary),
                   onSelectNode: (nodeId) => {
                     setSelectedNodeId(nodeId);
+                    setSelectedEdgeId(null);
                     setSelectedMarkerId(null);
                     setSelectedRegionId(null);
                   },
@@ -560,14 +731,14 @@ export function OrchestrationGraphCanvas({
           ) : null}
         </AnimatePresence>
 
-        {!selectedDetailNode && !selectedRegion && !statusPanelOpen ? (
+        {!selectedDetailNode && !selectedEdge && !selectedRegion && !statusPanelOpen ? (
           <Button
             type="button"
             variant="secondary"
             size="icon-sm"
             aria-label="Show graph panel"
             title="Show graph panel"
-            className="absolute right-3 top-3 z-20 shadow-sm"
+            className="fixed right-3 top-3 z-20 shadow-sm"
             onClick={() => setStatusPanelOpen(true)}
           >
             <PanelRightOpen />
@@ -581,10 +752,23 @@ export function OrchestrationGraphCanvas({
 function GraphLoadingState() {
   return (
     <div className="absolute inset-0 z-10 grid place-items-center bg-background/72 backdrop-blur-[1px]">
-      <span
-        aria-label="Loading graph"
-        className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground/25 border-t-muted-foreground"
-      />
+      <Loader aria-label="Loading graph" size="lg" />
+    </div>
+  );
+}
+
+function GraphEmptyState() {
+  return (
+    <div className="absolute inset-0 z-10 grid place-items-center bg-background px-6">
+      <div className="w-full max-w-2xl">
+        <h2 className="text-2xl font-semibold tracking-normal text-foreground">
+          No graph nodes
+        </h2>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+          This workspace has orchestration docs, but the current strategy does
+          not project any workpieces or checkpoints yet.
+        </p>
+      </div>
     </div>
   );
 }

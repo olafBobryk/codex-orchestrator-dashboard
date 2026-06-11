@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { ServiceIndicator } from "./service-indicator";
 
 export function WorkspacePathMenu({ workspace }: { workspace: string }) {
   return (
@@ -40,23 +42,27 @@ export function WorkspacePathMenu({ workspace }: { workspace: string }) {
       renderMenu={({ close }) => (
         <form
           role="menu"
-          className="grid w-80 gap-2 p-3"
+          className="grid w-80 gap-3 p-3"
           action="/"
           onSubmit={() => close({ restoreFocus: false })}
         >
-          <Label htmlFor="workspace">Workspace path</Label>
-          <div className="flex gap-2">
-            <Input
-              id="workspace"
-              name="workspace"
-              defaultValue={workspace}
-              placeholder="/Users/name/path/to/project"
-              className="font-mono text-xs"
-            />
-            <Button type="submit">
-              <FolderOpen />
-              Load
-            </Button>
+          <ServiceIndicator className="px-0.5" />
+          <Separator />
+          <div className="grid gap-2">
+            <Label htmlFor="workspace">Workspace path</Label>
+            <div className="flex gap-2">
+              <Input
+                id="workspace"
+                name="workspace"
+                defaultValue={workspace}
+                placeholder="/Users/name/path/to/project"
+                className="font-mono text-xs"
+              />
+              <Button type="submit">
+                <FolderOpen />
+                Load
+              </Button>
+            </div>
           </div>
         </form>
       )}

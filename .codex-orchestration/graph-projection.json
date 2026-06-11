@@ -41,7 +41,7 @@
           "links": [
             {
               "label": "Shape strategy",
-              "relativePath": "strategies/shape-strategy/meta/orchestration-shape-strategy.md"
+              "relativePath": "strategies/shape-strategy/_guides/orchestration-shape-strategy.md"
             }
           ]
         }
@@ -54,12 +54,12 @@
       "links": [
         {
           "label": "Shape strategy artifact",
-          "relativePath": "strategies/shape-strategy/meta/orchestration-shape-strategy.md",
+          "relativePath": "strategies/shape-strategy/_guides/orchestration-shape-strategy.md",
           "kind": "artifact"
         },
         {
           "label": "Graph projection meta template",
-          "relativePath": "strategies/shape-strategy/meta/dashboard-contract-notes.md",
+          "relativePath": "strategies/shape-strategy/_guides/dashboard-contract-notes.md",
           "kind": "meta_template"
         }
       ],
@@ -312,12 +312,12 @@
       "links": [
         {
           "label": "Shape strategy",
-          "relativePath": "strategies/shape-strategy/meta/orchestration-shape-strategy.md",
+          "relativePath": "strategies/shape-strategy/_guides/orchestration-shape-strategy.md",
           "kind": "artifact"
         },
         {
           "label": "Shape contract meta template",
-          "relativePath": "strategies/shape-strategy/meta/dashboard-contract-notes.md",
+          "relativePath": "strategies/shape-strategy/_guides/dashboard-contract-notes.md",
           "kind": "meta_template"
         },
         {
@@ -402,7 +402,7 @@
       "links": [
         {
           "label": "Graph projection meta template",
-          "relativePath": "strategies/shape-strategy/meta/dashboard-contract-notes.md",
+          "relativePath": "strategies/shape-strategy/_guides/dashboard-contract-notes.md",
           "kind": "meta_template"
         }
       ]
@@ -420,12 +420,12 @@
       "links": [
         {
           "label": "Worker artifact",
-          "relativePath": "strategies/shape-strategy/meta/orchestration-shape-strategy.md",
+          "relativePath": "strategies/shape-strategy/_guides/orchestration-shape-strategy.md",
           "kind": "artifact"
         },
         {
           "label": "Worker meta template",
-          "relativePath": "strategies/shape-strategy/meta/dashboard-contract-notes.md",
+          "relativePath": "strategies/shape-strategy/_guides/dashboard-contract-notes.md",
           "kind": "meta_template"
         }
       ]

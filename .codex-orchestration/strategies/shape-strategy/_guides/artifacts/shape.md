@@ -2,6 +2,8 @@
 
 Status: accepted minimal doc idea
 
+Template: ../../_templates/shape.md
+
 This file defines the smallest useful Markdown shape document for the
 orchestration shape strategy. It is a documentation idea, not an adapter schema.
 
@@ -39,7 +41,7 @@ Each reference should include enough context to understand why the workpiece is
 inside the shape.
 
 The minimal workpiece document is described in
-`orchestration-workpiece-minimal-doc.md`.
+`workpiece.md`.
 
 ### Fixed Decisions
 

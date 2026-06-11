@@ -16,7 +16,7 @@ Keep markers scoped to active worker or agent position.
 
 ## Artifacts
 
-- `../meta/orchestration-shape-strategy.md`
+- `../_guides/orchestration-shape-strategy.md`
 
 ## Commit Evidence
 

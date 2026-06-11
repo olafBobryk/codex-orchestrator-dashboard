@@ -5,6 +5,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import type { GraphDetailBlock, GraphDetailLink } from "@/lib/orchestration-graph";
 import { createVsCodeDocHref } from "../../canvas/graph-adapter";
 import type { GraphMarkdownReference } from "../../canvas/types";
+import { GraphPanelPreviewContent } from "../preview";
 import type { SignalIcon } from "./types";
 
 export function SignalToken({
@@ -151,6 +152,38 @@ export function DetailBlockCard({
       />
     </div>
   );
+}
+
+export function DetailSummaryTile({
+  block,
+  index,
+}: {
+  block: GraphDetailBlock;
+  index: number;
+}) {
+  const color = block.color ?? "#64748b";
+  const href = `#${getDetailBlockDomId(block)}`;
+  const stat = block.summary ?? String(index + 1);
+
+  return (
+    <a
+      href={href}
+      className="block min-w-0 rounded-md border bg-card px-2.5 py-2 text-left transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+      style={{ borderColor: color }}
+    >
+      <GraphPanelPreviewContent
+        icon={block.icon}
+        color={color}
+        primary={stat}
+        secondary={block.name}
+        primaryIsStat
+      />
+    </a>
+  );
+}
+
+export function getDetailBlockDomId(block: Pick<GraphDetailBlock, "id">) {
+  return `graph-detail-block-${block.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 }
 
 export function EntityLinks({

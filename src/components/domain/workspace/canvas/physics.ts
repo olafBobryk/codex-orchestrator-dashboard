@@ -1,8 +1,8 @@
 import type { Force, ForceLink } from "d3-force";
 import { forceCollide, forceManyBody, forceY } from "d3-force";
-import type { GraphEdge, GraphNodeChronology } from "@/lib/orchestration-graph";
+import type { GraphNodeChronology } from "@/lib/orchestration-graph";
 import { GRAPH_VERTICAL_CENTER_Y } from "./constants";
-import type { CanvasNode, GraphMethods } from "./types";
+import type { CanvasLink, CanvasNode, GraphMethods } from "./types";
 
 const CHRONOLOGY_START_GUIDE_Y = GRAPH_VERTICAL_CENTER_Y - 700;
 const COLLISION_PADDING = 32;
@@ -10,6 +10,8 @@ const REGION_BODY_PADDING = 72;
 const REGION_BODY_SEPARATION_MULTIPLIER = 1.02;
 const REGION_BODY_SEPARATION_STRENGTH = 0.055;
 const GRAVITY_Y_STRENGTH = 0.24;
+const CROSS_REGION_LINK_DISTANCE_MULTIPLIER = 1.9;
+const CROSS_REGION_LINK_STRENGTH_MULTIPLIER = 0.38;
 
 export function installGraphForces({
 	instance,
@@ -52,7 +54,7 @@ function createGravityYForce() {
 
 function configureLinkForce(instance: GraphMethods) {
 	const linkForce = instance.d3Force("link") as
-		| ForceLink<CanvasNode, GraphEdge>
+		| ForceLink<CanvasNode, CanvasLink>
 		| undefined;
 
 	linkForce
@@ -60,16 +62,30 @@ function configureLinkForce(instance: GraphMethods) {
 		.distance((link) => getLinkForceConfig(link).distance);
 }
 
-function getLinkForceConfig(link: GraphEdge) {
+function getLinkForceConfig(link: CanvasLink) {
+	const boundaryMultiplier = link.crossesRegionBoundary
+		? {
+				distance: CROSS_REGION_LINK_DISTANCE_MULTIPLIER,
+				strength: CROSS_REGION_LINK_STRENGTH_MULTIPLIER,
+			}
+		: { distance: 1, strength: 1 };
+	const applyBoundaryMultiplier = (config: {
+		distance: number;
+		strength: number;
+	}) => ({
+		distance: config.distance * boundaryMultiplier.distance,
+		strength: config.strength * boundaryMultiplier.strength,
+	});
+
 	if (link.style === "dotted") {
-		return { strength: 0.018, distance: 430 };
+		return applyBoundaryMultiplier({ strength: 0.018, distance: 430 });
 	}
 
 	if (link.style === "dashed") {
-		return { strength: 0.055, distance: 340 };
+		return applyBoundaryMultiplier({ strength: 0.055, distance: 340 });
 	}
 
-	return { strength: 0.2, distance: 220 };
+	return applyBoundaryMultiplier({ strength: 0.2, distance: 220 });
 }
 
 export function getChronologyGuideY(chronology: GraphNodeChronology) {

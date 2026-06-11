@@ -6,13 +6,13 @@ import {
   Copy,
   ExternalLink,
   FileText,
-  Loader2,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
+import { Loader } from "@/components/ui/loader";
 import { createVsCodeDocHref } from "../../canvas/graph-adapter";
 import type { GraphMarkdownViewerProps } from "../../canvas/types";
 
@@ -125,7 +125,7 @@ export function MarkdownReferenceViewer({
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         {visibleState.state === "loading" || visibleState.state === "idle" ? (
           <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-base text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader aria-label="Loading Markdown" />
             Loading Markdown
           </div>
         ) : visibleState.state === "ready" ? (

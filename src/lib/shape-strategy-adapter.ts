@@ -4,9 +4,10 @@ import type {
   GraphProjectionQualityWarning,
   RawProjection,
 } from "@/lib/graph-projection";
+import { readCodexThreadActivity } from "./codex-threads.ts";
 
 const ORCHESTRATION_DIR = ".codex-orchestration";
-const SHAPE_STRATEGY_DIR = "strategies/shape-strategy";
+const NESTED_SHAPE_STRATEGY_DIR = "strategies/shape-strategy";
 const SHAPE_STRATEGY_FILE = "map.md";
 const WORK_COLOR = "#737373";
 const CHECKPOINT_COLOR = "#d97706";
@@ -17,10 +18,16 @@ type ShapeStrategyProjectionReadResult =
       state: "ready";
       projection: RawProjection;
       warnings: GraphProjectionQualityWarning[];
+      mapRelativePath: string;
     }
   | {
       state: "missing";
     };
+
+type ShapeStrategySource = {
+  rootDir: string;
+  baseRelativePath: string;
+};
 
 type MarkdownDoc = {
   relativePath: string;
@@ -42,17 +49,34 @@ type EdgeDoc = MarkdownDoc & {
   visualWeight: string | null;
 };
 
+type AgentDoc = MarkdownDoc & {
+  markerId: string;
+  targetId: string | null;
+  role: string | null;
+  threadIds: string[];
+};
+
+export type ShapeStrategyMarkerActivity = {
+  id: string;
+  loader: boolean;
+};
+
 export async function readShapeStrategyProjection(
   workspace: string
 ): Promise<ShapeStrategyProjectionReadResult> {
-  const rootDir = path.join(
-    /*turbopackIgnore: true*/ workspace,
-    ORCHESTRATION_DIR,
-    SHAPE_STRATEGY_DIR
-  );
-  const mapRelativePath = `${SHAPE_STRATEGY_DIR}/${SHAPE_STRATEGY_FILE}`;
+  const source = await resolveShapeStrategySource(workspace);
+
+  if (!source) {
+    return { state: "missing" };
+  }
+
+  const mapRelativePath = displayRelativePath(source, SHAPE_STRATEGY_FILE);
   const warnings: GraphProjectionQualityWarning[] = [];
-  const mapDoc = await readDoc(rootDir, SHAPE_STRATEGY_FILE, mapRelativePath);
+  const mapDoc = await readDoc(
+    source.rootDir,
+    SHAPE_STRATEGY_FILE,
+    mapRelativePath
+  );
 
   if (!mapDoc) {
     return { state: "missing" };
@@ -62,14 +86,16 @@ export async function readShapeStrategyProjection(
   const checkpointRefs = readReferencePaths(
     mapDoc.sections.get("checkpoint references")
   );
-  const edgeRefs = await readEdges(rootDir, mapDoc, warnings);
+  const agentRefs = readReferencePaths(mapDoc.sections.get("agent references"));
+  const edgeRefs = await readEdges(source, mapDoc, warnings);
   const artifactRefs = readReferencePaths(mapDoc.sections.get("evidence"))
     .filter((reference) => reference.startsWith("artifacts/"));
 
-  const shapes = await readShapes(rootDir, shapeRefs, warnings);
-  const workpieces = await readWorkpieces(rootDir, shapes, warnings);
-  const checkpoints = await readCheckpoints(rootDir, checkpointRefs, warnings);
-  const artifacts = await readArtifactLinks(rootDir, artifactRefs, warnings);
+  const shapes = await readShapes(source, shapeRefs, warnings);
+  const workpieces = await readWorkpieces(source, shapes, warnings);
+  const checkpoints = await readCheckpoints(source, checkpointRefs, warnings);
+  const agents = await readAgents(source, agentRefs, warnings);
+  const artifacts = await readArtifactLinks(source, artifactRefs, warnings);
   const shapeColors = new Map(
     shapes.map((shape, index) => [
       shape.id,
@@ -77,6 +103,11 @@ export async function readShapeStrategyProjection(
     ])
   );
   const nodeRefs = createNodeReferenceResolver(shapes, checkpoints);
+  const markerActivity = await readAgentMarkerActivity(agents);
+  const markerTargetIds = new Set([
+    ...workpieces.map((workpiece) => workpiece.id),
+    ...checkpoints.map((checkpoint) => checkpoint.id),
+  ]);
 
   const projection: RawProjection = {
     title: mapDoc.title,
@@ -109,13 +140,11 @@ export async function readShapeStrategyProjection(
         status: workpiece.status ?? "planned",
         kind: "workpiece",
         summary: readSectionSummary(workpiece.sections.get("intent")),
-        detail: readDocDetailBlocks(workpiece, [
-          "acceptance",
-          "tests",
-          "artifacts",
-          "commit evidence",
-          "notes",
-        ]),
+        detail: readDocDetailBlocks(
+          source,
+          workpiece,
+          ["acceptance", "tests", "artifacts", "commit evidence", "notes"]
+        ),
         relativePath: workpiece.relativePath,
         links: [{ label: "Open source", relativePath: workpiece.relativePath }],
         order: index + 1,
@@ -129,7 +158,7 @@ export async function readShapeStrategyProjection(
         kind: "checkpoint",
         chronology: readStartCheckpointId(mapDoc) === checkpoint.id ? "start" : null,
         summary: readSectionSummary(checkpoint.sections.get("transition")),
-        detail: readDocDetailBlocks(checkpoint, [
+        detail: readDocDetailBlocks(source, checkpoint, [
           "transition",
           "applies to",
           "direction",
@@ -144,10 +173,14 @@ export async function readShapeStrategyProjection(
     edges: [
       ...createShapeWorkpieceEdges(shapes),
       ...edgeRefs.flatMap((edge) => {
-        const source = edge.source ? nodeRefs.resolveSource(edge.source) : null;
-        const target = edge.target ? nodeRefs.resolveTarget(edge.target) : null;
+        const edgeSource = edge.source
+          ? nodeRefs.resolveSource(edge.source)
+          : null;
+        const edgeTarget = edge.target
+          ? nodeRefs.resolveTarget(edge.target)
+          : null;
 
-        if (!source || !target) {
+        if (!edgeSource || !edgeTarget) {
           warnings.push(
             createWarning("shape-strategy-missing-edge-endpoint", edge.id, [
               `${edge.relativePath} references ${edge.source ?? "(missing)"} -> ${
@@ -161,14 +194,14 @@ export async function readShapeStrategyProjection(
         return [
           {
             id: edge.id,
-            source,
-            target,
+            source: edgeSource,
+            target: edgeTarget,
             label: edge.relationship ?? edge.title,
             style: edgeStyleForRelationship(edge.relationship),
             directional: edge.direction !== "undirected",
             status: edge.status ?? "active",
             relativePath: edge.relativePath,
-            detail: readDocDetailBlocks(edge, [
+            detail: readDocDetailBlocks(source, edge, [
               "intent",
               "source / target",
               "relationship",
@@ -180,14 +213,20 @@ export async function readShapeStrategyProjection(
         ];
       }),
     ],
-    markers: [],
+    markers: createAgentMarkers(
+      source,
+      agents,
+      markerActivity,
+      markerTargetIds,
+      warnings
+    ),
     regions: shapes.map((shape) => ({
       id: shape.id,
       label: shape.title,
       category: shape.id,
       color: shapeColors.get(shape.id),
       nodeIds: shape.workpieceRefs.map(referenceToId),
-      detail: readDocDetailBlocks(shape, [
+      detail: readDocDetailBlocks(source, shape, [
         "intent",
         "fixed decisions",
         "autonomous decisions",
@@ -207,18 +246,57 @@ export async function readShapeStrategyProjection(
     state: "ready",
     projection,
     warnings: dedupeWarnings(warnings),
+    mapRelativePath,
+  };
+}
+
+export async function readShapeStrategyMarkerActivity(workspace: string) {
+  const source = await resolveShapeStrategySource(workspace);
+
+  if (!source) {
+    return {
+      state: "missing" as const,
+      markers: [] as ShapeStrategyMarkerActivity[],
+    };
+  }
+
+  const mapRelativePath = displayRelativePath(source, SHAPE_STRATEGY_FILE);
+  const warnings: GraphProjectionQualityWarning[] = [];
+  const mapDoc = await readDoc(
+    source.rootDir,
+    SHAPE_STRATEGY_FILE,
+    mapRelativePath
+  );
+
+  if (!mapDoc) {
+    return {
+      state: "missing" as const,
+      markers: [] as ShapeStrategyMarkerActivity[],
+    };
+  }
+
+  const agentRefs = readReferencePaths(mapDoc.sections.get("agent references"));
+  const agents = await readAgents(source, agentRefs, warnings);
+  const markerActivity = await readAgentMarkerActivity(agents);
+
+  return {
+    state: "ready" as const,
+    markers: agents.map((agent) => ({
+      id: agent.markerId,
+      loader: markerActivity.get(agent.markerId)?.loader ?? false,
+    })),
   };
 }
 
 async function readShapes(
-  rootDir: string,
+  source: ShapeStrategySource,
   refs: string[],
   warnings: GraphProjectionQualityWarning[]
 ) {
   const shapes: ShapeDoc[] = [];
 
   for (const ref of refs) {
-    const doc = await readReferencedDoc(rootDir, ref, null, warnings);
+    const doc = await readReferencedDoc(source, ref, null, warnings);
 
     if (!doc) {
       continue;
@@ -234,7 +312,7 @@ async function readShapes(
 }
 
 async function readWorkpieces(
-  rootDir: string,
+  source: ShapeStrategySource,
   shapes: ShapeDoc[],
   warnings: GraphProjectionQualityWarning[]
 ) {
@@ -242,7 +320,12 @@ async function readWorkpieces(
 
   for (const shape of shapes) {
     for (const ref of shape.workpieceRefs) {
-      const doc = await readReferencedDoc(rootDir, ref, shape.relativePath, warnings);
+      const doc = await readReferencedDoc(
+        source,
+        ref,
+        shape.relativePath,
+        warnings
+      );
 
       if (doc) {
         docs.set(doc.id, doc);
@@ -254,14 +337,14 @@ async function readWorkpieces(
 }
 
 async function readCheckpoints(
-  rootDir: string,
+  source: ShapeStrategySource,
   refs: string[],
   warnings: GraphProjectionQualityWarning[]
 ) {
   const docs: MarkdownDoc[] = [];
 
   for (const ref of refs) {
-    const doc = await readReferencedDoc(rootDir, ref, null, warnings);
+    const doc = await readReferencedDoc(source, ref, null, warnings);
 
     if (doc) {
       docs.push(doc);
@@ -271,8 +354,98 @@ async function readCheckpoints(
   return docs;
 }
 
+async function readAgents(
+  source: ShapeStrategySource,
+  refs: string[],
+  warnings: GraphProjectionQualityWarning[]
+) {
+  const docs: AgentDoc[] = [];
+
+  for (const ref of refs) {
+    const doc = await readReferencedDoc(source, ref, null, warnings);
+
+    if (!doc) {
+      continue;
+    }
+
+    docs.push(readAgentDoc(doc));
+  }
+
+  return docs;
+}
+
+function readAgentDoc(doc: MarkdownDoc): AgentDoc {
+  const currentPosition = doc.sections.get("current position");
+  const markerId = readNamedReference(currentPosition, "marker") ?? doc.id;
+  const targetId = readNamedReference(currentPosition, "node");
+
+  return {
+    ...doc,
+    markerId: referenceToId(markerId),
+    targetId: targetId ? referenceToId(targetId) : null,
+    role: readScalarSection(doc.sections.get("role")),
+    threadIds: readThreadIds(doc),
+  };
+}
+
+async function readAgentMarkerActivity(agents: AgentDoc[]) {
+  const threadActivity = await readCodexThreadActivity(
+    agents.flatMap((agent) => agent.threadIds)
+  );
+  const markerActivity = new Map<string, ShapeStrategyMarkerActivity>();
+
+  for (const agent of agents) {
+    markerActivity.set(agent.markerId, {
+      id: agent.markerId,
+      loader: agent.threadIds.some(
+        (threadId) => threadActivity.get(threadId)?.working
+      ),
+    });
+  }
+
+  return markerActivity;
+}
+
+function createAgentMarkers(
+  source: ShapeStrategySource,
+  agents: AgentDoc[],
+  markerActivity: Map<string, ShapeStrategyMarkerActivity>,
+  targetNodeIds: Set<string>,
+  warnings: GraphProjectionQualityWarning[]
+) {
+  return agents.flatMap((agent) => {
+    if (!agent.targetId || !targetNodeIds.has(agent.targetId)) {
+      warnings.push(
+        createWarning("shape-strategy-missing-agent-position", agent.id, [
+          `${agent.relativePath} does not point to a visible Current Position node.`,
+        ])
+      );
+      return [];
+    }
+
+    return [
+      {
+        id: agent.markerId,
+        targetId: agent.targetId,
+        label: agent.title,
+        description: readAgentDescription(agent),
+        color: agentColor(agent.role),
+        icon: "user-cog",
+        loader: markerActivity.get(agent.markerId)?.loader ?? false,
+        links: [
+          {
+            label: "Open agent",
+            relativePath: agent.relativePath,
+          },
+          ...readDocLinks(source, agent, ["active shape references", "evidence"]),
+        ],
+      },
+    ];
+  });
+}
+
 async function readEdges(
-  rootDir: string,
+  source: ShapeStrategySource,
   mapDoc: MarkdownDoc,
   warnings: GraphProjectionQualityWarning[]
 ) {
@@ -282,7 +455,7 @@ async function readEdges(
   for (const [index, ref] of refs.entries()) {
     const inferredPath = inferEdgePath(ref.source, ref.target);
     const doc = inferredPath
-      ? await readReferencedDoc(rootDir, inferredPath, null, warnings)
+      ? await readReferencedDoc(source, inferredPath, null, warnings)
       : null;
 
     if (doc) {
@@ -317,18 +490,21 @@ async function readEdges(
 }
 
 async function readArtifactLinks(
-  rootDir: string,
+  source: ShapeStrategySource,
   refs: string[],
   warnings: GraphProjectionQualityWarning[]
 ) {
   const links = [];
 
   for (const ref of refs) {
-    const doc = await readReferencedDoc(rootDir, ref, null, warnings);
+    const doc = await readReferencedDoc(source, ref, null, warnings);
 
     links.push({
       label: doc?.title ?? referenceToId(ref),
-      relativePath: `${SHAPE_STRATEGY_DIR}/${normalizeRelativeReference(ref)}`,
+      relativePath: displayRelativePath(
+        source,
+        normalizeRelativeReference(source, ref)
+      ),
       kind: "artifact",
     });
   }
@@ -337,22 +513,22 @@ async function readArtifactLinks(
 }
 
 async function readReferencedDoc(
-  rootDir: string,
+  source: ShapeStrategySource,
   reference: string,
   fromRelativePath: string | null,
   warnings: GraphProjectionQualityWarning[]
 ) {
-  const normalized = normalizeRelativeReference(reference, fromRelativePath);
+  const normalized = normalizeRelativeReference(source, reference, fromRelativePath);
   const doc = await readDoc(
-    rootDir,
+    source.rootDir,
     normalized,
-    `${SHAPE_STRATEGY_DIR}/${normalized}`
+    displayRelativePath(source, normalized)
   );
 
   if (!doc) {
     warnings.push(
       createWarning("shape-strategy-missing-reference", referenceToId(reference), [
-        `${SHAPE_STRATEGY_DIR}/${normalized} could not be read.`,
+        `${displayRelativePath(source, normalized)} could not be read.`,
       ])
     );
   }
@@ -573,7 +749,11 @@ function edgeStyleForRelationship(relationship: string | null) {
   return "solid";
 }
 
-function readDocDetailBlocks(doc: MarkdownDoc, sectionNames: string[]) {
+function readDocDetailBlocks(
+  source: ShapeStrategySource,
+  doc: MarkdownDoc,
+  sectionNames: string[]
+) {
   return sectionNames.flatMap((sectionName) => {
     const body = doc.sections.get(sectionName);
 
@@ -588,10 +768,29 @@ function readDocDetailBlocks(doc: MarkdownDoc, sectionNames: string[]) {
         body,
         links: readReferencePaths(body).map((reference) => ({
           label: referenceToId(reference),
-          relativePath: normalizeDetailReference(reference, doc.relativePath),
+          relativePath: normalizeDetailReference(source, reference, doc.relativePath),
         })),
       },
     ];
+  });
+}
+
+function readDocLinks(
+  source: ShapeStrategySource,
+  doc: MarkdownDoc,
+  sectionNames: string[]
+) {
+  return sectionNames.flatMap((sectionName) => {
+    const body = doc.sections.get(sectionName);
+
+    if (!body || body === "none") {
+      return [];
+    }
+
+    return readReferencePaths(body).map((reference) => ({
+      label: referenceToId(reference),
+      relativePath: normalizeDetailReference(source, reference, doc.relativePath),
+    }));
   });
 }
 
@@ -603,7 +802,38 @@ function readSectionSummary(section: string | undefined) {
   return section.replace(/\s+/g, " ").trim();
 }
 
+function readAgentDescription(agent: AgentDoc) {
+  const intent = readSectionSummary(agent.sections.get("intent"));
+  const role = agent.role ? titleCase(agent.role) : null;
+
+  return [role, intent].filter(Boolean).join(" - ") || null;
+}
+
+function readThreadIds(doc: MarkdownDoc) {
+  const content = [...doc.sections.values()].join("\n");
+  const matches = content.matchAll(
+    /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi
+  );
+
+  return [...new Set([...matches].map((match) => match[0]))];
+}
+
+function agentColor(role: string | null) {
+  switch (role?.toLowerCase()) {
+    case "steward":
+      return "#d97706";
+    case "reviewer":
+      return "#9333ea";
+    case "observer":
+      return "#64748b";
+    case "worker":
+    default:
+      return "#2563eb";
+  }
+}
+
 function normalizeRelativeReference(
+  source: ShapeStrategySource,
   reference: string,
   fromRelativePath?: string | null
 ) {
@@ -615,18 +845,87 @@ function normalizeRelativeReference(
 
   return path.posix
     .normalize(
-      path.posix.join(path.posix.dirname(fromRelativePath), normalizedReference)
+      path.posix.join(
+        path.posix.dirname(stripSourcePrefix(source, fromRelativePath)),
+        normalizedReference
+      )
     )
-    .replace(new RegExp(`^${SHAPE_STRATEGY_DIR}/`), "");
+    .replace(/^\.?\//, "");
 }
 
-function normalizeDetailReference(reference: string, fromRelativePath: string) {
+function normalizeDetailReference(
+  source: ShapeStrategySource,
+  reference: string,
+  fromRelativePath: string
+) {
   const relative = normalizeRelativeReference(
+    source,
     reference,
-    fromRelativePath.replace(new RegExp(`^${SHAPE_STRATEGY_DIR}/`), "")
+    fromRelativePath
   );
 
-  return `${SHAPE_STRATEGY_DIR}/${relative}`;
+  return displayRelativePath(source, relative);
+}
+
+async function resolveShapeStrategySource(
+  workspace: string
+): Promise<ShapeStrategySource | null> {
+  const orchestrationRoot = path.join(
+    /*turbopackIgnore: true*/ workspace,
+    ORCHESTRATION_DIR
+  );
+  const rootSource = {
+    rootDir: orchestrationRoot,
+    baseRelativePath: "",
+  };
+
+  if (await docExists(rootSource, SHAPE_STRATEGY_FILE)) {
+    return rootSource;
+  }
+
+  const nestedSource = {
+    rootDir: path.join(orchestrationRoot, NESTED_SHAPE_STRATEGY_DIR),
+    baseRelativePath: NESTED_SHAPE_STRATEGY_DIR,
+  };
+
+  if (await docExists(nestedSource, SHAPE_STRATEGY_FILE)) {
+    return nestedSource;
+  }
+
+  return null;
+}
+
+async function docExists(source: ShapeStrategySource, relativePath: string) {
+  return Boolean(
+    await readDoc(source.rootDir, relativePath, displayRelativePath(source, relativePath))
+  );
+}
+
+function displayRelativePath(source: ShapeStrategySource, relativePath: string) {
+  const normalized = relativePath.replace(/\\/g, "/").replace(/^\.\//, "");
+
+  if (!source.baseRelativePath) {
+    return normalized;
+  }
+
+  return `${source.baseRelativePath}/${normalized}`;
+}
+
+function stripSourcePrefix(source: ShapeStrategySource, relativePath: string) {
+  const normalized = relativePath.replace(/\\/g, "/").replace(/^\.\//, "");
+
+  if (!source.baseRelativePath) {
+    return normalized;
+  }
+
+  return normalized.replace(
+    new RegExp(`^${escapeRegExp(source.baseRelativePath)}/`),
+    ""
+  );
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function referenceToId(reference: string) {
@@ -634,7 +933,10 @@ function referenceToId(reference: string) {
 }
 
 function simplifyTitle(title: string) {
-  return title.replace(/^(Artifact|Checkpoint|Edge|Shape|Workpiece):\s*/i, "");
+  return title.replace(
+    /^(Agent|Artifact|Checkpoint|Edge|Run|Shape|Workpiece):\s*/i,
+    ""
+  );
 }
 
 function normalizeHeading(value: string) {

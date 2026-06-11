@@ -6,7 +6,11 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const ORCHESTRATION_DIR = ".codex-orchestration";
-const REFRESH_DEBOUNCE_MS = 150;
+const REFRESH_DEBOUNCE_MS = 500;
+const REFRESH_FILE_EXTENSIONS = new Set([".json", ".md"]);
+const IGNORED_REFRESH_PATH_PREFIXES = [
+  "service/",
+];
 
 export async function GET(request: NextRequest) {
   const workspace = request.nextUrl.searchParams.get("workspace") ?? "";
@@ -40,6 +44,10 @@ export async function GET(request: NextRequest) {
         );
       };
       const scheduleRefresh = (filename: string | null) => {
+        if (shouldIgnoreRefreshPath(filename)) {
+          return;
+        }
+
         if (refreshTimer) {
           clearTimeout(refreshTimer);
         }
@@ -95,4 +103,24 @@ export async function GET(request: NextRequest) {
       "Content-Type": "text/event-stream",
     },
   });
+}
+
+function shouldIgnoreRefreshPath(filename: string | null) {
+  if (!filename) {
+    return true;
+  }
+
+  const normalized = filename.replaceAll(path.sep, "/");
+
+  if (
+    IGNORED_REFRESH_PATH_PREFIXES.some((prefix) =>
+      normalized.startsWith(prefix)
+    )
+  ) {
+    return true;
+  }
+
+  const extension = path.extname(normalized).toLowerCase();
+
+  return !REFRESH_FILE_EXTENSIONS.has(extension);
 }

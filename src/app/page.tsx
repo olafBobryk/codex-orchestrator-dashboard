@@ -9,8 +9,7 @@ import {
 } from "@/lib/codex-projects";
 import { readCodexLiveThreads } from "@/lib/codex-threads";
 import {
-  GraphProjectionQualityToast,
-  WorkspaceCanvas,
+  WorkspaceDashboard,
   WorkspacePathMenu,
   WorkspaceSidebar,
   WorkspaceStatusToast,
@@ -57,30 +56,21 @@ export default async function Home({ searchParams }: PageProps) {
 
   return (
     <main className="relative min-h-screen bg-background lg:h-screen lg:overflow-hidden">
-      <WorkspaceSidebar
+      <WorkspaceDashboard
         codexProjects={codexProjects}
+        graph={graph}
+        projectionQualityWarnings={projectionQualityWarnings}
+        resolvedWorkspace={resolvedWorkspace}
         workspace={workspace}
-        resolvedWorkspace={result.resolvedWorkspace}
+        stats={{
+          docs: result.counts.docs,
+          packets: result.counts.packets,
+          ledgers: result.counts.ledgers,
+          summaries: result.counts.summaries + result.counts.handoffs,
+          liveAgents: liveThreads.counts.agents,
+          activeThreads: liveThreads.counts.active,
+        }}
       />
-
-      <div className="min-h-screen min-w-0 bg-background lg:h-screen lg:overflow-hidden">
-        <GraphProjectionQualityToast
-          workspace={resolvedWorkspace}
-          warnings={projectionQualityWarnings}
-        />
-        <WorkspaceCanvas
-          graph={graph}
-          workspace={resolvedWorkspace}
-          stats={{
-            docs: result.counts.docs,
-            packets: result.counts.packets,
-            ledgers: result.counts.ledgers,
-            summaries: result.counts.summaries + result.counts.handoffs,
-            liveAgents: liveThreads.counts.agents,
-            activeThreads: liveThreads.counts.active,
-          }}
-        />
-      </div>
     </main>
   );
 }
@@ -142,6 +132,7 @@ function HomeSurface({
           {firstReadyProject ? (
             <Link
               href={`/?workspace=${encodeURIComponent(firstReadyProject.path)}`}
+              prefetch={false}
               className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               Open first project

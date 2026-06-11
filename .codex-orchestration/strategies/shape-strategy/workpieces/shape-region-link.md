@@ -16,7 +16,7 @@ Keep orchestration `shape` language distinct from dashboard `region` rendering.
 
 ## Artifacts
 
-- `../meta/dashboard-contract-notes.md`
+- `../_guides/dashboard-contract-notes.md`
 
 ## Commit Evidence
 

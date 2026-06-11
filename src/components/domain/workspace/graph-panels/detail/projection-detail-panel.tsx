@@ -1,9 +1,16 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
-import type { GraphDetailBlock, GraphMarker } from "@/lib/orchestration-graph";
+import type { GraphMarker } from "@/lib/orchestration-graph";
 import { getNodeProvenanceFiles } from "../../canvas/graph-adapter";
-import { DetailBlockCard, DetailField, DetailSection, EntityLinks } from "../shared";
+import {
+  DetailBlockCard,
+  DetailField,
+  DetailSection,
+  DetailSummaryTile,
+  EntityLinks,
+  getDetailBlockDomId,
+} from "../shared";
 import { GraphDetailHeader } from "./header";
-import { GraphPanelPreviewContent, MarkerGlyph, MarkerIsland } from "../preview";
+import { MarkerGlyph, MarkerIsland } from "../preview";
 import { ProjectionProvenanceFooter } from "./provenance-footer";
 import { ProjectionRelationshipList } from "./relationships";
 import type { GraphDetailOverlayProps } from "../shared";
@@ -164,36 +171,4 @@ function MarkerDetailCard({
       />
     </div>
   );
-}
-
-function DetailSummaryTile({
-  block,
-  index,
-}: {
-  block: GraphDetailBlock;
-  index: number;
-}) {
-  const color = block.color ?? "#64748b";
-  const href = `#${getDetailBlockDomId(block)}`;
-  const stat = block.summary ?? String(index + 1);
-
-  return (
-    <a
-      href={href}
-      className="block min-w-0 rounded-md border bg-card px-2.5 py-2 text-left transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-      style={{ borderColor: color }}
-    >
-      <GraphPanelPreviewContent
-        icon={block.icon}
-        color={color}
-        primary={stat}
-        secondary={block.name}
-        primaryIsStat
-      />
-    </a>
-  );
-}
-
-function getDetailBlockDomId(block: Pick<GraphDetailBlock, "id">) {
-  return `graph-detail-block-${block.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 }

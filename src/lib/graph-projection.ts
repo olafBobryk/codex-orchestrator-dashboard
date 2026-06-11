@@ -119,6 +119,9 @@ type RawDetailBlock = {
 
 type RawDetailLink = {
   label?: unknown;
+  name?: unknown;
+  aliases?: unknown;
+  searchNames?: unknown;
   href?: unknown;
   relativePath?: unknown;
   path?: unknown;
@@ -177,11 +180,11 @@ export async function readGraphProjection(
       state: "ready",
       relativePath: GRAPH_PROJECTION_FILENAME,
       graph: buildProjectionGraph(shapeStrategyProjection.projection, {
-        relativePath: "strategies/shape-strategy/map.md",
+        relativePath: shapeStrategyProjection.mapRelativePath,
         sourceLabel: "Shape strategy Markdown",
         sourceLayer: "markdown",
         extractionRules: [
-          "Read .codex-orchestration/strategies/shape-strategy/map.md as the preferred authored Markdown map.",
+          "Read .codex-orchestration/map.md first, then fall back to .codex-orchestration/strategies/shape-strategy/map.md for the source repo and older projects.",
           "Translate map, shape, workpiece, edge, checkpoint, and artifact Markdown into the existing dashboard projection in memory.",
           "Keep shapes as dashboard regions; resolve shape-to-shape flow through the first and last workpieces inside each shape.",
           "Use graph-projection.json only when the authored shape strategy is absent.",
@@ -554,9 +557,18 @@ function readDetailLinks(
         href: href ?? "",
         relativePath,
         kind: readLinkKind(entry.kind ?? entry.type, defaultKind),
+        searchNames: uniqueStrings([
+          readString(entry.name),
+          ...readStringArray(entry.aliases),
+          ...readStringArray(entry.searchNames),
+        ]),
       },
     ];
   });
+}
+
+function uniqueStrings(values: Array<string | null>) {
+  return [...new Set(values.filter((value): value is string => Boolean(value)))];
 }
 
 function readLinkKind(

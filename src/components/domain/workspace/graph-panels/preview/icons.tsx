@@ -12,6 +12,8 @@ import {
   PanelRight,
   Route,
   Split,
+  User,
+  UserCog,
 } from "lucide-react";
 
 export function renderGraphPanelIcon(icon: string | null, className: string) {
@@ -41,6 +43,10 @@ export function renderGraphPanelIcon(icon: string | null, className: string) {
       return <Route className={className} />;
     case "split":
       return <Split className={className} />;
+    case "user":
+      return <User className={className} />;
+    case "user-cog":
+      return <UserCog className={className} />;
     default:
       return <CircleDot className={className} />;
   }

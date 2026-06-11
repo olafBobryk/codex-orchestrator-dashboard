@@ -9,7 +9,17 @@
     "lint": "eslint",
     "check:graph-components": "node scripts/check-graph-projection-components.mjs",
     "check:shape-strategy-adapter": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-shape-strategy-adapter.mjs",
-    "init:shape-strategy": "node scripts/init-shape-strategy.mjs"
+    "init:shape-strategy": "node scripts/init-shape-strategy.mjs",
+    "update:shape-strategy": "node scripts/update-shape-strategy.mjs",
+    "service:install": "node scripts/service.mjs install",
+    "service:start": "node scripts/service.mjs start",
+    "service:stop": "node scripts/service.mjs stop",
+    "service:restart": "node scripts/service.mjs restart",
+    "service:status": "node scripts/service.mjs status",
+    "service:open": "node scripts/service.mjs open",
+    "service:install-app": "node scripts/service.mjs install-app",
+    "service:uninstall-app": "node scripts/service.mjs uninstall-app",
+    "service:uninstall": "node scripts/service.mjs uninstall"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

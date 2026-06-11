@@ -34,6 +34,7 @@ const GRAVITY_INITIAL_FALL_DISTANCE = 180;
 const GRAVITY_INITIAL_VELOCITY_Y = 1.8;
 const GRAVITY_FALLBACK_DEPTH_BASE = 2.25;
 const GRAVITY_FALLBACK_DEPTH_SPREAD = 3;
+const CROSS_REGION_GRAVITY_DEPTH_MULTIPLIER = 1.75;
 
 type InitialRegionOffset = {
   x: number;
@@ -96,6 +97,7 @@ export function createCanvasGraph(graph: OrchestrationGraph): {
   const initialGravityDepthLayout = createInitialGravityDepthLayout({
     nodes: includedGraphNodes,
     edges: graph.edges,
+    regionIdsByNode,
   });
 
   const nodes = includedGraphNodes.map((node) => {
@@ -143,6 +145,7 @@ export function createCanvasGraph(graph: OrchestrationGraph): {
       color: getLinkColor(edge),
       width: getLinkWidth(),
       dash: getLinkDash(edge),
+      crossesRegionBoundary: edgeCrossesRegionBoundary(edge, regionIdsByNode),
     }));
   const visibleNodeIds = new Set(nodes.map((node) => node.id));
   const rawRegions = graph.regions.map((region) => ({
@@ -312,9 +315,11 @@ function getStableNodeUnit(value: string) {
 function createInitialGravityDepthLayout({
   nodes,
   edges,
+  regionIdsByNode,
 }: {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  regionIdsByNode: Map<string, string[]>;
 }): InitialGravityDepthLayout | null {
   const startY = getChronologyGuideY("start");
   const startNodeIds = nodes
@@ -342,7 +347,11 @@ function createInitialGravityDepthLayout({
     let changed = false;
 
     for (const edge of depthEdges) {
-      const depthStep = getGravityDepthStep(edge);
+      const depthStep =
+        getGravityDepthStep(edge) *
+        (edgeCrossesRegionBoundary(edge, regionIdsByNode)
+          ? CROSS_REGION_GRAVITY_DEPTH_MULTIPLIER
+          : 1);
 
       changed =
         relaxGravityDepth(depths, edge.source, edge.target, depthStep) ||
@@ -627,6 +636,20 @@ function getEdgeOrderWeight(edge: GraphEdge) {
   return 3;
 }
 
+function edgeCrossesRegionBoundary(
+  edge: Pick<GraphEdge, "source" | "target">,
+  regionIdsByNode: Map<string, string[]>
+) {
+  const sourceRegionIds = regionIdsByNode.get(edge.source) ?? [];
+  const targetRegionIds = regionIdsByNode.get(edge.target) ?? [];
+
+  if (sourceRegionIds.length === 0 || targetRegionIds.length === 0) {
+    return sourceRegionIds.length !== targetRegionIds.length;
+  }
+
+  return !sourceRegionIds.some((regionId) => targetRegionIds.includes(regionId));
+}
+
 export function countRuntimeAnnotations(graph: OrchestrationGraph) {
   return uniqueRuntimeAnnotations(
     graph.nodes.flatMap((node) => node.detail.runtimeThreads)
@@ -803,7 +826,7 @@ function getLinkColor(edge: GraphEdge) {
     return "#a8a29e";
   }
 
-  return LINK_COLORS[edge.type];
+  return DEFAULT_WORK_NODE_COLOR;
 }
 
 function getLinkDash(edge: GraphEdge) {

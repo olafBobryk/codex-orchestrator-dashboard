@@ -2,6 +2,8 @@
 
 Status: accepted minimal doc idea
 
+Template: ../../_templates/run.md
+
 This file defines the smallest useful Markdown run document for the
 orchestration shape strategy. It is a documentation idea, not an adapter schema.
 

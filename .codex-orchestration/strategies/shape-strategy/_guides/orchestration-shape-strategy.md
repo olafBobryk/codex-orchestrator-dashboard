@@ -29,6 +29,32 @@ npm run init:shape-strategy -- /absolute/path/to/target-repo
 Use `--force` only when intentionally replacing an existing shape strategy
 folder.
 
+Update an already-initialized repo with the latest shared strategy support docs
+with:
+
+```bash
+npm run update:shape-strategy -- /absolute/path/to/target-repo
+```
+
+The update command refreshes shared `_guides/` and `_templates/` docs and creates
+a missing project-local pressure ledger. It preserves project-authored maps,
+shapes, workpieces, runs, checkpoints, artifacts, and existing pressure ledger
+entries.
+
+The init command creates a clean project-local starter. It copies shared
+`_guides/` and `_templates/` strategy docs, writes a blank map and pressure
+ledger, and creates starter artifact/checkpoint/edge/run/shape/workpiece
+folders. It does not copy this repo's example graph into the target.
+
+Guides explain the strategy and artifact semantics. Templates are short
+copy/edit starting points that link back to their guide counterparts.
+
+The commands should stay conservative. They sync canonical guides and
+templates, but they should not accept JSON payloads to generate artifact docs by
+default. Agents should create project docs by copying templates and editing
+plain Markdown with normal file operations so the command does not become a
+second orchestration authoring abstraction.
+
 Migration from older packet/chunk/handoff docs should not be automatic by
 default. Use `goal-ledger-prep` first: create a temporary ignored ledger,
 inventory old docs, classify what maps to shapes, workpieces, checkpoints,
@@ -134,28 +160,31 @@ The shape owns the worker boundary. A run is bounded by the shape, not only by
 an individual workpiece.
 
 The accepted minimal Markdown shape document is described in
-`orchestration-shape-minimal-doc.md`.
+`artifacts/shape.md`.
 
 The accepted minimal Markdown workpiece document is described in
-`orchestration-workpiece-minimal-doc.md`.
+`artifacts/workpiece.md`.
 
 The accepted minimal Markdown run document is described in
-`orchestration-run-minimal-doc.md`.
+`artifacts/run.md`.
 
 The accepted minimal Markdown checkpoint document is described in
-`orchestration-checkpoint-minimal-doc.md`.
+`artifacts/checkpoint.md`.
 
 An optional, provisional Markdown agent document is sketched in
-`orchestration-agent-minimal-doc.md`. Agent docs are not required by default.
+`artifacts/agent.md`. Agent docs are not required by default.
 
 The accepted minimal Markdown map document is described in
-`orchestration-map-minimal-doc.md`.
+`artifacts/map.md`.
 
 The accepted minimal Markdown edge document is described in
-`orchestration-edge-minimal-doc.md`.
+`artifacts/edge.md`.
 
 The accepted minimal Markdown artifact document is described in
-`orchestration-artifact-minimal-doc.md`.
+`artifacts/artifact.md`.
+
+The accepted minimal Markdown pressure ledger document is described in
+`artifacts/pressure-ledger.md`.
 
 ### Fixed Decisions
 
@@ -193,6 +222,33 @@ accepted local decisions, or decisions that need steward acceptance.
 Return evidence can overlap with run return artifacts. That overlap is
 acceptable: the shape defines what must come back, while the run produces the
 actual return material.
+
+## Pressure Ledger
+
+The pressure ledger records friction against the orchestration strategy itself.
+
+Pressure entries are not concerns, workpieces, checkpoints, or architecture
+decisions by default. They capture durable feedback about where the current
+strategy bent, confused the work, created churn, or exposed useful signal.
+
+Pressure is grouped by direction:
+
+- Upper pressure: higher-level intent, steward decisions, architecture, product
+  direction, or human preference pushing down onto the work.
+- Lower pressure: implementation reality, verification, UI behavior, code
+  constraints, adapter limits, or worker output pushing up against the plan.
+- Sideways pressure: neighboring workstreams, concurrent agents, dirty
+  worktrees, duplicated docs, shared files, or parallel decisions pushing
+  laterally against the work.
+
+Pressure entries do not update strategy automatically. The promotion path is:
+
+```text
+pressure entry -> discussion -> accepted decision -> strategy doc update
+```
+
+This keeps the ledger useful as feedback without turning every friction point
+into durable architecture.
 
 ## Visual Strategy Notes
 
