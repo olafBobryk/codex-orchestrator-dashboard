@@ -103,6 +103,8 @@ type RawMarker = {
   muted?: unknown;
   icon?: unknown;
   loader?: unknown;
+  threadIds?: unknown;
+  threads?: unknown;
   links?: unknown;
   artifacts?: unknown;
 };
@@ -466,6 +468,7 @@ function readMarkers(value: unknown, nodeIds: Set<string>): GraphMarker[] {
         muted: readBoolean(entry.muted) ?? false,
         icon: readString(entry.icon),
         loader: readBoolean(entry.loader) ?? false,
+        threadIds: readStringArray(entry.threadIds ?? entry.threads),
         links: readEntityLinks(entry.links, entry.artifacts),
       },
     ];

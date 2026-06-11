@@ -30,18 +30,13 @@ import {
   drawNode,
   drawNodePointerArea,
   drawRegions,
-  getClickedLink,
-  getClickedRegion,
-  getClickedNodeMarker,
-  getRegionAtScreenPoint,
+  type GraphHitResult,
   isLinkCoveredByActiveRegions,
   isNodeCoveredByActiveRegion,
-  isNodeInsideCoveredRegion,
   readCanvasTheme,
+  resolveGraphHit,
 } from "./drawing";
 import type {
-  CanvasNode,
-  CanvasRegion,
   GraphMarkdownReference,
   GraphMethods,
   GraphProps,
@@ -58,14 +53,8 @@ const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
 const INITIAL_FOCUS_ZOOM = 0.52;
 const MARKER_LOADER_TRANSITION_REDRAW_MS = 760;
 
-type HoveredNodeTooltip = {
-  node: CanvasNode;
-  x: number;
-  y: number;
-};
-
-type HoveredRegionTooltip = {
-  region: CanvasRegion;
+type HoveredGraphTooltip = {
+  target: Exclude<GraphHitResult, { type: "background" }>;
   x: number;
   y: number;
 };
@@ -93,10 +82,8 @@ export function OrchestrationGraphCanvas({
     useState<GraphMarkdownReference | null>(null);
   const [statusPanelOpen, setStatusPanelOpen] = useState(true);
   const [graphMountVersion, setGraphMountVersion] = useState(0);
-  const [hoveredNodeTooltip, setHoveredNodeTooltip] =
-    useState<HoveredNodeTooltip | null>(null);
-  const [hoveredRegionTooltip, setHoveredRegionTooltip] =
-    useState<HoveredRegionTooltip | null>(null);
+  const [hoveredGraphTooltip, setHoveredGraphTooltip] =
+    useState<HoveredGraphTooltip | null>(null);
   const [markerLoaderTransitionRedraw, setMarkerLoaderTransitionRedraw] =
     useState(false);
   const markerLoaderSnapshotRef = useRef<string | null>(null);
@@ -120,8 +107,6 @@ export function OrchestrationGraphCanvas({
   const runtimeAnnotationCount = countRuntimeAnnotations(graph);
   const sourceStatus = getVisibleSourceStatus(graph);
   const flowSignalCounts = countFlowSignals(graph.edges);
-  const supportNodeCount = data.nodes.filter((node) => !node.primary).length;
-  const primaryChunkCount = data.nodes.filter((node) => node.primary).length;
   const hasLoadingMarkers = data.nodes.some((node) =>
     node.markers.some((marker) => marker.loader)
   );
@@ -194,83 +179,6 @@ export function OrchestrationGraphCanvas({
     [data.nodes, initialFocusNodeId]
   );
 
-  const isNodeInteractionBlocked = useCallback(
-    (node: CanvasNode) =>
-      isNodeInsideCoveredRegion({
-        node,
-        regions,
-        nodes: data.nodes,
-        graph: graphRef.current,
-        viewportWidth: size.width,
-        viewportHeight: size.height,
-      }),
-    [data.nodes, regions, size.height, size.width]
-  );
-
-  const refreshHoveredNodeTooltip = useCallback(
-    (node: CanvasNode | null) => {
-      if (!node || isNodeInteractionBlocked(node)) {
-        setHoveredNodeTooltip(null);
-        return;
-      }
-
-      const instance = graphRef.current;
-
-      if (!instance) {
-        setHoveredNodeTooltip(null);
-        return;
-      }
-
-      const point = instance.graph2ScreenCoords(
-        node.x ?? node.guideX,
-        node.y ?? node.guideY
-      );
-
-      setHoveredRegionTooltip(null);
-      setHoveredNodeTooltip({
-        node,
-        x: point.x,
-        y: point.y,
-      });
-    },
-    [isNodeInteractionBlocked]
-  );
-
-  const refreshHoveredRegionTooltip = useCallback(
-    (event: ReactMouseEvent<HTMLDivElement>) => {
-      if (hoveredNodeTooltip) {
-        return;
-      }
-
-      const container = containerRef.current;
-      const instance = graphRef.current;
-
-      if (!container || !instance) {
-        setHoveredRegionTooltip(null);
-        return;
-      }
-
-      const rect = container.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      const region = getRegionAtScreenPoint({
-        regions,
-        nodes: data.nodes,
-        graph: instance,
-        x,
-        y,
-      });
-
-      if (!region) {
-        setHoveredRegionTooltip(null);
-        return;
-      }
-
-      setHoveredRegionTooltip({ region, x, y });
-    },
-    [data.nodes, hoveredNodeTooltip, regions]
-  );
-
   const selectEdge = useCallback((edgeId: string) => {
     setSelectedNodeId(null);
     setSelectedEdgeId(edgeId);
@@ -279,6 +187,111 @@ export function OrchestrationGraphCanvas({
     setMarkdownReference(null);
     setStatusPanelOpen(false);
   }, []);
+
+  const selectNode = useCallback((nodeId: string, markerId: string | null = null) => {
+    setSelectedNodeId(nodeId);
+    setSelectedEdgeId(null);
+    setSelectedMarkerId(markerId);
+    setSelectedRegionId(null);
+    setMarkdownReference(null);
+    setStatusPanelOpen(false);
+  }, []);
+
+  const selectRegion = useCallback((regionId: string) => {
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setSelectedMarkerId(null);
+    setSelectedRegionId(regionId);
+    setMarkdownReference(null);
+    setStatusPanelOpen(false);
+  }, []);
+
+  const clearGraphSelection = useCallback(() => {
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setSelectedMarkerId(null);
+    setSelectedRegionId(null);
+    setMarkdownReference(null);
+  }, []);
+
+  const selectGraphHit = useCallback(
+    (hit: GraphHitResult) => {
+      if (hit.type === "marker") {
+        selectNode(hit.node.id, hit.marker.id);
+        return;
+      }
+
+      if (hit.type === "node") {
+        selectNode(hit.node.id);
+        return;
+      }
+
+      if (hit.type === "edge") {
+        selectEdge(hit.edge.id);
+        return;
+      }
+
+      if (hit.type === "region") {
+        selectRegion(hit.region.id);
+        return;
+      }
+
+      clearGraphSelection();
+    },
+    [clearGraphSelection, selectEdge, selectNode, selectRegion]
+  );
+
+  const resolveHitFromEvent = useCallback(
+    (event: MouseEvent | ReactMouseEvent<HTMLDivElement>) => {
+      const point = readGraphEventPoint(event, containerRef.current);
+
+      if (!point) {
+        return { type: "background" } satisfies GraphHitResult;
+      }
+
+      return resolveGraphHit({
+        nodes: data.nodes,
+        links: data.links,
+        regions,
+        graph: graphRef.current,
+        screenX: point.x,
+        screenY: point.y,
+      });
+    },
+    [data.links, data.nodes, regions]
+  );
+
+  const refreshGraphTooltip = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>) => {
+      const point = readGraphEventPoint(event, containerRef.current);
+
+      if (!point) {
+        setHoveredGraphTooltip(null);
+        return;
+      }
+
+      const hit = resolveGraphHit({
+        nodes: data.nodes,
+        links: data.links,
+        regions,
+        graph: graphRef.current,
+        screenX: point.x,
+        screenY: point.y,
+      });
+
+      if (hit.type === "background") {
+        setHoveredGraphTooltip(null);
+        return;
+      }
+
+      setHoveredGraphTooltip({
+        target: hit,
+        x: point.x,
+        y: point.y,
+      });
+    },
+    [data.links, data.nodes, regions]
+  );
 
   useEffect(() => {
     const element = containerRef.current;
@@ -412,10 +425,9 @@ export function OrchestrationGraphCanvas({
       <div
         ref={containerRef}
         className="relative h-full min-h-[520px] bg-background"
-        onMouseMove={refreshHoveredRegionTooltip}
+        onMouseMove={refreshGraphTooltip}
         onMouseLeave={() => {
-          setHoveredNodeTooltip(null);
-          setHoveredRegionTooltip(null);
+          setHoveredGraphTooltip(null);
         }}
       >
         {data.nodes.length > 0 ? (
@@ -514,90 +526,22 @@ export function OrchestrationGraphCanvas({
               linkDirectionalParticleWidth={2}
               d3VelocityDecay={0.46}
               cooldownTicks={320}
-              onLinkClick={(link, event) => {
+              onLinkClick={(_link, event) => {
                 event.stopPropagation();
-                selectEdge(link.id);
+                selectGraphHit(resolveHitFromEvent(event));
               }}
-              onNodeHover={(node) => refreshHoveredNodeTooltip(node)}
-              onNodeClick={(node, event) => {
+              onNodeClick={(_node, event) => {
                 event.stopPropagation();
-                const clickedLink = getClickedLink({
-                  links: data.links,
-                  event,
-                  graph: graphRef.current,
-                });
-
-                if (clickedLink) {
-                  selectEdge(clickedLink.id);
-                  return;
-                }
-
-                if (isNodeInteractionBlocked(node)) {
-                  const region = getClickedRegion({
-                    regions,
-                    nodes: data.nodes,
-                    event,
-                    graph: graphRef.current,
-                  });
-
-                  if (region) {
-                    setSelectedNodeId(null);
-                    setSelectedEdgeId(null);
-                    setSelectedMarkerId(null);
-                    setSelectedRegionId(region.id);
-                    setMarkdownReference(null);
-                  }
-
-                  return;
-                }
-
-                const marker = getClickedNodeMarker({
-                  node,
-                  event,
-                  graph: graphRef.current,
-                });
-
-                setSelectedNodeId(node.id);
-                setSelectedEdgeId(null);
-                setSelectedMarkerId(marker?.id ?? null);
-                setSelectedRegionId(null);
-                setMarkdownReference(null);
+                selectGraphHit(resolveHitFromEvent(event));
               }}
               onBackgroundClick={(event) => {
-                const clickedLink = getClickedLink({
-                  links: data.links,
-                  event,
-                  graph: graphRef.current,
-                });
+                const hit = resolveHitFromEvent(event);
 
-                if (clickedLink) {
+                if (hit.type !== "background") {
                   event.stopPropagation();
-                  selectEdge(clickedLink.id);
-                  return;
                 }
 
-                const region = getClickedRegion({
-                  regions,
-                  nodes: data.nodes,
-                  event,
-                  graph: graphRef.current,
-                });
-
-                if (region) {
-                  event.stopPropagation();
-                  setSelectedNodeId(null);
-                  setSelectedEdgeId(null);
-                  setSelectedMarkerId(null);
-                  setSelectedRegionId(region.id);
-                  setMarkdownReference(null);
-                  return;
-                }
-
-                setSelectedNodeId(null);
-                setSelectedEdgeId(null);
-                setSelectedMarkerId(null);
-                setSelectedRegionId(null);
-                setMarkdownReference(null);
+                selectGraphHit(hit);
               }}
               enableNodeDrag
             />
@@ -607,10 +551,8 @@ export function OrchestrationGraphCanvas({
         )}
 
         <AnimatePresence>
-          {hoveredNodeTooltip ? (
-            <GraphNodeTooltip tooltip={hoveredNodeTooltip} />
-          ) : hoveredRegionTooltip ? (
-            <GraphRegionTooltip tooltip={hoveredRegionTooltip} />
+          {hoveredGraphTooltip ? (
+            <GraphHitTooltip tooltip={hoveredGraphTooltip} />
           ) : null}
         </AnimatePresence>
 
@@ -658,6 +600,7 @@ export function OrchestrationGraphCanvas({
                     : "min(520px, calc(100vh - 1.5rem))",
               }}
               onPointerDown={(event) => event.stopPropagation()}
+              onMouseMove={(event) => event.stopPropagation()}
               onClick={(event) => event.stopPropagation()}
             >
               {sidePanelMode === "markdown" && markdownReference ? (
@@ -700,6 +643,14 @@ export function OrchestrationGraphCanvas({
                   region: selectedRegion,
                   workspace,
                   onOpenMarkdownReference: setMarkdownReference,
+                  onSelectNode: (nodeId) => {
+                    setSelectedNodeId(nodeId);
+                    setSelectedEdgeId(null);
+                    setSelectedMarkerId(null);
+                    setSelectedRegionId(null);
+                    setMarkdownReference(null);
+                    setStatusPanelOpen(false);
+                  },
                   onClose: () => {
                     setSelectedRegionId(null);
                     setMarkdownReference(null);
@@ -711,18 +662,17 @@ export function OrchestrationGraphCanvas({
                   stats,
                   packetColors,
                   visiblePackets,
-                  primaryChunkCount,
-                  supportNodeCount,
-                  edgeCount: data.links.length,
                   flowSignalCounts,
                   runtimeAnnotationCount,
                   sourceStatus,
                   primaryNodes: data.nodes.filter((node) => node.primary),
-                  onSelectNode: (nodeId) => {
+                  onSelectNode: (nodeId, markerId) => {
                     setSelectedNodeId(nodeId);
                     setSelectedEdgeId(null);
-                    setSelectedMarkerId(null);
+                    setSelectedMarkerId(markerId ?? null);
                     setSelectedRegionId(null);
+                    setMarkdownReference(null);
+                    setStatusPanelOpen(false);
                   },
                   onClose: () => setStatusPanelOpen(false),
                 })
@@ -773,11 +723,13 @@ function GraphEmptyState() {
   );
 }
 
-function GraphNodeTooltip({ tooltip }: { tooltip: HoveredNodeTooltip }) {
+function GraphHitTooltip({ tooltip }: { tooltip: HoveredGraphTooltip }) {
+  const content = formatGraphHitTooltip(tooltip.target);
+
   return (
     <motion.div
-      key={tooltip.node.id}
-      data-graph-tooltip="node"
+      key={content.key}
+      data-graph-tooltip={tooltip.target.type}
       className="pointer-events-none absolute z-30 max-w-[260px]"
       style={{ left: tooltip.x, top: tooltip.y }}
       initial={{ opacity: 0, scale: 0.96, y: -4 }}
@@ -787,7 +739,10 @@ function GraphNodeTooltip({ tooltip }: { tooltip: HoveredNodeTooltip }) {
     >
       <div className="-translate-x-1/2 -translate-y-[calc(100%+14px)] rounded-md border border-border/80 bg-popover/95 px-3 py-2 text-xs text-popover-foreground shadow-lg shadow-black/10 backdrop-blur">
         <div className="max-w-[220px] truncate font-medium leading-snug">
-          {tooltip.node.label}
+          {content.label}
+        </div>
+        <div className="mt-1 text-[11px] leading-none text-muted-foreground">
+          {content.detail}
         </div>
         <div className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-border/80 bg-popover/95" />
       </div>
@@ -795,27 +750,75 @@ function GraphNodeTooltip({ tooltip }: { tooltip: HoveredNodeTooltip }) {
   );
 }
 
-function GraphRegionTooltip({ tooltip }: { tooltip: HoveredRegionTooltip }) {
-  return (
-    <motion.div
-      key={tooltip.region.id}
-      data-graph-tooltip="region"
-      className="pointer-events-none absolute z-30 max-w-[260px]"
-      style={{ left: tooltip.x, top: tooltip.y }}
-      initial={{ opacity: 0, scale: 0.96, y: -4 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.98, y: -3 }}
-      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className="-translate-x-1/2 -translate-y-[calc(100%+14px)] rounded-md border border-border/80 bg-popover/95 px-3 py-2 text-xs text-popover-foreground shadow-lg shadow-black/10 backdrop-blur">
-        <div className="max-w-[220px] truncate font-medium leading-snug">
-          {tooltip.region.label}
-        </div>
-        <div className="mt-1 text-[11px] leading-none text-muted-foreground">
-          region
-        </div>
-        <div className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-border/80 bg-popover/95" />
-      </div>
-    </motion.div>
-  );
+function formatGraphHitTooltip(
+  target: Exclude<GraphHitResult, { type: "background" }>
+) {
+  if (target.type === "marker") {
+    return {
+      key: `marker:${target.marker.id}`,
+      label: target.marker.label,
+      detail: "Marker details",
+    };
+  }
+
+  if (target.type === "node") {
+    return {
+      key: `node:${target.node.id}`,
+      label: target.node.label,
+      detail: "Node details",
+    };
+  }
+
+  if (target.type === "edge") {
+    return {
+      key: `edge:${target.edge.id}`,
+      label: target.edge.label,
+      detail: "Edge details",
+    };
+  }
+
+  return {
+    key: `region:${target.region.id}`,
+    label: target.region.label,
+    detail: "Shape details",
+  };
+}
+
+function readGraphEventPoint(
+  event: MouseEvent | ReactMouseEvent<HTMLDivElement>,
+  container: HTMLDivElement | null
+) {
+  if ("nativeEvent" in event) {
+    if (!container) {
+      return null;
+    }
+
+    const rect = container.getBoundingClientRect();
+
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+  }
+
+  if (
+    typeof event.offsetX === "number" &&
+    typeof event.offsetY === "number"
+  ) {
+    return {
+      x: event.offsetX,
+      y: event.offsetY,
+    };
+  }
+
+  if (!container) {
+    return null;
+  }
+
+  const rect = container.getBoundingClientRect();
+
+  return {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top,
+  };
 }

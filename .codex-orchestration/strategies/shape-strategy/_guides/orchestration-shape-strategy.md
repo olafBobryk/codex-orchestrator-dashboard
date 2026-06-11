@@ -125,6 +125,25 @@ In the dashboard, runs may be represented indirectly through checkpoint edges,
 active worker markers, node details, and return evidence rather than as primary
 graph nodes.
 
+### Worktree
+
+A worktree is a filesystem and Git execution context.
+
+A worktree is not a run. A run is the worker or agent job; a worktree is one
+place where that job may edit, test, and produce commits.
+
+A worktree is not a primary graph node by default. It can appear as a detail or
+evidence reference on runs, agents, workpieces, and shapes when it helps explain
+where work happened.
+
+The accepted shorthand is:
+
+- Agent: who or what acted.
+- Run: the execution attempt or job.
+- Worktree: the checkout/folder context used by the run.
+- Branch: the Git line the worktree may point at.
+- Commit: durable Git evidence produced by the run.
+
 ### Checkpoint
 
 A checkpoint is a durable "we are here" graph node.

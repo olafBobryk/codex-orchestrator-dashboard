@@ -1,5 +1,5 @@
 import type { NodeObject } from "react-force-graph-2d";
-import type { GraphNode } from "@/lib/orchestration-graph";
+import type { GraphMarker, GraphNode } from "@/lib/orchestration-graph";
 import { DEFAULT_CANVAS_THEME } from "./constants";
 import type {
   CanvasLink,
@@ -29,12 +29,37 @@ const REGION_CHILD_PADDING = 76;
 const REGION_INSIDE_LABEL_FONT_SIZE = 18;
 const MARKER_LOADER_ROTATION_MS = 1200;
 const MARKER_LOADER_TRANSITION_MS = 620;
+const NODE_HIT_PADDING = 12;
+const MARKER_HIT_PADDING = 8;
+const EDGE_HIT_DISTANCE = 18;
 
 type MarkerLoaderAnimationState = {
   loader: boolean;
   changedAt: number;
   lastSeenAt: number;
 };
+
+export type GraphHitResult =
+  | {
+      type: "marker";
+      node: CanvasNode;
+      marker: GraphMarker;
+    }
+  | {
+      type: "node";
+      node: CanvasNode;
+    }
+  | {
+      type: "edge";
+      edge: CanvasLink;
+    }
+  | {
+      type: "region";
+      region: CanvasRegion;
+    }
+  | {
+      type: "background";
+    };
 
 const markerLoaderAnimationState = new Map<string, MarkerLoaderAnimationState>();
 
@@ -381,67 +406,6 @@ export function isNodeCoveredByActiveRegion({
   );
 }
 
-export function isNodeInsideCoveredRegion({
-  node,
-  regions,
-  nodes,
-  graph,
-  viewportWidth,
-  viewportHeight,
-}: {
-  node: NodeObject<CanvasNode>;
-  regions: CanvasRegion[];
-  nodes: NodeObject<CanvasNode>[];
-  graph: GraphMethods | undefined;
-  viewportWidth: number;
-  viewportHeight: number;
-}) {
-  if (!graph || regions.length === 0) {
-    return false;
-  }
-
-  const regionState = getRegionInteractionState({
-    regions,
-    nodes,
-    graph,
-    viewportWidth,
-    viewportHeight,
-  });
-  const nodeX = node.x ?? node.guideX ?? 0;
-  const nodeY = node.y ?? node.guideY ?? 0;
-
-  if (
-    regionState.regionFields.some((regionField) => {
-      if (
-        (regionState.coverAlphaByRegionId.get(regionField.region.id) ?? 0) <
-        REGION_ABSTRACTION_SKIP_ALPHA
-      ) {
-        return false;
-      }
-
-      return readMetaballValue(regionField.field, nodeX, nodeY) >= METABALL_THRESHOLD;
-    })
-  ) {
-    return true;
-  }
-
-  return regions.some((region) => {
-    if (
-      (regionState.coverAlphaByRegionId.get(region.id) ?? 0) <
-      REGION_ABSTRACTION_SKIP_ALPHA
-    ) {
-      return false;
-    }
-
-    return regionContainsNode(
-      region,
-      node.id,
-      new Map(regions.map((candidate) => [candidate.id, candidate])),
-      new Set()
-    );
-  });
-}
-
 export function isLinkCoveredByActiveRegions({
   link,
   regions,
@@ -690,7 +654,18 @@ function drawNodeMarkers({
     context.fillText(
       truncateCanvasText(context, marker.label, island.width - 54),
       island.x + 50,
-      island.y + island.height / 2
+      island.y + 21
+    );
+    context.fillStyle = "rgba(148, 163, 184, 0.92)";
+    context.font = "500 10px ui-sans-serif, system-ui";
+    context.fillText(
+      truncateCanvasText(
+        context,
+        marker.description ?? (marker.muted ? "Muted marker" : "Active marker"),
+        island.width - 54
+      ),
+      island.x + 50,
+      island.y + 35
     );
     context.restore();
   });
@@ -814,7 +789,13 @@ export function drawNodePointerArea(
 ) {
   context.fillStyle = color;
   context.beginPath();
-  context.arc(node.x ?? 0, node.y ?? 0, node.radius + 12, 0, Math.PI * 2);
+  context.arc(
+    node.x ?? node.guideX ?? 0,
+    node.y ?? node.guideY ?? 0,
+    node.visualRadius + NODE_HIT_PADDING,
+    0,
+    Math.PI * 2
+  );
   context.fill();
 
   node.markers.slice(0, 4).forEach((_, index) => {
@@ -871,39 +852,83 @@ export function drawLinkPointerArea(
   context.moveTo(source.x, source.y);
   context.lineTo(target.x, target.y);
   context.strokeStyle = color;
-  context.lineWidth = Math.max(14, link.width + 12);
+  context.lineWidth = Math.max(EDGE_HIT_DISTANCE * 2, link.width + 12);
   context.lineCap = "round";
   context.stroke();
   context.restore();
 }
 
-export function getClickedLink({
+export function resolveGraphHit({
+  nodes,
   links,
-  event,
+  regions,
   graph,
-  maxDistance = 18,
+  screenX,
+  screenY,
+  maxEdgeDistance = EDGE_HIT_DISTANCE,
+}: {
+  nodes: NodeObject<CanvasNode>[];
+  links: CanvasLink[];
+  regions: CanvasRegion[];
+  graph: GraphMethods | undefined;
+  screenX: number;
+  screenY: number;
+  maxEdgeDistance?: number;
+}): GraphHitResult {
+  if (!graph) {
+    return { type: "background" };
+  }
+
+  const point = graph.screen2GraphCoords(screenX, screenY);
+
+  for (const node of [...nodes].reverse()) {
+    const marker = getMarkerAtGraphPoint(node, point);
+
+    if (marker) {
+      return { type: "marker", node, marker };
+    }
+  }
+
+  for (const node of [...nodes].reverse()) {
+    if (isNodeHitAtGraphPoint(node, point)) {
+      return { type: "node", node };
+    }
+  }
+
+  const edge = getClosestEdgeAtGraphPoint({
+    links,
+    point,
+    maxDistance: maxEdgeDistance,
+  });
+
+  if (edge) {
+    return { type: "edge", edge };
+  }
+
+  const region = getRegionAtScreenPoint({
+    regions,
+    nodes,
+    graph,
+    x: screenX,
+    y: screenY,
+  });
+
+  if (region) {
+    return { type: "region", region };
+  }
+
+  return { type: "background" };
+}
+
+function getClosestEdgeAtGraphPoint({
+  links,
+  point,
+  maxDistance,
 }: {
   links: CanvasLink[];
-  event: MouseEvent;
-  graph: GraphMethods | undefined;
-  maxDistance?: number;
+  point: { x: number; y: number };
+  maxDistance: number;
 }) {
-  if (!graph || links.length === 0) {
-    return null;
-  }
-
-  const eventWithOffset = event as MouseEvent & {
-    offsetX?: number;
-    offsetY?: number;
-  };
-  const offsetX = eventWithOffset.offsetX;
-  const offsetY = eventWithOffset.offsetY;
-
-  if (typeof offsetX !== "number" || typeof offsetY !== "number") {
-    return null;
-  }
-
-  const point = graph.screen2GraphCoords(offsetX, offsetY);
   let closestLink: CanvasLink | null = null;
   let closestDistance = maxDistance;
 
@@ -926,79 +951,37 @@ export function getClickedLink({
   return closestLink;
 }
 
-export function getClickedNodeMarker({
-  node,
-  event,
-  graph,
-}: {
-  node: NodeObject<CanvasNode>;
-  event: MouseEvent;
-  graph: GraphMethods | undefined;
-}) {
-  if (!graph || node.markers.length === 0) {
+function getMarkerAtGraphPoint(
+  node: NodeObject<CanvasNode>,
+  point: { x: number; y: number }
+) {
+  if (node.markers.length === 0) {
     return null;
   }
-
-  const eventWithOffset = event as MouseEvent & {
-    offsetX?: number;
-    offsetY?: number;
-  };
-  const offsetX = eventWithOffset.offsetX;
-  const offsetY = eventWithOffset.offsetY;
-
-  if (typeof offsetX !== "number" || typeof offsetY !== "number") {
-    return null;
-  }
-
-  const point = graph.screen2GraphCoords(offsetX, offsetY);
 
   return (
     node.markers.slice(0, 4).find((_, index) => {
       const island = getMarkerIslandRect(node, index);
 
       return (
-        point.x >= island.x &&
-        point.x <= island.x + island.width &&
-        point.y >= island.y &&
-        point.y <= island.y + island.height
+        point.x >= island.x - MARKER_HIT_PADDING &&
+        point.x <= island.x + island.width + MARKER_HIT_PADDING &&
+        point.y >= island.y - MARKER_HIT_PADDING &&
+        point.y <= island.y + island.height + MARKER_HIT_PADDING
       );
     }) ?? null
   );
 }
 
-export function getClickedRegion({
-  regions,
-  nodes,
-  event,
-  graph,
-}: {
-  regions: CanvasRegion[];
-  nodes: NodeObject<CanvasNode>[];
-  event: MouseEvent;
-  graph: GraphMethods | undefined;
-}) {
-  if (!graph || regions.length === 0) {
-    return null;
-  }
+function isNodeHitAtGraphPoint(
+  node: NodeObject<CanvasNode>,
+  point: { x: number; y: number }
+) {
+  const x = node.x ?? node.guideX ?? 0;
+  const y = node.y ?? node.guideY ?? 0;
+  const hitRadius = node.visualRadius + NODE_HIT_PADDING;
 
-  const eventWithOffset = event as MouseEvent & {
-    offsetX?: number;
-    offsetY?: number;
-  };
-  const offsetX = eventWithOffset.offsetX;
-  const offsetY = eventWithOffset.offsetY;
-
-  if (typeof offsetX !== "number" || typeof offsetY !== "number") {
-    return null;
-  }
-
-  return getRegionAtScreenPoint({
-    regions,
-    nodes,
-    graph,
-    x: offsetX,
-    y: offsetY,
-  });
+  return Math.hypot(point.x - x, point.y - y) <= hitRadius;
 }
 
 export function getRegionAtScreenPoint({
@@ -1045,7 +1028,13 @@ export function getRegionAtScreenPoint({
   return null;
 }
 
-function getLinkEndpoint(endpoint: unknown): { x: number; y: number } | null {
+type LinkEndpoint = {
+  x: number;
+  y: number;
+  hitRadius: number;
+};
+
+function getLinkEndpoint(endpoint: unknown): LinkEndpoint | null {
   if (
     endpoint &&
     typeof endpoint === "object" &&
@@ -1054,10 +1043,34 @@ function getLinkEndpoint(endpoint: unknown): { x: number; y: number } | null {
     typeof endpoint.x === "number" &&
     typeof endpoint.y === "number"
   ) {
-    return { x: endpoint.x, y: endpoint.y };
+    return {
+      x: endpoint.x,
+      y: endpoint.y,
+      hitRadius: readEndpointHitRadius(endpoint),
+    };
   }
 
   return null;
+}
+
+function readEndpointHitRadius(endpoint: object) {
+  if (
+    "radius" in endpoint &&
+    typeof endpoint.radius === "number" &&
+    Number.isFinite(endpoint.radius)
+  ) {
+    return Math.max(0, endpoint.radius);
+  }
+
+  if (
+    "visualRadius" in endpoint &&
+    typeof endpoint.visualRadius === "number" &&
+    Number.isFinite(endpoint.visualRadius)
+  ) {
+    return Math.max(0, endpoint.visualRadius);
+  }
+
+  return 0;
 }
 
 function getPointToSegmentDistance(
@@ -1701,67 +1714,6 @@ function getRegionFieldsForHitTesting({
   return fields.sort((left, right) => {
     return right.depth - left.depth || right.order - left.order;
   });
-}
-
-function getRegionInteractionState({
-  regions,
-  nodes,
-  graph,
-  viewportWidth,
-  viewportHeight,
-}: {
-  regions: CanvasRegion[];
-  nodes: NodeObject<CanvasNode>[];
-  graph: GraphMethods;
-  viewportWidth: number;
-  viewportHeight: number;
-}) {
-  const regionFields = getRegionFieldsForDrawing({ regions, nodes });
-  const coverAlphaByRegionId = new Map(
-    regionFields.map((regionField) => [
-      regionField.region.id,
-      getRegionCoverAlphaFromScreenFill(
-        getRegionScreenFillFromGraph({
-          field: regionField.field,
-          graph,
-          viewportWidth,
-          viewportHeight,
-        })
-      ),
-    ])
-  );
-
-  return {
-    regionFields,
-    coverAlphaByRegionId,
-  };
-}
-
-function getRegionScreenFillFromGraph({
-  field,
-  graph,
-  viewportWidth,
-  viewportHeight,
-}: {
-  field: MetaballField;
-  graph: GraphMethods;
-  viewportWidth: number;
-  viewportHeight: number;
-}) {
-  const corners = [
-    graph.graph2ScreenCoords(field.bounds.left, field.bounds.top),
-    graph.graph2ScreenCoords(field.bounds.right, field.bounds.top),
-    graph.graph2ScreenCoords(field.bounds.right, field.bounds.bottom),
-    graph.graph2ScreenCoords(field.bounds.left, field.bounds.bottom),
-  ];
-  const left = Math.max(0, Math.min(...corners.map((corner) => corner.x)));
-  const right = Math.min(viewportWidth, Math.max(...corners.map((corner) => corner.x)));
-  const top = Math.max(0, Math.min(...corners.map((corner) => corner.y)));
-  const bottom = Math.min(viewportHeight, Math.max(...corners.map((corner) => corner.y)));
-  const visibleScreenArea = Math.max(0, right - left) * Math.max(0, bottom - top);
-  const viewportScreenArea = Math.max(1, viewportWidth * viewportHeight);
-
-  return Math.min(1, visibleScreenArea / viewportScreenArea);
 }
 
 function createRegionFields({

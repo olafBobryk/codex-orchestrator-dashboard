@@ -25,7 +25,14 @@ Guide: ../_guides/artifacts/run.md
 
 - Checkpoint: `<checkpoint-id>` | none
 - Handoff: <handoff or source artifact>
+
+## Execution Context
+
+- Thread: <current thread id or link>
+- Codex agent: <agent id, worker name, or none>
 - Worktree: <path or branch, if any>
+- Branch: <branch or none>
+- Base: <commit or branch, if known>
 
 ## Return Evidence
 

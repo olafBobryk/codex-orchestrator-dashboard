@@ -17,11 +17,13 @@ export const DEFAULT_CANVAS_THEME: CanvasTheme = {
   surfaceForeground: "#fafafa",
 };
 
+export const DEFAULT_GRAPH_NEUTRAL_STROKE = "#94a3b8";
+
 export const STATUS_COLORS: Record<
   GraphStatus,
   { fill: string; stroke: string }
 > = {
-  queued: { fill: "#f8fafc", stroke: "#94a3b8" },
+  queued: { fill: "#f8fafc", stroke: DEFAULT_GRAPH_NEUTRAL_STROKE },
   in_progress: { fill: "#eff6ff", stroke: "#2563eb" },
   needs_human: { fill: "#fff7ed", stroke: "#d97706" },
   blocked: { fill: "#fff1f2", stroke: "#be123c" },
@@ -29,7 +31,7 @@ export const STATUS_COLORS: Record<
   verified: { fill: "#f0fdf4", stroke: "#16a34a" },
   signed_off: { fill: "#eef2ff", stroke: "#4f46e5" },
   complete: { fill: "#f8fafc", stroke: "#64748b" },
-  superseded: { fill: "#f1f5f9", stroke: "#94a3b8" },
+  superseded: { fill: "#f1f5f9", stroke: DEFAULT_GRAPH_NEUTRAL_STROKE },
   resolved: { fill: "#f0fdf4", stroke: "#16a34a" },
   deferred: { fill: "#fafaf9", stroke: "#a8a29e" },
   unknown: { fill: "#f8fafc", stroke: "#cbd5e1" },
@@ -39,7 +41,7 @@ export const STATUS_META: Record<GraphStatus, SignalMeta> = {
   queued: {
     label: "Queued",
     description: "Planned work that has not started yet.",
-    color: "#94a3b8",
+    color: DEFAULT_GRAPH_NEUTRAL_STROKE,
   },
   in_progress: {
     label: "In progress",
@@ -79,7 +81,7 @@ export const STATUS_META: Record<GraphStatus, SignalMeta> = {
   superseded: {
     label: "Superseded",
     description: "This item was replaced by a newer accepted direction.",
-    color: "#94a3b8",
+    color: DEFAULT_GRAPH_NEUTRAL_STROKE,
   },
   resolved: {
     label: "Resolved",
@@ -127,10 +129,10 @@ export const KIND_META: Record<GraphNode["kind"], SignalMeta> = {
 };
 
 export const LINK_COLORS: Record<CanvasLink["type"], string> = {
-  annotates: "#94a3b8",
+  annotates: DEFAULT_GRAPH_NEUTRAL_STROKE,
   blocked: "#be123c",
   detour: "#d97706",
-  documents: "#64748b",
+  documents: DEFAULT_GRAPH_NEUTRAL_STROKE,
   repass: "#7c3aed",
   returned: "#16a34a",
   sequence: "#2563eb",

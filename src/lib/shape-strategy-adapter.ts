@@ -12,6 +12,8 @@ const SHAPE_STRATEGY_FILE = "map.md";
 const WORK_COLOR = "#737373";
 const CHECKPOINT_COLOR = "#d97706";
 const SHAPE_COLORS = ["#2563eb", "#16a34a", "#9333ea", "#dc2626"];
+const ARTIFACT_PATH_HINT =
+  "Map references should usually be artifact paths like `shapes/name.md`, not bare IDs.";
 
 type ShapeStrategyProjectionReadResult =
   | {
@@ -186,6 +188,7 @@ export async function readShapeStrategyProjection(
               `${edge.relativePath} references ${edge.source ?? "(missing)"} -> ${
                 edge.target ?? "(missing)"
               }.`,
+              ARTIFACT_PATH_HINT,
             ])
           );
           return [];
@@ -432,6 +435,7 @@ function createAgentMarkers(
         color: agentColor(agent.role),
         icon: "user-cog",
         loader: markerActivity.get(agent.markerId)?.loader ?? false,
+        threadIds: agent.threadIds,
         links: [
           {
             label: "Open agent",
@@ -529,6 +533,7 @@ async function readReferencedDoc(
     warnings.push(
       createWarning("shape-strategy-missing-reference", referenceToId(reference), [
         `${displayRelativePath(source, normalized)} could not be read.`,
+        ARTIFACT_PATH_HINT,
       ])
     );
   }
@@ -626,7 +631,12 @@ function readNamedReference(section: string | undefined, name: string) {
     return null;
   }
 
-  const pattern = new RegExp("^-\\s*" + name + ":\\s*`([^`]+)`", "im");
+  const pattern = new RegExp(
+    "^\\s*(?:[-*+]\\s+|\\d+[.)]\\s+)?" +
+      escapeRegExp(name) +
+      ":\\s*`([^`]+)`",
+    "im"
+  );
   return section.match(pattern)?.[1]?.trim() ?? null;
 }
 
@@ -637,7 +647,7 @@ function readScalarSection(section: string | undefined) {
 
   const line = section
     .split("\n")
-    .map((entry) => entry.trim())
+    .map(normalizeMarkdownListLine)
     .find(Boolean);
 
   return line ?? null;
@@ -756,23 +766,222 @@ function readDocDetailBlocks(
 ) {
   return sectionNames.flatMap((sectionName) => {
     const body = doc.sections.get(sectionName);
+    const normalizedBody = normalizeMarkdownListBody(body);
 
-    if (!body || body === "none") {
+    if (!normalizedBody || normalizedBody === "none") {
       return [];
     }
+
+    const links = readDetailReferencePaths(body).map((reference) => ({
+      label: referenceToId(reference),
+      relativePath: normalizeDetailReference(source, reference, doc.relativePath),
+    }));
 
     return [
       {
         id: `${doc.id}-${sectionName.replace(/\s+/g, "-")}`,
         name: titleCase(sectionName),
-        body,
-        links: readReferencePaths(body).map((reference) => ({
-          label: referenceToId(reference),
-          relativePath: normalizeDetailReference(source, reference, doc.relativePath),
-        })),
+        icon: readDetailBlockIcon(sectionName),
+        summary: readDetailBlockSummary(sectionName, body ?? "", links.length),
+        color: readDetailBlockColor(sectionName),
+        body: readDetailBlockBody(sectionName, body, links.length),
+        links,
       },
     ];
   });
+}
+
+function readDetailBlockBody(
+  sectionName: string,
+  body: string | undefined,
+  linkCount: number
+) {
+  if (linkCount > 0 && isReferenceOnlyBody(body)) {
+    return null;
+  }
+
+  const displayBody = stripDetailSummaryLines(sectionName, body ?? "");
+  const normalizedDisplayBody = normalizeMarkdownListBody(displayBody);
+
+  if (!normalizedDisplayBody || normalizedDisplayBody === "none") {
+    return null;
+  }
+
+  return displayBody.trim();
+}
+
+function stripDetailSummaryLines(sectionName: string, body: string) {
+  if (sectionName !== "tests") {
+    return body;
+  }
+
+  return body
+    .split("\n")
+    .filter(
+      (line) =>
+        !/^\s*(?:[-*+]|\d+[.)])?\s*Test Completion:\s*\d+\s*\/\s*\d+\s*$/i.test(
+          line
+        )
+    )
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n");
+}
+
+function isReferenceOnlyBody(body: string | undefined) {
+  if (!body) {
+    return false;
+  }
+
+  const lines = body
+    .split("\n")
+    .map(normalizeMarkdownListLine)
+    .filter(Boolean);
+
+  return (
+    lines.length > 0 &&
+    lines.every((line) => /^`[^`]+`$/.test(line) && line !== "`none`")
+  );
+}
+
+function readDetailReferencePaths(section: string | undefined) {
+  if (!section) {
+    return [];
+  }
+
+  return section
+    .split("\n")
+    .flatMap((line) => {
+      const reference = readExplicitDetailReference(normalizeMarkdownListLine(line));
+      return reference ? [reference] : [];
+    })
+    .filter((reference) => reference !== "none");
+}
+
+function readExplicitDetailReference(line: string) {
+  const directReference = line.match(/^`([^`]+)`$/)?.[1];
+
+  if (directReference) {
+    return directReference;
+  }
+
+  return line.match(/^[A-Za-z][\w /-]*:\s*`([^`]+)`$/)?.[1] ?? null;
+}
+
+function readDetailBlockSummary(
+  sectionName: string,
+  body: string,
+  linkCount: number
+) {
+  const itemCount = countMarkdownListItems(body);
+
+  switch (sectionName) {
+    case "acceptance":
+      return formatCount(itemCount, "criterion", "criteria");
+    case "tests":
+      return (
+        readTestCompletionSummary(body) ?? formatCount(itemCount, "check", "checks")
+      );
+    case "artifacts":
+    case "evidence":
+    case "run references":
+      return formatCount(linkCount || itemCount, "link", "links");
+    case "commit evidence":
+      return formatCount(itemCount, "entry", "entries");
+    default:
+      return itemCount > 1 ? formatCount(itemCount, "item", "items") : null;
+  }
+}
+
+function readTestCompletionSummary(body: string) {
+  const completion = body.match(
+    /(?:^|\n)\s*(?:[-*+]|\d+[.)])?\s*Test Completion:\s*(\d+)\s*\/\s*(\d+)/i
+  );
+
+  if (!completion?.[1] || !completion[2]) {
+    return null;
+  }
+
+  return `${completion[1]}/${completion[2]}`;
+}
+
+function readDetailBlockIcon(sectionName: string) {
+  switch (sectionName) {
+    case "intent":
+      return "eye";
+    case "acceptance":
+    case "tests":
+    case "decision":
+      return "check";
+    case "artifacts":
+    case "evidence":
+    case "run references":
+      return "link";
+    case "commit evidence":
+      return "git-branch";
+    case "fixed decisions":
+    case "escalation triggers":
+      return "lock";
+    case "autonomous decisions":
+      return "user";
+    case "return evidence":
+      return "archive";
+    case "applies to":
+      return "layers";
+    case "source / target":
+    case "relationship":
+    case "direction":
+    case "visual weight":
+    case "transition":
+      return "route";
+    default:
+      return null;
+  }
+}
+
+function readDetailBlockColor(sectionName: string) {
+  switch (sectionName) {
+    case "acceptance":
+    case "tests":
+    case "decision":
+    case "return evidence":
+      return "#16a34a";
+    case "intent":
+    case "autonomous decisions":
+    case "artifacts":
+    case "evidence":
+    case "run references":
+      return "#2563eb";
+    case "commit evidence":
+      return "#9333ea";
+    case "fixed decisions":
+      return "#d97706";
+    case "escalation triggers":
+      return "#dc2626";
+    case "applies to":
+    case "source / target":
+    case "relationship":
+    case "direction":
+    case "visual weight":
+    case "transition":
+      return "#64748b";
+    default:
+      return null;
+  }
+}
+
+function countMarkdownListItems(body: string) {
+  return body
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /^[-*+] |\d+[.)]\s+/.test(line)).length;
+}
+
+function formatCount(count: number, singular: string, plural: string) {
+  if (count <= 0) {
+    return null;
+  }
+
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function readDocLinks(
@@ -787,7 +996,7 @@ function readDocLinks(
       return [];
     }
 
-    return readReferencePaths(body).map((reference) => ({
+    return readDetailReferencePaths(body).map((reference) => ({
       label: referenceToId(reference),
       relativePath: normalizeDetailReference(source, reference, doc.relativePath),
     }));
@@ -799,7 +1008,7 @@ function readSectionSummary(section: string | undefined) {
     return null;
   }
 
-  return section.replace(/\s+/g, " ").trim();
+  return normalizeMarkdownListBody(section)?.replace(/\s+/g, " ").trim() ?? null;
 }
 
 function readAgentDescription(agent: AgentDoc) {
@@ -945,6 +1154,25 @@ function normalizeHeading(value: string) {
 
 function titleCase(value: string) {
   return value.replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function normalizeMarkdownListBody(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  return value
+    .split("\n")
+    .map(normalizeMarkdownListLine)
+    .join("\n")
+    .trim();
+}
+
+function normalizeMarkdownListLine(value: string) {
+  return value
+    .trim()
+    .replace(/^(?:[-*+]|\d+[.)])\s+/, "")
+    .trim();
 }
 
 function createWarning(

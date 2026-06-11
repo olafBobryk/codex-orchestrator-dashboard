@@ -72,14 +72,6 @@ export type OrchestrationGraphCanvasProps = {
   renderStatusPanel: (props: GraphStatusPanelProps) => ReactNode;
 };
 
-export type NodeSignalPanel =
-  | "files"
-  | "verification"
-  | "git"
-  | "runtime"
-  | "related"
-  | "missing";
-
 export type GraphCanvasStats = {
   docs: number;
   packets: number;
@@ -137,6 +129,7 @@ export type GraphRegionPanelProps = {
   region: CanvasRegion;
   workspace: string;
   onOpenMarkdownReference: (reference: GraphMarkdownReference) => void;
+  onSelectNode: (nodeId: string) => void;
   onClose: () => void;
 };
 
@@ -160,13 +153,10 @@ export type GraphStatusPanelProps = {
   stats: GraphCanvasStats;
   packetColors: Map<string, string>;
   visiblePackets: GraphPacketGroup[];
-  primaryChunkCount: number;
-  supportNodeCount: number;
-  edgeCount: number;
   flowSignalCounts: Array<{ type: GraphEdge["type"]; count: number }>;
   runtimeAnnotationCount: number;
   sourceStatus: string;
   primaryNodes: CanvasNode[];
-  onSelectNode: (nodeId: string) => void;
+  onSelectNode: (nodeId: string, markerId?: string | null) => void;
   onClose: () => void;
 };

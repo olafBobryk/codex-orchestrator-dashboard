@@ -1,23 +1,17 @@
-import {
-  CheckCircle2,
-  ExternalLink,
-  FileText,
-  GitCommitHorizontal,
-  Radio,
-} from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, GitCommitHorizontal, Radio } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import type { GraphDetailLink } from "@/lib/orchestration-graph";
 import {
-  createVsCodeDocHref,
   uniqueRuntimeAnnotations,
   uniqueStrings,
 } from "../../canvas/graph-adapter";
-import type { NodeSignalPanel } from "../../canvas/types";
-import { DetailBlockCard, DetailField, DetailSection } from "../shared";
-import { GraphDetailHeader } from "./header";
-import { MarkerIsland } from "../preview";
-import { NodeSignalSummary } from "./node-signals";
+import { DetailField, EntityLinks } from "../shared";
+import {
+  createMarkerSummaryFields,
+  createNodePanelHeader,
+  DetailBlockSection,
+  DetailPanelLayout,
+} from "./detail-panel-layout";
 import type { GraphDetailOverlayProps } from "../shared";
 
 export function MarkdownDetailPanel({
@@ -31,8 +25,6 @@ export function MarkdownDetailPanel({
   onSelectMarker,
   onClose,
 }: GraphDetailOverlayProps) {
-  const [activeSignalPanel, setActiveSignalPanel] =
-    useState<NodeSignalPanel | null>(null);
   const files = uniqueStrings([
     ...node.detail.files,
     ...node.sources.flatMap((source) =>
@@ -44,101 +36,62 @@ export function MarkdownDetailPanel({
     ...relatedNodes.flatMap((relatedNode) => relatedNode.detail.runtimeThreads),
   ]);
   const gitAnnotations = node.detail.gitWorktree;
+  const fileLinks = files.map(
+    (relativePath) =>
+      ({
+        label: relativePath,
+        href: "",
+        relativePath,
+        kind: "reference",
+      }) satisfies GraphDetailLink
+  );
+  const entityLinks = [
+    ...node.links,
+    ...fileLinks.filter(
+      (fileLink) =>
+        !node.links.some((link) => link.relativePath === fileLink.relativePath)
+    ),
+  ];
+  const relatedLinks = relatedNodes.flatMap(createRelatedNodeLinks);
 
   return (
-    <TooltipProvider>
-      <aside
-        data-graph-detail-panel
-        data-graph-detail-source="markdown"
-        className="flex h-full max-h-[inherit] min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-xl"
-      >
-        <GraphDetailHeader
-          node={node}
-          markers={[]}
-          onClose={onClose}
-        />
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-        {markers.length > 0 ? (
-          <DetailSection title="Markers">
-            <div className="grid gap-2">
-              {markers.map((marker) => (
-                <MarkerIsland
-                  key={marker.id}
-                  marker={marker}
-                  selected={marker.id === selectedMarker?.id}
-                  onSelect={() =>
-                    onSelectMarker(
-                      marker.id === selectedMarker?.id ? null : marker.id
-                    )
-                  }
-                />
-              ))}
-            </div>
-          </DetailSection>
-        ) : null}
-
-        <NodeSignalSummary
-          node={node}
-          files={files}
-          relatedNodes={relatedNodes}
-          workspace={workspace}
-          runtimeAnnotations={runtimeAnnotations}
-          gitAnnotations={gitAnnotations}
-          relatedCount={relatedNodes.length}
-          runtimeCount={runtimeAnnotations.length}
-          gitCount={gitAnnotations.length}
-          activePanel={activeSignalPanel}
-          onSelectPanel={(panel) =>
-            setActiveSignalPanel((currentPanel) =>
-              currentPanel === panel ? null : panel
-            )
-          }
-        />
-
-        <DetailSection title="Summary">
-          <p className="text-sm leading-6 text-muted-foreground">
-            {node.detail.summary ?? "No summary section was found."}
-          </p>
-        </DetailSection>
-
-        {node.detail.blocks.length > 0 ? (
-          <DetailSection title="Details">
-            <div className="grid gap-2">
-              {node.detail.blocks.map((block) => (
-                <DetailBlockCard
-                  key={block.id}
+    <DetailPanelLayout
+      panelKind="detail"
+      detailSource="markdown"
+      header={createNodePanelHeader({ node, markers })}
+      onClose={onClose}
+      links={entityLinks}
+      summaryFields={createMarkerSummaryFields({
+        markers,
+        selectedMarker,
+        onSelectMarker,
+      })}
+      detailBlocks={node.detail.blocks}
+      workspace={workspace}
+      onOpenMarkdownReference={onOpenMarkdownReference}
+      afterDetails={
+        edges.some((edge) => (edge.detailBlocks ?? []).length > 0) ? (
+          <>
+            {edges.flatMap((edge) =>
+              (edge.detailBlocks ?? []).map((block) => (
+                <DetailBlockSection
+                  key={`${edge.id}:${block.id}`}
                   block={block}
+                  title={`${edge.label}: ${block.name}`}
+                  contentClassName="min-w-0"
                   workspace={workspace}
                   onOpenMarkdownReference={onOpenMarkdownReference}
                 />
-              ))}
-            </div>
-          </DetailSection>
-        ) : null}
-
-        {edges.some((edge) => (edge.detailBlocks ?? []).length > 0) ? (
-          <DetailSection title="Edge Details">
-            <div className="grid gap-2">
-              {edges.flatMap((edge) =>
-                (edge.detailBlocks ?? []).map((block) => (
-                  <DetailBlockCard
-                    key={`${edge.id}:${block.id}`}
-                    block={{
-                      ...block,
-                      name: `${edge.label}: ${block.name}`,
-                    }}
-                    workspace={workspace}
-                    onOpenMarkdownReference={onOpenMarkdownReference}
-                  />
-                ))
-              )}
-            </div>
-          </DetailSection>
-        ) : null}
-
-        {node.detail.handoff ? (
-          <DetailSection title="Handoff Summary">
+              ))
+            )}
+          </>
+        ) : null
+      }
+      sections={[
+        {
+          title: "Handoff Summary",
+          hidden: !node.detail.handoff,
+          content: node.detail.handoff ? (
             <div className="grid gap-2">
               <DetailField label="Packet" value={node.detail.handoff.packet} />
               <DetailField label="Chunk" value={node.detail.handoff.chunk} />
@@ -157,11 +110,12 @@ export function MarkdownDetailPanel({
                 value={node.detail.handoff.reviewLink}
               />
             </div>
-          </DetailSection>
-        ) : null}
-
-        {node.detail.concern ? (
-          <DetailSection title="Concern">
+          ) : null,
+        },
+        {
+          title: "Concern",
+          hidden: !node.detail.concern,
+          content: node.detail.concern ? (
             <div className="grid gap-2">
               <DetailField label="Concern" value={node.detail.concern.concern} />
               <DetailField
@@ -178,34 +132,12 @@ export function MarkdownDetailPanel({
                 value={node.detail.concern.needsHuman}
               />
             </div>
-          </DetailSection>
-        ) : null}
-
-        <DetailSection title="Files">
-          {files.length > 0 ? (
-            <div className="grid gap-2">
-              {files.map((relativePath) => (
-                <a
-                  key={relativePath}
-                  href={createVsCodeDocHref(workspace, relativePath)}
-                  title="Open Markdown file in VS Code"
-                  className="flex min-w-0 items-center justify-between gap-2 rounded-md border border-border px-2.5 py-2 text-xs transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate font-mono">{relativePath}</span>
-                  </span>
-                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                </a>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No source file recorded.</p>
-          )}
-        </DetailSection>
-
-        <DetailSection title="Verification">
-          {node.detail.verification.length > 0 ? (
+          ) : null,
+        },
+        {
+          title: "Verification",
+          hidden: node.detail.verification.length === 0,
+          content: (
             <div className="grid gap-2">
               {node.detail.verification.map((item) => (
                 <div
@@ -227,50 +159,23 @@ export function MarkdownDetailPanel({
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No verification evidence recorded for this item.
-            </p>
-          )}
-        </DetailSection>
-
-        <DetailSection title="Related">
-          {relatedNodes.length > 0 ? (
-            <div className="grid gap-2">
-              {relatedNodes.map((relatedNode) => (
-                <div
-                  key={relatedNode.id}
-                  className="rounded-md border border-border px-2.5 py-2"
-                >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Badge variant="outline">{relatedNode.kind}</Badge>
-                    <span className="truncate text-xs font-medium">
-                      {relatedNode.label}
-                    </span>
-                  </div>
-                  {relatedNode.relativePath ? (
-                    <a
-                      href={createVsCodeDocHref(workspace, relatedNode.relativePath)}
-                      className="mt-1 inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground underline-offset-4 hover:underline"
-                    >
-                      <ExternalLink className="h-3 w-3 shrink-0" />
-                      <span className="truncate font-mono">
-                        {relatedNode.relativePath}
-                      </span>
-                    </a>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No related handoff, concern, thread, or file item is recorded.
-            </p>
-          )}
-        </DetailSection>
-
-        <DetailSection title="Runtime">
-          {runtimeAnnotations.length > 0 ? (
+          ),
+        },
+        {
+          title: "Related",
+          hidden: relatedLinks.length === 0,
+          content: (
+            <EntityLinks
+              links={relatedLinks}
+              workspace={workspace}
+              onOpenMarkdownReference={onOpenMarkdownReference}
+            />
+          ),
+        },
+        {
+          title: "Runtime",
+          hidden: runtimeAnnotations.length === 0,
+          content: (
             <div className="grid gap-2">
               {runtimeAnnotations.map((thread) => (
                 <div
@@ -290,15 +195,12 @@ export function MarkdownDetailPanel({
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No runtime annotation is recorded for this item.
-            </p>
-          )}
-        </DetailSection>
-
-        <DetailSection title="Git / Worktree">
-          {gitAnnotations.length > 0 ? (
+          ),
+        },
+        {
+          title: "Git / Worktree",
+          hidden: gitAnnotations.length === 0,
+          content: (
             <div className="grid gap-2">
               {gitAnnotations.map((annotation) => (
                 <div
@@ -320,15 +222,12 @@ export function MarkdownDetailPanel({
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No Git or worktree annotation is recorded for this item.
-            </p>
-          )}
-        </DetailSection>
-
-        <DetailSection title="Completeness">
-          {node.missing.length > 0 ? (
+          ),
+        },
+        {
+          title: "Completeness",
+          hidden: node.missing.length === 0,
+          content: (
             <div className="flex flex-wrap gap-1.5">
               {node.missing.map((state) => (
                 <Badge key={state} variant="outline">
@@ -336,14 +235,26 @@ export function MarkdownDetailPanel({
                 </Badge>
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No missing state recorded for this item.
-            </p>
-          )}
-        </DetailSection>
-      </div>
-    </aside>
-    </TooltipProvider>
+          ),
+        },
+      ]}
+    />
   );
+}
+
+function createRelatedNodeLinks(
+  relatedNode: GraphDetailOverlayProps["relatedNodes"][number]
+): GraphDetailLink[] {
+  if (!relatedNode.relativePath) {
+    return [];
+  }
+
+  return [
+    {
+      label: relatedNode.label,
+      href: "",
+      relativePath: relatedNode.relativePath,
+      kind: "reference",
+    },
+  ];
 }

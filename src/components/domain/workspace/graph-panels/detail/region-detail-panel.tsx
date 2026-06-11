@@ -1,101 +1,68 @@
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { ExternalLink } from "lucide-react";
 import type { GraphRegionPanelProps } from "../../canvas/types";
 import {
-  DetailBlockCard,
-  DetailField,
-  DetailSection,
-  DetailSummaryTile,
-  EntityLinks,
-  getDetailBlockDomId,
-} from "../shared";
-import { GraphRegionHeader } from "./header";
+  createRegionPanelHeader,
+  DetailPanelLayout,
+} from "./detail-panel-layout";
 
 export function RegionDetailPanel({
   region,
   workspace,
   onOpenMarkdownReference,
+  onSelectNode,
   onClose,
 }: GraphRegionPanelProps) {
-  const hasSummary = region.detail.some(
-    (block) => block.summary || block.body
-  );
-
   return (
-    <TooltipProvider>
-      <aside
-        data-graph-region-panel
-        className="flex h-full max-h-[inherit] min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-xl"
-      >
-        <GraphRegionHeader region={region} onClose={onClose} />
+    <DetailPanelLayout
+      panelKind="region"
+      header={createRegionPanelHeader({ region })}
+      onClose={onClose}
+      links={region.links}
+      detailBlocks={region.detail}
+      workspace={workspace}
+      onOpenMarkdownReference={onOpenMarkdownReference}
+      sections={[
+        {
+          title: "Child Regions",
+          hidden: region.regionIds.length === 0,
+          content: <TokenList values={region.regionIds} />,
+        },
+        {
+          title: "Nodes",
+          hidden: region.nodeIds.length === 0,
+          content: (
+            <NodeActionList
+              nodeIds={region.nodeIds}
+              onSelectNode={onSelectNode}
+            />
+          ),
+        },
+      ]}
+    />
+  );
+}
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-          {region.links.length > 0 ? (
-            <DetailSection title="Entity files">
-              <EntityLinks
-                links={region.links}
-                workspace={workspace}
-                onOpenMarkdownReference={onOpenMarkdownReference}
-              />
-            </DetailSection>
-          ) : null}
-
-          {hasSummary ? (
-            <DetailSection title="Summary">
-              <div className="grid grid-cols-2 gap-2">
-                {region.detail.map((block, index) => (
-                  <DetailSummaryTile
-                    key={block.id}
-                    block={block}
-                    index={index}
-                  />
-                ))}
-              </div>
-            </DetailSection>
-          ) : null}
-
-          {region.detail.length > 0 ? (
-            <DetailSection title="Details">
-              <div className="grid gap-2">
-                {region.detail.map((block) => (
-                  <DetailBlockCard
-                    key={block.id}
-                    block={block}
-                    workspace={workspace}
-                    domId={getDetailBlockDomId(block)}
-                    onOpenMarkdownReference={onOpenMarkdownReference}
-                  />
-                ))}
-              </div>
-            </DetailSection>
-          ) : null}
-
-          <DetailSection title="Region">
-            <div className="grid grid-cols-2 gap-2">
-              <DetailField label="ID" value={region.id} mono />
-              <DetailField label="Nodes" value={String(region.nodeIds.length)} />
-              <DetailField
-                label="Child regions"
-                value={String(region.regionIds.length)}
-              />
-              <DetailField label="Category" value={region.category} />
-              <DetailField label="Muted" value={region.muted ? "Yes" : "No"} />
-            </div>
-          </DetailSection>
-
-          {region.regionIds.length > 0 ? (
-            <DetailSection title="Child Regions">
-              <TokenList values={region.regionIds} />
-            </DetailSection>
-          ) : null}
-
-          {region.nodeIds.length > 0 ? (
-            <DetailSection title="Nodes">
-              <TokenList values={region.nodeIds} />
-            </DetailSection>
-          ) : null}
-        </div>
-      </aside>
-    </TooltipProvider>
+function NodeActionList({
+  nodeIds,
+  onSelectNode,
+}: {
+  nodeIds: string[];
+  onSelectNode: (nodeId: string) => void;
+}) {
+  return (
+    <div className="grid gap-1.5">
+      {nodeIds.map((nodeId) => (
+        <button
+          key={nodeId}
+          type="button"
+          className="flex w-full min-w-0 items-center gap-1.5 rounded-md border border-border px-2 py-1 text-left text-xs text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          onClick={() => onSelectNode(nodeId)}
+        >
+          <ExternalLink className="h-3 w-3 shrink-0" />
+          <span className="min-w-0 flex-1 truncate font-mono">{nodeId}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 

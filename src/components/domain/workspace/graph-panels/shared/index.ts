@@ -1,11 +1,7 @@
 export {
-  DetailBlockCard,
   DetailField,
   DetailSection,
-  DetailSummaryTile,
   EntityLinks,
-  SignalTile,
-  SignalToken,
   getDetailBlockDomId,
 } from "./detail-primitives";
-export type { GraphDetailOverlayProps, SignalIcon } from "./types";
+export type { GraphDetailPanelProps as GraphDetailOverlayProps } from "../../canvas/types";

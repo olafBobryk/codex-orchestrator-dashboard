@@ -7,6 +7,7 @@ import type {
   OrchestrationGraph,
 } from "@/lib/orchestration-graph";
 import {
+  DEFAULT_GRAPH_NEUTRAL_STROKE,
   GRAPH_EDGE_SIGNAL_ORDER,
   LINK_COLORS,
   PACKET_PALETTE,
@@ -15,7 +16,7 @@ import {
 import { getChronologyGuideY } from "./physics";
 import type { CanvasLink, CanvasNode, CanvasRegion } from "./types";
 
-const DEFAULT_WORK_NODE_COLOR = "#94a3b8";
+const DEFAULT_WORK_NODE_COLOR = DEFAULT_GRAPH_NEUTRAL_STROKE;
 const NEUTRAL_WORK_PACKET_IDS = new Set([
   "work",
   "default",

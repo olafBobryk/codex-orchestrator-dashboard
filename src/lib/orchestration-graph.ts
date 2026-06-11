@@ -89,6 +89,7 @@ export type GraphMarker = {
   muted: boolean;
   icon: string | null;
   loader: boolean;
+  threadIds: string[];
   links: GraphDetailLink[];
 };
 

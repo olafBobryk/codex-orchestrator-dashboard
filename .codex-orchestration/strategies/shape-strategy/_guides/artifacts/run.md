@@ -22,8 +22,14 @@ the run.
 - A shape defines the work boundary.
 - A workpiece defines concrete work.
 - A run records execution across one or more shapes and workpieces.
+- A worktree records where execution happened, when a separate checkout was
+  used.
 
 Runs may touch multiple workpieces and may operate inside one or more shapes.
+
+The worktree is execution context, not the run itself. It should be recorded as
+detail or evidence for the run and can also be surfaced from related agent,
+workpiece, or shape details when helpful.
 
 ## Required Sections
 
@@ -59,6 +65,16 @@ Start records where the run began.
 
 The start checkpoint is optional. A run can start from a thread, handoff,
 worktree, or accepted shape boundary without having a checkpoint node.
+
+### Execution Context
+
+Execution context records the concrete runtime and checkout context for the
+run.
+
+It can include thread id, Codex agent id, worktree path, branch, base commit, or
+other context needed to find where the work happened later.
+
+This section should stay factual. It should not become a second run plan.
 
 ### Return Evidence
 
@@ -105,7 +121,14 @@ Status: active | returned | accepted | blocked | paused
 
 - Checkpoint: `<checkpoint-id>` | none
 - Handoff: <handoff or source artifact>
+
+## Execution Context
+
+- Thread: <current thread id or link>
+- Codex agent: <agent id, worker name, or none>
 - Worktree: <path or branch, if any>
+- Branch: <branch or none>
+- Base: <commit or branch, if known>
 
 ## Return Evidence
 
