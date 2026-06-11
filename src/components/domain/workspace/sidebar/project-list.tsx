@@ -1,19 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Folder, FolderCheck } from "lucide-react";
+import { Folder } from "lucide-react";
+import type { SVGProps } from "react";
 import { useEffect, useState } from "react";
 import { Loader } from "@/components/ui/loader";
 import type { CodexProject, CodexProjectActivity } from "@/lib/codex-projects";
 import { cn } from "@/lib/utils";
 
 const ACTIVITY_POLL_INTERVAL_MS = 5_000;
-const EMPTY_PROJECT_ACTIVITY: CodexProjectActivity = {
-  activeThreads: 0,
-  unreadThreads: 0,
-  workingAgentThreads: 0,
-  updatedAt: null,
-};
 
 type ProjectActivityResponse = {
   activityByPath?: Record<string, CodexProjectActivity>;
@@ -95,7 +90,7 @@ export function CodexProjectList({
       {projects.map((project) => {
         const activity = runtimeReady
           ? activityByPath[project.path] ?? project.activity
-          : EMPTY_PROJECT_ACTIVITY;
+          : project.activity;
 
         return (
           <CodexProjectLink
@@ -103,7 +98,6 @@ export function CodexProjectList({
             project={{
               ...project,
               activity,
-              isActive: runtimeReady ? project.isActive : false,
             }}
             isCurrent={project.path === currentWorkspace}
           />
@@ -120,14 +114,18 @@ function CodexProjectLink({
   project: CodexProject;
   isCurrent: boolean;
 }) {
-  const Icon = project.isActive ? FolderCheck : Folder;
+  const hasReadyOrchestration = project.state === "ready";
+  const Icon = hasReadyOrchestration ? FilledFolderCheckIcon : Folder;
   const activityTitle = getProjectActivityTitle(project);
+  const orchestrationTitle = getProjectStateTitle(project);
 
   return (
     <Link
       href={`/?workspace=${encodeURIComponent(project.path)}`}
       prefetch={false}
-      title={activityTitle ? `${project.path}\n${activityTitle}` : project.path}
+      title={[project.path, orchestrationTitle, activityTitle]
+        .filter(Boolean)
+        .join("\n")}
       aria-current={isCurrent ? "page" : undefined}
       className={cn(
         "relative flex min-w-0 items-center gap-2 rounded-md border px-2.5 py-2 text-left transition-colors group-data-[collapsed=true]/sidebar:mx-auto group-data-[collapsed=true]/sidebar:size-9 group-data-[collapsed=true]/sidebar:place-items-center group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:p-0",
@@ -137,12 +135,42 @@ function CodexProjectLink({
           : "border-transparent bg-transparent"
       )}
     >
-      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <Icon
+        className={cn(
+          "h-3.5 w-3.5 shrink-0",
+          hasReadyOrchestration ? "text-foreground" : "text-muted-foreground"
+        )}
+      />
       <span className="min-w-0 flex-1 truncate text-sm font-medium group-data-[collapsed=true]/sidebar:hidden">
         {project.name}
       </span>
       <ProjectActivityIndicator project={project} />
     </Link>
+  );
+}
+
+function FilledFolderCheckIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      focusable="false"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        d="M3 7.75A2.75 2.75 0 0 1 5.75 5h4.1c.74 0 1.45.3 1.97.82L13 7h5.25A2.75 2.75 0 0 1 21 9.75v6.5A2.75 2.75 0 0 1 18.25 19H5.75A2.75 2.75 0 0 1 3 16.25v-8.5Z"
+        fill="currentColor"
+        opacity="0.92"
+      />
+      <path
+        d="m10.3 14.05 1.35 1.35 3.35-3.35"
+        stroke="var(--sidebar)"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
   );
 }
 
@@ -174,6 +202,18 @@ function ProjectActivityIndicator({ project }: { project: CodexProject }) {
   }
 
   return null;
+}
+
+function getProjectStateTitle(project: CodexProject) {
+  if (project.state === "ready") {
+    return "Ready orchestration layer";
+  }
+
+  if (project.state === "missing_docs") {
+    return "Missing .codex-orchestration";
+  }
+
+  return "Missing project directory";
 }
 
 function getProjectActivityTitle(project: CodexProject) {

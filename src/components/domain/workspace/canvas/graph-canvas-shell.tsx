@@ -1,20 +1,19 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { PanelRightOpen } from "lucide-react";
 import {
   type ComponentType,
+  type MouseEvent as ReactMouseEvent,
   useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  type MouseEvent as ReactMouseEvent,
 } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader } from "@/components/ui/loader";
 import {
   countFlowSignals,
   countRuntimeAnnotations,
@@ -30,12 +29,18 @@ import {
   drawNode,
   drawNodePointerArea,
   drawRegions,
-  type GraphHitResult,
   isLinkCoveredByActiveRegions,
   isNodeCoveredByActiveRegion,
   readCanvasTheme,
-  resolveGraphHit,
 } from "./drawing";
+import { readGraphEventPoint } from "./graph-event-point";
+import { GraphEmptyState, GraphLoadingState } from "./graph-canvas-states";
+import {
+  GraphHitTooltip,
+  type HoveredGraphTooltip,
+} from "./graph-canvas-tooltip";
+import { GraphSidePanel } from "./graph-side-panel";
+import { type GraphHitResult, resolveGraphHit } from "./hit-testing";
 import type {
   GraphMarkdownReference,
   GraphMethods,
@@ -52,12 +57,6 @@ const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
 
 const INITIAL_FOCUS_ZOOM = 0.52;
 const MARKER_LOADER_TRANSITION_REDRAW_MS = 760;
-
-type HoveredGraphTooltip = {
-  target: Exclude<GraphHitResult, { type: "background" }>;
-  x: number;
-  y: number;
-};
 
 export function OrchestrationGraphCanvas({
   graph,
@@ -117,7 +116,7 @@ export function OrchestrationGraphCanvas({
     .join("|");
 
   const selectedDetailNode = selectedNodeId
-    ? graph.nodes.find((node) => node.id === selectedNodeId)
+    ? graph.nodes.find((node) => node.id === selectedNodeId) ?? null
     : null;
   const relatedDetailNodes = selectedDetailNode
     ? findRelatedDetailNodes(graph, selectedDetailNode)
@@ -562,124 +561,67 @@ export function OrchestrationGraphCanvas({
         </div>
         */}
 
-        <AnimatePresence mode="wait">
-          {sidePanelMode ? (
-            <motion.div
-              key={
-                sidePanelMode === "detail"
-                  ? "graph-detail-panel"
-                  : sidePanelMode === "markdown"
-                    ? "graph-markdown-panel"
-                    : sidePanelMode === "edge"
-                      ? "graph-edge-panel"
-                    : sidePanelMode === "region"
-                      ? "graph-region-panel"
-                      : "graph-status-panel"
-              }
-              data-graph-side-panel={sidePanelMode}
-              initial={{ x: "calc(100% + 16px)", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "calc(100% + 16px)", opacity: 0 }}
-              transition={{ type: "spring", stiffness: 360, damping: 34 }}
-              className={`fixed right-3 top-3 z-10 ${
-                sidePanelMode === "markdown"
-                  ? "bottom-3 w-[min(560px,calc(100vw_-_1.5rem))]"
-                  : sidePanelMode === "detail" ||
-                    sidePanelMode === "edge" ||
-                    sidePanelMode === "region"
-                  ? "bottom-3 w-[min(390px,calc(100vw_-_1.5rem))]"
-                  : "w-[min(340px,calc(100vw_-_1.5rem))]"
-              }`}
-              style={{
-                maxHeight:
-                  sidePanelMode === "detail" ||
-                  sidePanelMode === "edge" ||
-                  sidePanelMode === "markdown" ||
-                  sidePanelMode === "region"
-                    ? "calc(100vh - 1.5rem)"
-                    : "min(520px, calc(100vh - 1.5rem))",
-              }}
-              onPointerDown={(event) => event.stopPropagation()}
-              onMouseMove={(event) => event.stopPropagation()}
-              onClick={(event) => event.stopPropagation()}
-            >
-              {sidePanelMode === "markdown" && markdownReference ? (
-                renderMarkdownViewer({
-                  workspace,
-                  reference: markdownReference,
-                  onBack: () => setMarkdownReference(null),
-                })
-              ) : sidePanelMode === "detail" && selectedDetailNode ? (
-                renderDetailPanel({
-                  node: selectedDetailNode,
-                  markers: selectedNodeMarkers,
-                  selectedMarker,
-                  edges: selectedNodeEdges,
-                  relatedNodes: relatedDetailNodes,
-                  workspace,
-                  onOpenMarkdownReference: setMarkdownReference,
-                  onSelectMarker: setSelectedMarkerId,
-                  onClose: () => {
-                    setSelectedNodeId(null);
-                    setSelectedEdgeId(null);
-                    setSelectedMarkerId(null);
-                    setMarkdownReference(null);
-                  },
-                })
-              ) : sidePanelMode === "edge" && selectedEdge ? (
-                renderEdgePanel({
-                  edge: selectedEdge,
-                  sourceNode: selectedEdgeSourceNode,
-                  targetNode: selectedEdgeTargetNode,
-                  workspace,
-                  onOpenMarkdownReference: setMarkdownReference,
-                  onClose: () => {
-                    setSelectedEdgeId(null);
-                    setMarkdownReference(null);
-                  },
-                })
-              ) : sidePanelMode === "region" && selectedRegion ? (
-                renderRegionPanel({
-                  region: selectedRegion,
-                  workspace,
-                  onOpenMarkdownReference: setMarkdownReference,
-                  onSelectNode: (nodeId) => {
-                    setSelectedNodeId(nodeId);
-                    setSelectedEdgeId(null);
-                    setSelectedMarkerId(null);
-                    setSelectedRegionId(null);
-                    setMarkdownReference(null);
-                    setStatusPanelOpen(false);
-                  },
-                  onClose: () => {
-                    setSelectedRegionId(null);
-                    setMarkdownReference(null);
-                  },
-                })
-              ) : (
-                renderStatusPanel({
-                  graph,
-                  stats,
-                  packetColors,
-                  visiblePackets,
-                  flowSignalCounts,
-                  runtimeAnnotationCount,
-                  sourceStatus,
-                  primaryNodes: data.nodes.filter((node) => node.primary),
-                  onSelectNode: (nodeId, markerId) => {
-                    setSelectedNodeId(nodeId);
-                    setSelectedEdgeId(null);
-                    setSelectedMarkerId(markerId ?? null);
-                    setSelectedRegionId(null);
-                    setMarkdownReference(null);
-                    setStatusPanelOpen(false);
-                  },
-                  onClose: () => setStatusPanelOpen(false),
-                })
-              )}
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+        <GraphSidePanel
+          sidePanelMode={sidePanelMode}
+          graph={graph}
+          workspace={workspace}
+          stats={stats}
+          packetColors={packetColors}
+          visiblePackets={visiblePackets}
+          flowSignalCounts={flowSignalCounts}
+          runtimeAnnotationCount={runtimeAnnotationCount}
+          sourceStatus={sourceStatus}
+          primaryNodes={data.nodes.filter((node) => node.primary)}
+          markdownReference={markdownReference}
+          selectedDetailNode={selectedDetailNode}
+          selectedNodeMarkers={selectedNodeMarkers}
+          selectedMarker={selectedMarker}
+          selectedNodeEdges={selectedNodeEdges}
+          relatedDetailNodes={relatedDetailNodes}
+          selectedEdge={selectedEdge}
+          selectedEdgeSourceNode={selectedEdgeSourceNode}
+          selectedEdgeTargetNode={selectedEdgeTargetNode}
+          selectedRegion={selectedRegion}
+          renderDetailPanel={renderDetailPanel}
+          renderEdgePanel={renderEdgePanel}
+          renderRegionPanel={renderRegionPanel}
+          renderMarkdownViewer={renderMarkdownViewer}
+          renderStatusPanel={renderStatusPanel}
+          onOpenMarkdownReference={setMarkdownReference}
+          onCloseMarkdownReference={() => setMarkdownReference(null)}
+          onSelectMarker={setSelectedMarkerId}
+          onSelectNode={(nodeId, markerId) => {
+            setSelectedNodeId(nodeId);
+            setSelectedEdgeId(null);
+            setSelectedMarkerId(markerId ?? null);
+            setSelectedRegionId(null);
+            setMarkdownReference(null);
+            setStatusPanelOpen(false);
+          }}
+          onSelectRegionNode={(nodeId) => {
+            setSelectedNodeId(nodeId);
+            setSelectedEdgeId(null);
+            setSelectedMarkerId(null);
+            setSelectedRegionId(null);
+            setMarkdownReference(null);
+            setStatusPanelOpen(false);
+          }}
+          onCloseDetail={() => {
+            setSelectedNodeId(null);
+            setSelectedEdgeId(null);
+            setSelectedMarkerId(null);
+            setMarkdownReference(null);
+          }}
+          onCloseEdge={() => {
+            setSelectedEdgeId(null);
+            setMarkdownReference(null);
+          }}
+          onCloseRegion={() => {
+            setSelectedRegionId(null);
+            setMarkdownReference(null);
+          }}
+          onCloseStatus={() => setStatusPanelOpen(false)}
+        />
 
         {!selectedDetailNode && !selectedEdge && !selectedRegion && !statusPanelOpen ? (
           <Button
@@ -697,128 +639,4 @@ export function OrchestrationGraphCanvas({
       </div>
     </section>
   );
-}
-
-function GraphLoadingState() {
-  return (
-    <div className="absolute inset-0 z-10 grid place-items-center bg-background/72 backdrop-blur-[1px]">
-      <Loader aria-label="Loading graph" size="lg" />
-    </div>
-  );
-}
-
-function GraphEmptyState() {
-  return (
-    <div className="absolute inset-0 z-10 grid place-items-center bg-background px-6">
-      <div className="w-full max-w-2xl">
-        <h2 className="text-2xl font-semibold tracking-normal text-foreground">
-          No graph nodes
-        </h2>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-          This workspace has orchestration docs, but the current strategy does
-          not project any workpieces or checkpoints yet.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function GraphHitTooltip({ tooltip }: { tooltip: HoveredGraphTooltip }) {
-  const content = formatGraphHitTooltip(tooltip.target);
-
-  return (
-    <motion.div
-      key={content.key}
-      data-graph-tooltip={tooltip.target.type}
-      className="pointer-events-none absolute z-30 max-w-[260px]"
-      style={{ left: tooltip.x, top: tooltip.y }}
-      initial={{ opacity: 0, scale: 0.96, y: -4 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.98, y: -3 }}
-      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className="-translate-x-1/2 -translate-y-[calc(100%+14px)] rounded-md border border-border/80 bg-popover/95 px-3 py-2 text-xs text-popover-foreground shadow-lg shadow-black/10 backdrop-blur">
-        <div className="max-w-[220px] truncate font-medium leading-snug">
-          {content.label}
-        </div>
-        <div className="mt-1 text-[11px] leading-none text-muted-foreground">
-          {content.detail}
-        </div>
-        <div className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-border/80 bg-popover/95" />
-      </div>
-    </motion.div>
-  );
-}
-
-function formatGraphHitTooltip(
-  target: Exclude<GraphHitResult, { type: "background" }>
-) {
-  if (target.type === "marker") {
-    return {
-      key: `marker:${target.marker.id}`,
-      label: target.marker.label,
-      detail: "Marker details",
-    };
-  }
-
-  if (target.type === "node") {
-    return {
-      key: `node:${target.node.id}`,
-      label: target.node.label,
-      detail: "Node details",
-    };
-  }
-
-  if (target.type === "edge") {
-    return {
-      key: `edge:${target.edge.id}`,
-      label: target.edge.label,
-      detail: "Edge details",
-    };
-  }
-
-  return {
-    key: `region:${target.region.id}`,
-    label: target.region.label,
-    detail: "Shape details",
-  };
-}
-
-function readGraphEventPoint(
-  event: MouseEvent | ReactMouseEvent<HTMLDivElement>,
-  container: HTMLDivElement | null
-) {
-  if ("nativeEvent" in event) {
-    if (!container) {
-      return null;
-    }
-
-    const rect = container.getBoundingClientRect();
-
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    };
-  }
-
-  if (
-    typeof event.offsetX === "number" &&
-    typeof event.offsetY === "number"
-  ) {
-    return {
-      x: event.offsetX,
-      y: event.offsetY,
-    };
-  }
-
-  if (!container) {
-    return null;
-  }
-
-  const rect = container.getBoundingClientRect();
-
-  return {
-    x: event.clientX - rect.left,
-    y: event.clientY - rect.top,
-  };
 }

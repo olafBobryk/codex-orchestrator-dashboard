@@ -1,6 +1,10 @@
 import type { NodeObject } from "react-force-graph-2d";
-import type { GraphMarker, GraphNode } from "@/lib/orchestration-graph";
-import { DEFAULT_CANVAS_THEME } from "./constants";
+import type { GraphNode } from "@/lib/orchestration-graph";
+import {
+  drawRoundedRect,
+  getLinkEndpointId,
+  getMarkerIslandRect,
+} from "./canvas-geometry";
 import type {
   CanvasLink,
   CanvasNode,
@@ -30,8 +34,6 @@ const REGION_INSIDE_LABEL_FONT_SIZE = 18;
 const MARKER_LOADER_ROTATION_MS = 1200;
 const MARKER_LOADER_TRANSITION_MS = 620;
 const NODE_HIT_PADDING = 12;
-const MARKER_HIT_PADDING = 8;
-const EDGE_HIT_DISTANCE = 18;
 
 type MarkerLoaderAnimationState = {
   loader: boolean;
@@ -39,47 +41,16 @@ type MarkerLoaderAnimationState = {
   lastSeenAt: number;
 };
 
-export type GraphHitResult =
-  | {
-      type: "marker";
-      node: CanvasNode;
-      marker: GraphMarker;
-    }
-  | {
-      type: "node";
-      node: CanvasNode;
-    }
-  | {
-      type: "edge";
-      edge: CanvasLink;
-    }
-  | {
-      type: "region";
-      region: CanvasRegion;
-    }
-  | {
-      type: "background";
-    };
-
 const markerLoaderAnimationState = new Map<string, MarkerLoaderAnimationState>();
 
-export function readCanvasTheme(): CanvasTheme {
-  if (typeof window === "undefined") {
-    return DEFAULT_CANVAS_THEME;
-  }
-
-  const styles = window.getComputedStyle(document.documentElement);
-  const cssVar = (name: string, fallback: string) =>
-    styles.getPropertyValue(name).trim() || fallback;
-
-  return {
-    surface: cssVar("--card", DEFAULT_CANVAS_THEME.surface),
-    surfaceForeground: cssVar(
-      "--card-foreground",
-      DEFAULT_CANVAS_THEME.surfaceForeground
-    ),
-  };
-}
+export { readCanvasTheme } from "./canvas-theme";
+export {
+  getLinkEndpoint,
+  getMarkerIslandRect,
+  getPointToSegmentDistance,
+  type LinkEndpoint,
+} from "./canvas-geometry";
+export { drawLink, drawLinkPointerArea } from "./link-drawing";
 
 export function drawNode({
   node,
@@ -813,177 +784,6 @@ export function drawNodePointerArea(
   });
 }
 
-export function drawLink(
-  link: CanvasLink,
-  context: CanvasRenderingContext2D
-) {
-  const source = getLinkEndpoint(link.source as unknown);
-  const target = getLinkEndpoint(link.target as unknown);
-
-  if (!source || !target) {
-    return;
-  }
-
-  context.save();
-  context.beginPath();
-  context.moveTo(source.x, source.y);
-  context.lineTo(target.x, target.y);
-  context.strokeStyle = link.color;
-  context.lineWidth = link.width;
-  context.setLineDash(link.dash ?? []);
-  context.stroke();
-  context.restore();
-}
-
-export function drawLinkPointerArea(
-  link: CanvasLink,
-  color: string,
-  context: CanvasRenderingContext2D
-) {
-  const source = getLinkEndpoint(link.source as unknown);
-  const target = getLinkEndpoint(link.target as unknown);
-
-  if (!source || !target) {
-    return;
-  }
-
-  context.save();
-  context.beginPath();
-  context.moveTo(source.x, source.y);
-  context.lineTo(target.x, target.y);
-  context.strokeStyle = color;
-  context.lineWidth = Math.max(EDGE_HIT_DISTANCE * 2, link.width + 12);
-  context.lineCap = "round";
-  context.stroke();
-  context.restore();
-}
-
-export function resolveGraphHit({
-  nodes,
-  links,
-  regions,
-  graph,
-  screenX,
-  screenY,
-  maxEdgeDistance = EDGE_HIT_DISTANCE,
-}: {
-  nodes: NodeObject<CanvasNode>[];
-  links: CanvasLink[];
-  regions: CanvasRegion[];
-  graph: GraphMethods | undefined;
-  screenX: number;
-  screenY: number;
-  maxEdgeDistance?: number;
-}): GraphHitResult {
-  if (!graph) {
-    return { type: "background" };
-  }
-
-  const point = graph.screen2GraphCoords(screenX, screenY);
-
-  for (const node of [...nodes].reverse()) {
-    const marker = getMarkerAtGraphPoint(node, point);
-
-    if (marker) {
-      return { type: "marker", node, marker };
-    }
-  }
-
-  for (const node of [...nodes].reverse()) {
-    if (isNodeHitAtGraphPoint(node, point)) {
-      return { type: "node", node };
-    }
-  }
-
-  const edge = getClosestEdgeAtGraphPoint({
-    links,
-    point,
-    maxDistance: maxEdgeDistance,
-  });
-
-  if (edge) {
-    return { type: "edge", edge };
-  }
-
-  const region = getRegionAtScreenPoint({
-    regions,
-    nodes,
-    graph,
-    x: screenX,
-    y: screenY,
-  });
-
-  if (region) {
-    return { type: "region", region };
-  }
-
-  return { type: "background" };
-}
-
-function getClosestEdgeAtGraphPoint({
-  links,
-  point,
-  maxDistance,
-}: {
-  links: CanvasLink[];
-  point: { x: number; y: number };
-  maxDistance: number;
-}) {
-  let closestLink: CanvasLink | null = null;
-  let closestDistance = maxDistance;
-
-  for (const link of links) {
-    const source = getLinkEndpoint(link.source as unknown);
-    const target = getLinkEndpoint(link.target as unknown);
-
-    if (!source || !target) {
-      continue;
-    }
-
-    const distance = getPointToSegmentDistance(point, source, target);
-
-    if (distance <= closestDistance) {
-      closestDistance = distance;
-      closestLink = link;
-    }
-  }
-
-  return closestLink;
-}
-
-function getMarkerAtGraphPoint(
-  node: NodeObject<CanvasNode>,
-  point: { x: number; y: number }
-) {
-  if (node.markers.length === 0) {
-    return null;
-  }
-
-  return (
-    node.markers.slice(0, 4).find((_, index) => {
-      const island = getMarkerIslandRect(node, index);
-
-      return (
-        point.x >= island.x - MARKER_HIT_PADDING &&
-        point.x <= island.x + island.width + MARKER_HIT_PADDING &&
-        point.y >= island.y - MARKER_HIT_PADDING &&
-        point.y <= island.y + island.height + MARKER_HIT_PADDING
-      );
-    }) ?? null
-  );
-}
-
-function isNodeHitAtGraphPoint(
-  node: NodeObject<CanvasNode>,
-  point: { x: number; y: number }
-) {
-  const x = node.x ?? node.guideX ?? 0;
-  const y = node.y ?? node.guideY ?? 0;
-  const hitRadius = node.visualRadius + NODE_HIT_PADDING;
-
-  return Math.hypot(point.x - x, point.y - y) <= hitRadius;
-}
-
 export function getRegionAtScreenPoint({
   regions,
   nodes,
@@ -1026,112 +826,6 @@ export function getRegionAtScreenPoint({
   }
 
   return null;
-}
-
-type LinkEndpoint = {
-  x: number;
-  y: number;
-  hitRadius: number;
-};
-
-function getLinkEndpoint(endpoint: unknown): LinkEndpoint | null {
-  if (
-    endpoint &&
-    typeof endpoint === "object" &&
-    "x" in endpoint &&
-    "y" in endpoint &&
-    typeof endpoint.x === "number" &&
-    typeof endpoint.y === "number"
-  ) {
-    return {
-      x: endpoint.x,
-      y: endpoint.y,
-      hitRadius: readEndpointHitRadius(endpoint),
-    };
-  }
-
-  return null;
-}
-
-function readEndpointHitRadius(endpoint: object) {
-  if (
-    "radius" in endpoint &&
-    typeof endpoint.radius === "number" &&
-    Number.isFinite(endpoint.radius)
-  ) {
-    return Math.max(0, endpoint.radius);
-  }
-
-  if (
-    "visualRadius" in endpoint &&
-    typeof endpoint.visualRadius === "number" &&
-    Number.isFinite(endpoint.visualRadius)
-  ) {
-    return Math.max(0, endpoint.visualRadius);
-  }
-
-  return 0;
-}
-
-function getPointToSegmentDistance(
-  point: { x: number; y: number },
-  source: { x: number; y: number },
-  target: { x: number; y: number }
-) {
-  const dx = target.x - source.x;
-  const dy = target.y - source.y;
-  const lengthSquared = dx * dx + dy * dy;
-
-  if (lengthSquared === 0) {
-    return Math.hypot(point.x - source.x, point.y - source.y);
-  }
-
-  const t = Math.max(
-    0,
-    Math.min(
-      1,
-      ((point.x - source.x) * dx + (point.y - source.y) * dy) / lengthSquared
-    )
-  );
-  const projectedX = source.x + t * dx;
-  const projectedY = source.y + t * dy;
-
-  return Math.hypot(point.x - projectedX, point.y - projectedY);
-}
-
-function getLinkEndpointId(endpoint: unknown) {
-  if (typeof endpoint === "string") {
-    return endpoint;
-  }
-
-  if (
-    endpoint &&
-    typeof endpoint === "object" &&
-    "id" in endpoint &&
-    typeof endpoint.id === "string"
-  ) {
-    return endpoint.id;
-  }
-
-  return null;
-}
-
-function getMarkerIslandRect(
-  node: Pick<CanvasNode, "x" | "y" | "visualRadius">,
-  index: number
-) {
-  const x = node.x ?? 0;
-  const y = node.y ?? 0;
-  const width = 118;
-  const height = 50;
-  const gap = 25;
-
-  return {
-    x: x + node.visualRadius + gap,
-    y: y - height / 2 + index * (height + 8),
-    width,
-    height,
-  };
 }
 
 function getCanvasNodeIconName(node: CanvasNode) {
@@ -1494,29 +1188,6 @@ function drawIconDot(
   context.beginPath();
   context.arc(x, y, size * 0.08, 0, Math.PI * 2);
   context.fill();
-}
-
-function drawRoundedRect(
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number
-) {
-  const r = Math.min(radius, width / 2, height / 2);
-
-  context.beginPath();
-  context.moveTo(x + r, y);
-  context.lineTo(x + width - r, y);
-  context.quadraticCurveTo(x + width, y, x + width, y + r);
-  context.lineTo(x + width, y + height - r);
-  context.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-  context.lineTo(x + r, y + height);
-  context.quadraticCurveTo(x, y + height, x, y + height - r);
-  context.lineTo(x, y + r);
-  context.quadraticCurveTo(x, y, x + r, y);
-  context.closePath();
 }
 
 type FieldBlob = {
