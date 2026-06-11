@@ -9,6 +9,8 @@ export type HoveredGraphTooltip = {
 
 export function GraphHitTooltip({ tooltip }: { tooltip: HoveredGraphTooltip }) {
   const content = formatGraphHitTooltip(tooltip.target);
+  const label = capitalizeTooltipText(content.label);
+  const detail = capitalizeTooltipText(content.detail);
 
   return (
     <motion.div
@@ -23,10 +25,10 @@ export function GraphHitTooltip({ tooltip }: { tooltip: HoveredGraphTooltip }) {
     >
       <div className="-translate-x-1/2 -translate-y-[calc(100%+14px)] rounded-md border border-border/80 bg-popover/95 px-3 py-2 text-xs text-popover-foreground shadow-lg shadow-black/10 backdrop-blur">
         <div className="max-w-[220px] truncate font-medium capitalize leading-snug">
-          {content.label}
+          {label}
         </div>
         <div className="mt-1 text-[11px] capitalize leading-none text-muted-foreground">
-          {content.detail}
+          {detail}
         </div>
         <div className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-border/80 bg-popover/95" />
       </div>
@@ -66,4 +68,12 @@ function formatGraphHitTooltip(
     label: target.region.label,
     detail: "Shape details",
   };
+}
+
+function capitalizeTooltipText(value: string) {
+  return value.replace(/\S+/g, (word) => {
+    const [firstCharacter = "", ...rest] = word;
+
+    return `${firstCharacter.toLocaleUpperCase()}${rest.join("")}`;
+  });
 }
