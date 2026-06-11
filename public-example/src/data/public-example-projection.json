@@ -1,0 +1,442 @@
+{
+  "title": "Shape Strategy Visual Map",
+  "legend": [
+    {
+      "key": "work",
+      "label": "Workpiece",
+      "color": "#94a3b8"
+    },
+    {
+      "key": "checkpoint",
+      "label": "Checkpoint",
+      "color": "#d97706"
+    },
+    {
+      "key": "graph-contract",
+      "label": "Graph Contract Shape",
+      "color": "#2563eb"
+    },
+    {
+      "key": "markdown-inspection",
+      "label": "Markdown Inspection Shape",
+      "color": "#16a34a"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "cp-graph-direction-start",
+      "kind": "checkpoint",
+      "label": "Graph Direction Start",
+      "legendKey": "checkpoint",
+      "icon": "flag",
+      "chronology": "start",
+      "detail": [
+        {
+          "id": "transition",
+          "name": "Transition",
+          "icon": "flag",
+          "summary": "outbound",
+          "color": "#d97706",
+          "body": "Steward accepted the Graph Contract Shape run boundary.",
+          "links": [
+            {
+              "label": "Shape strategy",
+              "relativePath": "strategies/shape-strategy/_guides/orchestration-shape-strategy.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shape-overlay-api",
+      "label": "Shape Overlay API",
+      "legendKey": "work",
+      "links": [
+        {
+          "label": "Shape strategy artifact",
+          "relativePath": "strategies/shape-strategy/_guides/orchestration-shape-strategy.md",
+          "kind": "artifact"
+        },
+        {
+          "label": "Graph projection meta template",
+          "relativePath": "strategies/shape-strategy/_guides/dashboard-contract-notes.md",
+          "kind": "meta_template"
+        }
+      ],
+      "detail": [
+        {
+          "id": "test",
+          "name": "Test",
+          "icon": "beaker",
+          "summary": "shape overlay",
+          "color": "#94a3b8",
+          "body": "Multiple nodes can be grouped without changing graph physics."
+        }
+      ]
+    },
+    {
+      "id": "checkpoint-icons",
+      "label": "Checkpoint Icons",
+      "legendKey": "work",
+      "detail": [
+        {
+          "id": "test",
+          "name": "Test",
+          "icon": "flag",
+          "summary": "low zoom",
+          "color": "#94a3b8",
+          "body": "Checkpoint remains visually distinct from work nodes at low zoom."
+        }
+      ]
+    },
+    {
+      "id": "marker-position",
+      "label": "Marker Position",
+      "legendKey": "work",
+      "detail": [
+        {
+          "id": "test",
+          "name": "Test",
+          "icon": "map-pin",
+          "summary": "active worker",
+          "color": "#94a3b8",
+          "body": "Active workers can be seen without turning markers into status badges."
+        }
+      ]
+    },
+    {
+      "id": "cp-graph-contract-return",
+      "kind": "checkpoint",
+      "label": "Graph Contract Return",
+      "legendKey": "checkpoint",
+      "icon": "flag",
+      "detail": [
+        {
+          "id": "return-evidence",
+          "name": "Return Evidence",
+          "icon": "file-check",
+          "summary": "state change",
+          "color": "#d97706",
+          "body": "Shape overlay notes, checkpoint icon behavior, and marker scope concerns. This return creates a checkpoint because the graph contract gains shape overlay capability."
+        }
+      ]
+    },
+    {
+      "id": "cp-markdown-direction-start",
+      "kind": "checkpoint",
+      "label": "Markdown Direction Start",
+      "legendKey": "checkpoint",
+      "icon": "flag",
+      "chronology": "start",
+      "detail": [
+        {
+          "id": "transition",
+          "name": "Transition",
+          "icon": "flag",
+          "summary": "outbound",
+          "color": "#d97706",
+          "body": "Steward accepted the Markdown Inspection Shape run boundary."
+        }
+      ]
+    },
+    {
+      "id": "viewer-panel",
+      "label": "Viewer Panel",
+      "legendKey": "work",
+      "detail": [
+        {
+          "id": "test",
+          "name": "Test",
+          "icon": "file-text",
+          "summary": "read-only",
+          "color": "#94a3b8",
+          "body": "Known Markdown file renders without editing controls.",
+          "links": [
+            {
+              "label": "Viewer test",
+              "relativePath": "tests/markdown-viewer-fixture.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reference-link-routing",
+      "label": "Reference Link Routing",
+      "legendKey": "work",
+      "detail": [
+        {
+          "id": "test",
+          "name": "Test",
+          "icon": "link",
+          "summary": "reference links",
+          "color": "#94a3b8",
+          "body": "Reference links open the viewer instead of launching an editor."
+        }
+      ]
+    },
+    {
+      "id": "restore-previous-panel",
+      "label": "Restore Previous Panel",
+      "legendKey": "work",
+      "detail": [
+        {
+          "id": "test",
+          "name": "Test",
+          "icon": "panel-right",
+          "summary": "panel restore",
+          "color": "#94a3b8",
+          "body": "Closing the viewer returns to the previously selected node or shape."
+        },
+        {
+          "id": "routine-return",
+          "name": "Routine Return Evidence",
+          "icon": "file-check",
+          "summary": "no checkpoint",
+          "color": "#16a34a",
+          "body": "Read-only viewer behavior and close/restore behavior are verified. No new strategy decision is needed, so this run does not create an end checkpoint."
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "graph-start-to-overlay",
+      "source": "cp-graph-direction-start",
+      "target": "shape-overlay-api",
+      "label": "starts",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "overlay-to-icons",
+      "source": "shape-overlay-api",
+      "target": "checkpoint-icons",
+      "label": "informs",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "icons-to-markers",
+      "source": "checkpoint-icons",
+      "target": "marker-position",
+      "label": "informs",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "markers-to-return",
+      "source": "marker-position",
+      "target": "cp-graph-contract-return",
+      "label": "returns",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "markdown-start-to-viewer",
+      "source": "cp-markdown-direction-start",
+      "target": "viewer-panel",
+      "label": "starts",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "viewer-to-links",
+      "source": "viewer-panel",
+      "target": "reference-link-routing",
+      "label": "enables",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "links-to-restore",
+      "source": "reference-link-routing",
+      "target": "restore-previous-panel",
+      "label": "requires",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "graph-to-markdown-parallel",
+      "source": "cp-graph-direction-start",
+      "target": "cp-markdown-direction-start",
+      "label": "parallel steward starts",
+      "style": "dashed",
+      "directional": false
+    }
+  ],
+  "regions": [
+    {
+      "id": "shape-graph-contract",
+      "label": "Graph Contract Shape",
+      "legendKey": "graph-contract",
+      "nodeIds": [
+        "shape-overlay-api",
+        "checkpoint-icons",
+        "marker-position"
+      ],
+      "detail": [
+        {
+          "id": "fixed-decisions",
+          "name": "Fixed Decisions",
+          "icon": "pin",
+          "summary": "3",
+          "color": "#2563eb",
+          "body": "Dashboard renders projected graph data; shapes do not affect physics; markers represent active workers."
+        },
+        {
+          "id": "autonomous-decisions",
+          "name": "Autonomous Decisions",
+          "icon": "git-branch",
+          "summary": "2",
+          "color": "#2563eb",
+          "body": "Worker may choose first overlay algorithm and tune icon or label fade behavior."
+        },
+        {
+          "id": "escalation-triggers",
+          "name": "Escalation Triggers",
+          "icon": "triangle-alert",
+          "summary": "3",
+          "color": "#ef4444",
+          "body": "Escalate if overlay needs physics changes, markers become generic status, or checkpoints become indistinguishable from Git commits."
+        },
+        {
+          "id": "return-evidence",
+          "name": "Return Evidence",
+          "icon": "file-check",
+          "summary": "3",
+          "color": "#16a34a",
+          "body": "Screenshot or preview notes, gray default node check, and missing projection fields."
+        }
+      ],
+      "links": [
+        {
+          "label": "Shape strategy",
+          "relativePath": "strategies/shape-strategy/_guides/orchestration-shape-strategy.md",
+          "kind": "artifact"
+        },
+        {
+          "label": "Shape contract meta template",
+          "relativePath": "strategies/shape-strategy/_guides/dashboard-contract-notes.md",
+          "kind": "meta_template"
+        },
+        {
+          "label": "Visual map example",
+          "relativePath": "strategies/shape-strategy/map.md",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "shape-markdown-inspection",
+      "label": "Markdown Inspection Shape",
+      "legendKey": "markdown-inspection",
+      "nodeIds": [
+        "viewer-panel",
+        "reference-link-routing",
+        "restore-previous-panel"
+      ],
+      "detail": [
+        {
+          "id": "fixed-decisions",
+          "name": "Fixed Decisions",
+          "icon": "pin",
+          "summary": "3",
+          "color": "#16a34a",
+          "body": "Read-only Markdown viewing; no in-app editor; no /editor route."
+        },
+        {
+          "id": "autonomous-decisions",
+          "name": "Autonomous Decisions",
+          "icon": "git-branch",
+          "summary": "2",
+          "color": "#16a34a",
+          "body": "Worker may choose panel state, loading state, and error handling."
+        },
+        {
+          "id": "escalation-triggers",
+          "name": "Escalation Triggers",
+          "icon": "triangle-alert",
+          "summary": "3",
+          "color": "#ef4444",
+          "body": "Escalate if arbitrary filesystem browsing, in-app editing, or default dashboard viewer mode is introduced."
+        },
+        {
+          "id": "return-evidence",
+          "name": "Return Evidence",
+          "icon": "file-check",
+          "summary": "3",
+          "color": "#16a34a",
+          "body": "Verified links open viewer; close restores previous panel; boundary friction notes."
+        }
+      ],
+      "links": [
+        {
+          "label": "Markdown viewer test",
+          "relativePath": "tests/markdown-viewer-fixture.md"
+        },
+        {
+          "label": "Visual map example",
+          "relativePath": "strategies/shape-strategy/map.md"
+        }
+      ]
+    },
+    {
+      "id": "region-strategy-map",
+      "label": "Strategy Map Region",
+      "legendKey": "graph-contract",
+      "regionIds": [
+        "shape-graph-contract",
+        "shape-markdown-inspection"
+      ],
+      "detail": [
+        {
+          "id": "recursive-region",
+          "name": "Recursive Region",
+          "icon": "layers",
+          "summary": "2 child regions",
+          "color": "#2563eb",
+          "body": "The parent region repeats the same metaball background and label pattern around child regions instead of duplicating their node lists."
+        }
+      ],
+      "links": [
+        {
+          "label": "Graph projection meta template",
+          "relativePath": "strategies/shape-strategy/_guides/dashboard-contract-notes.md",
+          "kind": "meta_template"
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "worker-a-active",
+      "targetId": "shape-overlay-api",
+      "label": "Worker A",
+      "description": "Graph worker is currently working around shape overlay behavior.",
+      "color": "#2563eb",
+      "icon": "user-cog",
+      "loader": true,
+      "links": [
+        {
+          "label": "Worker artifact",
+          "relativePath": "strategies/shape-strategy/_guides/orchestration-shape-strategy.md",
+          "kind": "artifact"
+        },
+        {
+          "label": "Worker meta template",
+          "relativePath": "strategies/shape-strategy/_guides/dashboard-contract-notes.md",
+          "kind": "meta_template"
+        }
+      ]
+    },
+    {
+      "id": "worker-b-active",
+      "targetId": "reference-link-routing",
+      "label": "Worker B",
+      "description": "Markdown worker is currently wiring reference links.",
+      "color": "#16a34a",
+      "icon": "user-cog"
+    }
+  ]
+}
