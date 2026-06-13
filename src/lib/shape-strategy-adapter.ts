@@ -41,6 +41,7 @@ type MarkdownDoc = {
 
 type ShapeDoc = MarkdownDoc & {
   workpieceRefs: string[];
+  nestedShapeRefs: string[];
 };
 
 type EdgeDoc = MarkdownDoc & {
@@ -105,6 +106,7 @@ export async function readShapeStrategyProjection(
     ])
   );
   const nodeRefs = createNodeReferenceResolver(shapes, checkpoints);
+  const shapeRegionNodeIds = createShapeRegionNodeIds(shapes);
   const markerActivity = await readAgentMarkerActivity(agents);
   const markerTargetIds = new Set([
     ...workpieces.map((workpiece) => workpiece.id),
@@ -236,9 +238,11 @@ export async function readShapeStrategyProjection(
       color: shapeColors.get(shape.id),
       status: shape.status ?? "active",
       muted: isPlanningLikeStatus(shape.status),
-      nodeIds: shape.workpieceRefs.map(referenceToId),
+      nodeIds: shapeRegionNodeIds.get(shape.id) ?? [],
+      regionIds: shape.nestedShapeRefs.map(referenceToId),
       detail: readDocDetailBlocks(source, shape, [
         "intent",
+        "nested shape references",
         "fixed decisions",
         "autonomous decisions",
         "escalation triggers",
@@ -316,10 +320,57 @@ async function readShapes(
     shapes.push({
       ...doc,
       workpieceRefs: readReferencePaths(doc.sections.get("workpiece references")),
+      nestedShapeRefs: readReferencePaths(
+        doc.sections.get("nested shape references")
+      ),
     });
   }
 
   return shapes;
+}
+
+function createShapeRegionNodeIds(shapes: ShapeDoc[]) {
+  const shapesById = new Map(shapes.map((shape) => [shape.id, shape]));
+  const resolvedNodeIds = new Map<string, string[]>();
+
+  const resolveShapeNodeIds = (shape: ShapeDoc, ancestry: Set<string>) => {
+    const cached = resolvedNodeIds.get(shape.id);
+
+    if (cached) {
+      return cached;
+    }
+
+    if (ancestry.has(shape.id)) {
+      return shape.workpieceRefs.map(referenceToId);
+    }
+
+    const nextAncestry = new Set(ancestry);
+    nextAncestry.add(shape.id);
+    const nodeIds = new Set(shape.workpieceRefs.map(referenceToId));
+
+    for (const nestedShapeRef of shape.nestedShapeRefs) {
+      const nestedShape = shapesById.get(referenceToId(nestedShapeRef));
+
+      if (!nestedShape) {
+        continue;
+      }
+
+      for (const nodeId of resolveShapeNodeIds(nestedShape, nextAncestry)) {
+        nodeIds.add(nodeId);
+      }
+    }
+
+    const resolved = [...nodeIds];
+    resolvedNodeIds.set(shape.id, resolved);
+
+    return resolved;
+  };
+
+  for (const shape of shapes) {
+    resolveShapeNodeIds(shape, new Set());
+  }
+
+  return resolvedNodeIds;
 }
 
 async function readWorkpieces(
