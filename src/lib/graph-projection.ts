@@ -100,6 +100,7 @@ type RawMarker = {
   label?: unknown;
   description?: unknown;
   color?: unknown;
+  status?: unknown;
   muted?: unknown;
   icon?: unknown;
   loader?: unknown;
@@ -137,6 +138,7 @@ type RawRegion = {
   category?: unknown;
   legendKey?: unknown;
   color?: unknown;
+  status?: unknown;
   muted?: unknown;
   nodeIds?: unknown;
   targetNodeIds?: unknown;
@@ -159,6 +161,7 @@ const STATUS_ALIASES: Record<string, GraphStatus> = {
   fixed: "fixed",
   in_progress: "in_progress",
   muted: "deferred",
+  planning: "deferred",
   needs_human: "needs_human",
   open: "needs_human",
   planned: "queued",
@@ -168,6 +171,7 @@ const STATUS_ALIASES: Record<string, GraphStatus> = {
   resolved: "resolved",
   signed_off: "signed_off",
   superseded: "superseded",
+  unsolidified: "deferred",
   unknown: "unknown",
   verified: "verified",
 };
@@ -321,7 +325,7 @@ function readLegend(
         sourceLayer: options.sourceLayer ?? "graph_projection",
         missing: [],
         color: readString(entry.color) ?? "#64748b",
-        muted: readBoolean(entry.muted) ?? false,
+        muted: readProjectionMuted(entry.status, entry.muted),
       };
     });
 }
@@ -342,7 +346,7 @@ function readNodes(
     const id = readString(entry.id) ?? `node-${index + 1}`;
     const label = readString(entry.label) ?? id;
     const legendKey = readString(entry.legendKey);
-    const muted = readBoolean(entry.muted) ?? false;
+    const muted = readProjectionMuted(entry.status, entry.muted);
     const rawStatus = readString(entry.status) ?? (muted ? "muted" : "active");
     const detailBlocks = readDetailBlocks(entry.detail);
     const relativePath =
@@ -465,7 +469,7 @@ function readMarkers(value: unknown, nodeIds: Set<string>): GraphMarker[] {
         label: readString(entry.label) ?? "Marker",
         description: readString(entry.description),
         color: readString(entry.color) ?? "#64748b",
-        muted: readBoolean(entry.muted) ?? false,
+        muted: readProjectionMuted(entry.status, entry.muted),
         icon: readString(entry.icon),
         loader: readBoolean(entry.loader) ?? false,
         threadIds: readStringArray(entry.threadIds ?? entry.threads),
@@ -507,7 +511,7 @@ function readRegions(
         label,
         category,
         color: readString(entry.color) ?? categoryColor ?? "#64748b",
-        muted: readBoolean(entry.muted) ?? false,
+        muted: readProjectionMuted(entry.status, entry.muted),
         nodeIds: targetNodeIds,
         regionIds: targetRegionIds,
         detail: readDetailBlocks(entry.detail),
@@ -673,6 +677,21 @@ function readProjectionStatus(
   }
 
   return fallback;
+}
+
+function readProjectionMuted(statusValue: unknown, mutedValue: unknown) {
+  return (
+    readBoolean(mutedValue) === true || isPlanningProjectionStatus(statusValue)
+  );
+}
+
+function isPlanningProjectionStatus(value: unknown) {
+  const normalized = normalizeKey(readString(value) ?? "");
+  return (
+    normalized === "planning" ||
+    normalized === "unsolidified" ||
+    normalized === "muted"
+  );
 }
 
 function readString(value: unknown) {

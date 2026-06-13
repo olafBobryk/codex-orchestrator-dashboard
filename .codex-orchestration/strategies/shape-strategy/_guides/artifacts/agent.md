@@ -11,8 +11,13 @@ shape strategy. It is not final and should not be required by default.
 
 An agent doc describes who or what is acting in the orchestration graph.
 
-Agent docs are optional. A project can visualize work without durable agent
-docs when the extra artifact would add ceremony without clarity.
+Agent docs are optional unless marker visibility is expected. A project can
+visualize work without durable agent docs when the extra artifact would add
+ceremony without clarity, but an active worker marker needs an agent doc with a
+current position and runtime identity when available.
+
+`Status:` is architecture-level strategy state for the agent. It is not a
+dashboard rendering instruction.
 
 ## Steward As Agent
 
@@ -70,6 +75,9 @@ a node or marker.
 
 The dashboard can render this as a marker attached to the referenced node. The
 marker is visual position, not a workflow status bucket.
+
+Create or update the agent doc before substantive mutation when the worker
+should be visible as an active dashboard marker.
 
 ### Runtime Identity
 

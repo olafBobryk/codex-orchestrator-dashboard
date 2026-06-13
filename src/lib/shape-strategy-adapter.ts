@@ -131,6 +131,7 @@ export async function readShapeStrategyProjection(
         label: shape.title,
         status: shape.status ?? "active",
         color: shapeColors.get(shape.id),
+        muted: isPlanningLikeStatus(shape.status),
       })),
     ],
     nodes: [
@@ -140,6 +141,7 @@ export async function readShapeStrategyProjection(
         legendKey: "work",
         color: WORK_COLOR,
         status: workpiece.status ?? "planned",
+        muted: isPlanningLikeStatus(workpiece.status),
         kind: "workpiece",
         summary: readSectionSummary(workpiece.sections.get("intent")),
         detail: readDocDetailBlocks(
@@ -157,6 +159,7 @@ export async function readShapeStrategyProjection(
         legendKey: "checkpoint",
         color: CHECKPOINT_COLOR,
         status: checkpoint.status ?? "active",
+        muted: isPlanningLikeStatus(checkpoint.status),
         kind: "checkpoint",
         chronology: readStartCheckpointId(mapDoc) === checkpoint.id ? "start" : null,
         summary: readSectionSummary(checkpoint.sections.get("transition")),
@@ -203,6 +206,9 @@ export async function readShapeStrategyProjection(
             style: edgeStyleForRelationship(edge.relationship),
             directional: edge.direction !== "undirected",
             status: edge.status ?? "active",
+            muted:
+              isPlanningLikeStatus(edge.status) ||
+              isMutedVisualWeight(edge.visualWeight),
             relativePath: edge.relativePath,
             detail: readDocDetailBlocks(source, edge, [
               "intent",
@@ -228,6 +234,8 @@ export async function readShapeStrategyProjection(
       label: shape.title,
       category: shape.id,
       color: shapeColors.get(shape.id),
+      status: shape.status ?? "active",
+      muted: isPlanningLikeStatus(shape.status),
       nodeIds: shape.workpieceRefs.map(referenceToId),
       detail: readDocDetailBlocks(source, shape, [
         "intent",
@@ -433,6 +441,7 @@ function createAgentMarkers(
         label: agent.title,
         description: readAgentDescription(agent),
         color: agentColor(agent.role),
+        muted: isPlanningLikeStatus(agent.status),
         icon: "user-cog",
         loader: markerActivity.get(agent.markerId)?.loader ?? false,
         threadIds: agent.threadIds,
@@ -764,7 +773,8 @@ function readDocDetailBlocks(
   doc: MarkdownDoc,
   sectionNames: string[]
 ) {
-  return sectionNames.flatMap((sectionName) => {
+  const statusBlock = readStatusDetailBlock(doc);
+  const sectionBlocks = sectionNames.flatMap((sectionName) => {
     const body = doc.sections.get(sectionName);
     const normalizedBody = normalizeMarkdownListBody(body);
 
@@ -789,6 +799,24 @@ function readDocDetailBlocks(
       },
     ];
   });
+
+  return statusBlock ? [statusBlock, ...sectionBlocks] : sectionBlocks;
+}
+
+function readStatusDetailBlock(doc: MarkdownDoc) {
+  if (!doc.status) {
+    return null;
+  }
+
+  return {
+    id: `${doc.id}-status`,
+    name: "Status",
+    icon: "circle",
+    summary: doc.status,
+    color: readStatusDetailColor(doc.status),
+    body: `Status: ${doc.status}`,
+    links: [],
+  };
 }
 
 function readDetailBlockBody(
@@ -967,6 +995,53 @@ function readDetailBlockColor(sectionName: string) {
     default:
       return null;
   }
+}
+
+function readStatusDetailColor(status: string) {
+  const normalized = normalizeStatusToken(status);
+
+  if (normalized === "planning" || normalized === "unsolidified") {
+    return "#a8a29e";
+  }
+
+  if (normalized === "active") {
+    return "#2563eb";
+  }
+
+  if (normalized === "accepted" || normalized === "verified") {
+    return "#16a34a";
+  }
+
+  if (normalized === "returned") {
+    return "#d97706";
+  }
+
+  if (normalized === "blocked") {
+    return "#dc2626";
+  }
+
+  if (normalized === "paused" || normalized === "planned") {
+    return "#64748b";
+  }
+
+  return "#94a3b8";
+}
+
+function isPlanningLikeStatus(status: string | null | undefined) {
+  const normalized = normalizeStatusToken(status);
+  return (
+    normalized === "planning" ||
+    normalized === "unsolidified" ||
+    normalized === "muted"
+  );
+}
+
+function isMutedVisualWeight(visualWeight: string | null | undefined) {
+  return normalizeStatusToken(visualWeight) === "muted";
+}
+
+function normalizeStatusToken(value: string | null | undefined) {
+  return value?.trim().toLowerCase().replace(/\s+/g, "_") ?? "";
 }
 
 function countMarkdownListItems(body: string) {

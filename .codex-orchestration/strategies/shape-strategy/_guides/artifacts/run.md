@@ -14,8 +14,15 @@ A run doc records one worker or agent execution trace inside a shape boundary.
 The run is not the workpiece itself. It is the record of what happened while
 work was attempted, verified, returned, paused, or accepted.
 
+`Status:` is architecture-level strategy state for the run. It is not a
+dashboard rendering instruction.
+
 Start and end checkpoints are optional anchors for a run, not the definition of
 the run.
+
+A run doc is required when a spawned or delegated worker is doing substantive
+visible work inside a shape. Create or update it before substantive mutation so
+the map does not hide active delegated work.
 
 ## Relationship To Shapes And Workpieces
 
@@ -92,6 +99,14 @@ End records where the run stopped.
 
 The end checkpoint is optional. Routine returns do not need to create checkpoint
 nodes unless they change orchestration state or need steward attention.
+
+## Status Lifecycle
+
+- `active`: worker is currently operating.
+- `returned`: worker has returned evidence and awaits steward handling.
+- `accepted`: returned work has been accepted into durable truth.
+- `blocked`: worker cannot continue without external input.
+- `paused`: work is intentionally stopped but may resume.
 
 ## Minimal Template
 

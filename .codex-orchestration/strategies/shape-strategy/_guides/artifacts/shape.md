@@ -15,6 +15,11 @@ act inside it and a steward can review what returns.
 The doc should stay plain Markdown. It may later be parsed by an adapter, but
 it should remain readable without tooling.
 
+`Status:` is architecture-level strategy state. Use `planning` for visible
+preview or speculative work that is not yet solidified. The dashboard may render
+planning shapes as muted regions, but `muted` should not be used as an authored
+shape status.
+
 ## Required Sections
 
 ### Intent
@@ -92,7 +97,7 @@ not define the shape boundary.
 ```markdown
 # Shape: <name>
 
-Status: planned | active | returned | accepted | paused
+Status: planning | planned | active | returned | accepted | paused
 
 ## Intent
 

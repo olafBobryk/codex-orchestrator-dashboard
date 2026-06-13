@@ -87,12 +87,16 @@ A shape is defined by target node ids plus node-like metadata such as:
 - Id.
 - Label.
 - Color or category.
-- Muted state.
+- Status.
 - Detail.
 - Artifact links.
 
 Shape rendering is a visual overlay around grouped nodes. It must not affect
 graph physics.
+
+Status is architecture-level strategy language. The dashboard may project
+planning-like statuses as visually muted regions, nodes, markers, or edges, but
+authors should not use UI state as orchestration vocabulary.
 
 Shape-in-shape is allowed as a strategy concept. Nested or overlapping shapes
 can represent a larger boundary containing smaller boundaries, as long as the
@@ -163,12 +167,34 @@ Checkpoints do not require Git evidence.
 
 - Default work nodes should render neutral gray unless a project-specific
   category or shape API deliberately assigns stronger meaning.
+- `Status: planning` means visible but not yet solidified work. The dashboard
+  may render it as muted or deferred. `muted` is projection vocabulary, not a
+  recommended authored status.
+- `unsolidified` is accepted as a compatibility alias for `planning`, but
+  `planning` is the canonical authored spelling.
 - Test results belong in workpiece detail blocks by default.
 - Test results should be readable as part of the work node's evidence, not
   forced into markers.
 - Markers represent active workers or agents and where they are now.
 - Other badge-like concepts should not overload markers without being named as
   a separate concept.
+
+## Visibility-Required Delegation
+
+Visible delegated work must appear on the map before substantive mutation.
+
+`agents/*` remains optional for low-ceremony or non-visible work. A project can
+visualize work without durable agent docs when the extra artifact would add
+ceremony without clarity.
+
+`runs/*` is required when a spawned or delegated worker is doing substantive
+visible work inside a shape.
+
+`agents/*` is required when that worker should appear as a dashboard marker.
+
+Run and agent artifacts should be created or updated before substantive
+mutation, then returned, accepted, paused, blocked, or removed from active map
+references when the work stops being active.
 
 ## Shape Boundary Grammar
 
@@ -191,7 +217,8 @@ The accepted minimal Markdown checkpoint document is described in
 `artifacts/checkpoint.md`.
 
 An optional, provisional Markdown agent document is sketched in
-`artifacts/agent.md`. Agent docs are not required by default.
+`artifacts/agent.md`. Agent docs are optional unless marker visibility is
+expected.
 
 The accepted minimal Markdown map document is described in
 `artifacts/map.md`.

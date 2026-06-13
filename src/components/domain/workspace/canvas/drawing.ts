@@ -28,6 +28,7 @@ const REGION_INTERNALS_FILL_ALPHA = 1;
 const REGION_INTERNALS_TINT_ALPHA = 0.04;
 const REGION_COVER_START_SCREEN_FILL = 0.1;
 const REGION_COVER_FULL_SCREEN_FILL = 0.06;
+const REGION_COVER_VISIBLE_ALPHA = 0.02;
 const REGION_ABSTRACTION_SKIP_ALPHA = 0.5;
 const REGION_CHILD_PADDING = 76;
 const REGION_INSIDE_LABEL_FONT_SIZE = 18;
@@ -208,9 +209,21 @@ export function drawRegionOverlays({
     const coverAlpha =
       regionState.coverAlphaByRegionId.get(regionField.region.id) ?? 0;
 
-    if (coverAlpha <= 0.02) {
+    if (coverAlpha <= REGION_COVER_VISIBLE_ALPHA) {
       continue;
     }
+
+    if (
+      hasVisibleCoveredAncestor({
+        region: regionField.region,
+        regions,
+        regionState,
+      })
+    ) {
+      continue;
+    }
+
+    const visualAlpha = regionField.region.muted ? coverAlpha * 0.52 : coverAlpha;
 
     context.save();
     drawRegionInternalsFill({
@@ -219,16 +232,18 @@ export function drawRegionOverlays({
       region: regionField.region,
       theme,
       globalScale,
-      alpha: regionField.region.muted ? coverAlpha * 0.52 : coverAlpha,
+      alpha: visualAlpha,
     });
     context.restore();
   }
 
-  for (const regionField of regionState.regionFields) {
+  for (const regionField of [...regionState.regionFields].sort(
+    compareRegionCoverOrder
+  )) {
     const coverAlpha =
       regionState.coverAlphaByRegionId.get(regionField.region.id) ?? 0;
 
-    if (coverAlpha <= 0.02) {
+    if (coverAlpha <= REGION_COVER_VISIBLE_ALPHA) {
       continue;
     }
 
@@ -242,8 +257,18 @@ export function drawRegionOverlays({
       continue;
     }
 
+    if (
+      hasVisibleCoveredAncestor({
+        region: regionField.region,
+        regions,
+        regionState,
+      })
+    ) {
+      continue;
+    }
+
     context.save();
-    context.globalAlpha = getRegionLabelAlpha(regionField.region, 1);
+    context.globalAlpha = getRegionLabelAlpha(regionField.region, coverAlpha);
     drawFilledRegionLabel({
       context,
       field: regionField.field,
@@ -293,7 +318,7 @@ function drawRegionInternalsFill({
     context,
     field,
     color: theme.surface,
-    alpha: alpha * REGION_INTERNALS_FILL_ALPHA,
+    alpha: REGION_INTERNALS_FILL_ALPHA,
     globalScale,
   });
   drawMetaballFill({
@@ -308,6 +333,7 @@ function drawRegionInternalsFill({
     field,
     color: region.color,
     muted: region.muted,
+    alpha,
     globalScale,
   });
 }
@@ -477,6 +503,67 @@ function getRegionCoveredAncestorDepthCount({
   return coveredDepths.size;
 }
 
+function hasVisibleCoveredAncestor({
+  region,
+  regions,
+  regionState,
+}: {
+  region: CanvasRegion;
+  regions: CanvasRegion[];
+  regionState: RegionRenderState;
+}) {
+  return hasVisibleCoveredAncestorById({
+    regionId: region.id,
+    regions,
+    regionState,
+    visited: new Set(),
+  });
+}
+
+function hasVisibleCoveredAncestorById({
+  regionId,
+  regions,
+  regionState,
+  visited,
+}: {
+  regionId: string;
+  regions: CanvasRegion[];
+  regionState: RegionRenderState;
+  visited: Set<string>;
+}): boolean {
+  if (visited.has(regionId)) {
+    return false;
+  }
+
+  visited.add(regionId);
+
+  for (const candidate of regions) {
+    if (!getRegionChildIdsForRendering(candidate, regions).includes(regionId)) {
+      continue;
+    }
+
+    if (
+      (regionState.coverAlphaByRegionId.get(candidate.id) ?? 0) >
+      REGION_COVER_VISIBLE_ALPHA
+    ) {
+      return true;
+    }
+
+    if (
+      hasVisibleCoveredAncestorById({
+        regionId: candidate.id,
+        regions,
+        regionState,
+        visited,
+      })
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function collectCoveredAncestorDepths({
   regionId,
   regions,
@@ -497,7 +584,7 @@ function collectCoveredAncestorDepths({
   visited.add(regionId);
 
   for (const candidate of regions) {
-    if (!candidate.regionIds.includes(regionId)) {
+    if (!getRegionChildIdsForRendering(candidate, regions).includes(regionId)) {
       continue;
     }
 
@@ -536,7 +623,7 @@ function regionContainsNode(
 
   visited.add(region.id);
 
-  return region.regionIds.some((regionId) => {
+  return getRegionChildIdsForRendering(region, [...regionsById.values()]).some((regionId) => {
     const child = regionsById.get(regionId);
 
     if (!child) {
@@ -1383,7 +1470,7 @@ function getRegionFieldsForHitTesting({
   const fields = createRegionFields({ regions, nodes });
 
   return fields.sort((left, right) => {
-    return right.depth - left.depth || right.order - left.order;
+    return left.depth - right.depth || right.order - left.order;
   });
 }
 
@@ -1414,7 +1501,7 @@ function createRegionFields({
 
     stack.add(region.id);
 
-    const childFields = region.regionIds
+    const childFields = getRegionChildIdsForRendering(region, regions)
       .map((regionId) => regionsById.get(regionId))
       .filter((child): child is CanvasRegion => Boolean(child))
       .map((child) => buildRegionField(child, stack))
@@ -1466,6 +1553,57 @@ function createRegionFields({
   return regions
     .map((region) => buildRegionField(region, new Set()))
     .filter((field): field is RegionField => Boolean(field));
+}
+
+function getRegionChildIdsForRendering(
+  region: CanvasRegion,
+  regions: CanvasRegion[]
+) {
+  const explicitChildIds = new Set(region.regionIds);
+  const inferredChildren = inferRegionChildrenFromNodeContainment(
+    region,
+    regions,
+    explicitChildIds
+  );
+
+  return [...explicitChildIds, ...inferredChildren.map((child) => child.id)];
+}
+
+function inferRegionChildrenFromNodeContainment(
+  region: CanvasRegion,
+  regions: CanvasRegion[],
+  explicitChildIds: Set<string>
+) {
+  if (region.nodeIds.length === 0) {
+    return [];
+  }
+
+  const regionNodeIds = new Set(region.nodeIds);
+  const containedRegions = regions.filter((candidate) => {
+    if (candidate.id === region.id || explicitChildIds.has(candidate.id)) {
+      return false;
+    }
+
+    return isStrictNodeSubset(candidate.nodeIds, regionNodeIds);
+  });
+
+  return containedRegions.filter((candidate) => {
+    return !containedRegions.some((other) => {
+      if (other.id === candidate.id) {
+        return false;
+      }
+
+      return isStrictNodeSubset(candidate.nodeIds, new Set(other.nodeIds));
+    });
+  });
+}
+
+function isStrictNodeSubset(nodeIds: string[], parentNodeIds: Set<string>) {
+  if (nodeIds.length === 0 || nodeIds.length >= parentNodeIds.size) {
+    return false;
+  }
+
+  return nodeIds.every((nodeId) => parentNodeIds.has(nodeId));
 }
 
 function createMetaballFieldFromBlobs(blobs: FieldBlob[]): MetaballField {
@@ -1585,18 +1723,20 @@ function drawMetaballBoundary({
   field,
   color,
   muted,
+  alpha = 1,
   globalScale,
 }: {
   context: CanvasRenderingContext2D;
   field: MetaballField;
   color: string;
   muted: boolean;
+  alpha?: number;
   globalScale: number;
 }) {
   const geometry = getMetaballGeometry(field, globalScale);
 
   context.save();
-  context.globalAlpha = muted ? 0.42 : 0.9;
+  context.globalAlpha = (muted ? 0.42 : 0.9) * alpha;
   context.strokeStyle = color;
   context.lineWidth = 2.1 / Math.max(0.7, globalScale);
   context.lineCap = "round";

@@ -1,6 +1,6 @@
 # Workpiece: <name>
 
-Status: planned | active | returned | accepted | paused
+Status: planning | planned | active | returned | accepted | paused
 
 Guide: ../_guides/artifacts/workpiece.md
 

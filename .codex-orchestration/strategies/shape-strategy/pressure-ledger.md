@@ -42,6 +42,67 @@ or promotion until reviewed.
 
 Decision:
 
+## Entry: Visible Delegated Worker Missing From Map
+
+Date: 2026-06-12
+Status: absorbed
+
+Pressure:
+lower + sideways
+
+Signal:
+A delegated worker was doing substantive visible work inside an Averlo shape,
+but the map had no active run or agent references, so the work did not appear
+as an active worker lane or marker.
+
+Why It Matters:
+The strategy said agent docs were optional, which was true for low-ceremony
+work but too loose for spawned workers expected to be visible on the dashboard.
+
+Affected Artifacts:
+- `strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
+- `strategies/shape-strategy/_guides/artifacts/map.md`
+- `strategies/shape-strategy/_guides/artifacts/agent.md`
+- `strategies/shape-strategy/_guides/artifacts/run.md`
+
+Recommended Response:
+Require run artifacts for substantive visible delegated work and require agent
+artifacts when a visible worker marker is expected.
+
+Decision:
+Absorbed by the Visibility-Required Delegation rule.
+
+## Entry: Muted Leaked Into Strategy Status
+
+Date: 2026-06-12
+Status: absorbed
+
+Pressure:
+lower
+
+Signal:
+Preview-only Averlo work used `Status: muted` to ask for a quieter visual
+surface, but `muted` reads like UI/projection language rather than architecture
+status.
+
+Why It Matters:
+If docs use visual rendering words as strategy status, the shape strategy starts
+mixing authored orchestration truth with dashboard appearance.
+
+Affected Artifacts:
+- `strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
+- `strategies/shape-strategy/_guides/artifacts/shape.md`
+- `strategies/shape-strategy/_guides/artifacts/workpiece.md`
+- `src/lib/shape-strategy-adapter.ts`
+- `src/lib/graph-projection.ts`
+
+Recommended Response:
+Use `Status: planning` for visible but not yet solidified work. Keep `muted` as
+projection vocabulary and as a legacy adapter alias only.
+
+Decision:
+Absorbed by the status-to-projection contract.
+
 ## Entry: Pressure Ledger Becomes Missing Feedback Artifact
 
 Date: 2026-06-11

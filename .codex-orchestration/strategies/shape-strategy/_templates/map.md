@@ -1,6 +1,6 @@
 # Orchestration Map: <project or scope name>
 
-Status: active | paused | accepted | archived
+Status: active | planning | paused | accepted | archived
 
 Guide: ../_guides/artifacts/map.md
 
@@ -22,11 +22,11 @@ Guide: ../_guides/artifacts/map.md
 
 ## Active Run References
 
-- `<run-id>`: <why this run is currently relevant>
+- `<run-id>`: <required for visible delegated work; why this run is currently relevant>
 
 ## Agent References
 
-- `<agent-id>`: <why this agent is relevant>
+- `<agent-id>`: <required when a visible worker marker is expected>
 
 ## Trunk / Flow
 
@@ -35,7 +35,7 @@ Guide: ../_guides/artifacts/map.md
 ## Intentional Disconnected Components
 
 - Intentional: yes | no
-- Notes: <why more than one component is acceptable, or none>
+- Notes: <why more than one component is acceptable; use for disconnected planning work>
 
 ## Evidence
 
