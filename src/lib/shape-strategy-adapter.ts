@@ -476,6 +476,10 @@ function createAgentMarkers(
   warnings: GraphProjectionQualityWarning[]
 ) {
   return agents.flatMap((agent) => {
+    if (!shouldRenderAgentMarker(agent.status)) {
+      return [];
+    }
+
     if (!agent.targetId || !targetNodeIds.has(agent.targetId)) {
       warnings.push(
         createWarning("shape-strategy-missing-agent-position", agent.id, [
@@ -506,6 +510,16 @@ function createAgentMarkers(
       },
     ];
   });
+}
+
+function shouldRenderAgentMarker(status: string | null) {
+  const normalizedStatus = status?.trim().toLowerCase();
+
+  if (!normalizedStatus) {
+    return true;
+  }
+
+  return ["active", "in_progress", "paused"].includes(normalizedStatus);
 }
 
 async function readEdges(
