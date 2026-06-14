@@ -59,8 +59,15 @@ const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
 }) as ComponentType<GraphProps>;
 
 const INITIAL_FIT_DURATION_MS = 420;
-const INITIAL_FIT_PADDING_DESKTOP = 140;
-const INITIAL_FIT_PADDING_MOBILE = 72;
+const SETTLED_FIT_DURATION_MS = 560;
+const FIT_VIEWPORT_MARGIN_DESKTOP = 28;
+const FIT_VIEWPORT_MARGIN_MOBILE = 18;
+const FIT_WORLD_PADDING = 132;
+const MIN_VISIBLE_FIT_WIDTH = 280;
+const MIN_VISIBLE_FIT_HEIGHT = 260;
+const MIN_OVERLAY_SIZE = 120;
+const MIN_INITIAL_ZOOM = 0.02;
+const MAX_INITIAL_ZOOM = 2.5;
 const MARKER_LOADER_TRANSITION_REDRAW_MS = 760;
 const PROMOTED_MARKER_TRANSITION_REDRAW_MS = 280;
 
@@ -78,7 +85,9 @@ export function OrchestrationGraphCanvas({
 }: OrchestrationGraphCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<GraphMethods | undefined>(undefined);
-  const initialFocusAppliedKeyRef = useRef<string | null>(null);
+  const provisionalFitAppliedKeyRef = useRef<string | null>(null);
+  const settledFitAppliedKeyRef = useRef<string | null>(null);
+  const userCameraInteractedKeyRef = useRef<string | null>(null);
   const [size, setSize] = useState({ width: 960, height: 620 });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
@@ -174,20 +183,64 @@ export function OrchestrationGraphCanvas({
           : null;
   const initialFocusKey = `${layoutKey}:${size.width}x${size.height}`;
 
-  const fitInitialGraph = useCallback(() => {
+  const fitInitialGraph = useCallback((durationMs = INITIAL_FIT_DURATION_MS) => {
     const instance = graphRef.current;
+    const container = containerRef.current;
 
-    if (!instance || data.nodes.length === 0) {
+    if (!instance || !container || data.nodes.length === 0) {
       return false;
     }
 
-    instance.zoomToFit(
-      INITIAL_FIT_DURATION_MS,
-      size.width < 700 ? INITIAL_FIT_PADDING_MOBILE : INITIAL_FIT_PADDING_DESKTOP
+    const graphBounds = getGraphFitBounds(data.nodes);
+
+    if (!graphBounds) {
+      return false;
+    }
+
+    const visibleViewport = getVisibleFitViewport(container, size);
+    const zoom = clamp(
+      Math.min(
+        visibleViewport.width / (graphBounds.right - graphBounds.left),
+        visibleViewport.height / (graphBounds.bottom - graphBounds.top)
+      ),
+      MIN_INITIAL_ZOOM,
+      MAX_INITIAL_ZOOM
     );
+    const graphCenter = {
+      x: (graphBounds.left + graphBounds.right) / 2,
+      y: (graphBounds.top + graphBounds.bottom) / 2,
+    };
+    const viewportOffset = {
+      x: visibleViewport.left + visibleViewport.width / 2 - size.width / 2,
+      y: visibleViewport.top + visibleViewport.height / 2 - size.height / 2,
+    };
+
+    instance.centerAt(
+      graphCenter.x - viewportOffset.x / zoom,
+      graphCenter.y - viewportOffset.y / zoom,
+      durationMs
+    );
+    instance.zoom(zoom, durationMs);
 
     return true;
-  }, [data.nodes.length, size.width]);
+  }, [data.nodes, size]);
+
+  const fitSettledInitialGraph = useCallback(() => {
+    if (
+      settledFitAppliedKeyRef.current === initialFocusKey ||
+      userCameraInteractedKeyRef.current === initialFocusKey
+    ) {
+      return;
+    }
+
+    if (fitInitialGraph(SETTLED_FIT_DURATION_MS)) {
+      settledFitAppliedKeyRef.current = initialFocusKey;
+    }
+  }, [fitInitialGraph, initialFocusKey]);
+
+  const markCameraInteraction = useCallback(() => {
+    userCameraInteractedKeyRef.current = initialFocusKey;
+  }, [initialFocusKey]);
 
   const selectEdge = useCallback((edgeId: string) => {
     setSelectedNodeId(null);
@@ -328,12 +381,12 @@ export function OrchestrationGraphCanvas({
   }, []);
 
   useLayoutEffect(() => {
-    if (initialFocusAppliedKeyRef.current === initialFocusKey) {
+    if (provisionalFitAppliedKeyRef.current === initialFocusKey) {
       return;
     }
 
     if (fitInitialGraph()) {
-      initialFocusAppliedKeyRef.current = initialFocusKey;
+      provisionalFitAppliedKeyRef.current = initialFocusKey;
     }
   }, [fitInitialGraph, graphMountVersion, initialFocusKey]);
 
@@ -470,6 +523,8 @@ export function OrchestrationGraphCanvas({
       <div
         ref={containerRef}
         className="relative h-full min-h-[520px] bg-background"
+        onPointerDown={markCameraInteraction}
+        onWheelCapture={markCameraInteraction}
         onMouseMove={refreshGraphTooltip}
         onMouseLeave={() => {
           setHoveredGraphTooltip(null);
@@ -603,6 +658,7 @@ export function OrchestrationGraphCanvas({
               linkDirectionalParticleWidth={2}
               d3VelocityDecay={0.46}
               cooldownTicks={320}
+              onEngineStop={fitSettledInitialGraph}
               onLinkClick={(_link, event) => {
                 event.stopPropagation();
                 selectGraphHit(resolveHitFromEvent(event));
@@ -718,4 +774,123 @@ export function OrchestrationGraphCanvas({
       </div>
     </section>
   );
+}
+
+function getGraphFitBounds(
+  nodes: Array<{ x?: number; y?: number; visualRadius?: number }>
+) {
+  const positionedNodes = nodes.filter(
+    (node): node is { x: number; y: number; visualRadius?: number } =>
+      Number.isFinite(node.x) && Number.isFinite(node.y)
+  );
+
+  if (positionedNodes.length === 0) {
+    return null;
+  }
+
+  return positionedNodes.reduce(
+    (bounds, node) => {
+      const radius = (node.visualRadius ?? 48) + FIT_WORLD_PADDING;
+
+      return {
+        left: Math.min(bounds.left, node.x - radius),
+        right: Math.max(bounds.right, node.x + radius),
+        top: Math.min(bounds.top, node.y - radius),
+        bottom: Math.max(bounds.bottom, node.y + radius),
+      };
+    },
+    {
+      left: Number.POSITIVE_INFINITY,
+      right: Number.NEGATIVE_INFINITY,
+      top: Number.POSITIVE_INFINITY,
+      bottom: Number.NEGATIVE_INFINITY,
+    }
+  );
+}
+
+function getVisibleFitViewport(
+  container: HTMLDivElement,
+  size: { width: number; height: number }
+) {
+  const margin =
+    size.width < 700 ? FIT_VIEWPORT_MARGIN_MOBILE : FIT_VIEWPORT_MARGIN_DESKTOP;
+  const containerRect = container.getBoundingClientRect();
+  let left = margin;
+  let right = size.width - margin;
+  let top = margin;
+  let bottom = size.height - margin;
+
+  for (const element of document.querySelectorAll("aside, [data-graph-status-panel]")) {
+    const overlay = getFixedOverlayElement(element);
+
+    if (!overlay) {
+      continue;
+    }
+
+    const rect = overlay.getBoundingClientRect();
+
+    if (
+      rect.width < MIN_OVERLAY_SIZE ||
+      rect.height < MIN_OVERLAY_SIZE ||
+      rect.right <= containerRect.left ||
+      rect.left >= containerRect.right ||
+      rect.bottom <= containerRect.top ||
+      rect.top >= containerRect.bottom
+    ) {
+      continue;
+    }
+
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    if (rect.height > containerRect.height * 0.35) {
+      if (centerX < containerRect.left + containerRect.width / 2) {
+        left = Math.max(left, rect.right - containerRect.left + margin);
+      } else {
+        right = Math.min(right, rect.left - containerRect.left - margin);
+      }
+    }
+
+    if (rect.width > containerRect.width * 0.35) {
+      if (centerY < containerRect.top + containerRect.height / 2) {
+        top = Math.max(top, rect.bottom - containerRect.top + margin);
+      } else {
+        bottom = Math.min(bottom, rect.top - containerRect.top - margin);
+      }
+    }
+  }
+
+  if (right - left < MIN_VISIBLE_FIT_WIDTH || bottom - top < MIN_VISIBLE_FIT_HEIGHT) {
+    return {
+      left: margin,
+      top: margin,
+      width: Math.max(MIN_VISIBLE_FIT_WIDTH, size.width - margin * 2),
+      height: Math.max(MIN_VISIBLE_FIT_HEIGHT, size.height - margin * 2),
+    };
+  }
+
+  return {
+    left,
+    top,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+function getFixedOverlayElement(element: Element) {
+  let current: Element | null = element;
+
+  while (current && current !== document.body) {
+    if (window.getComputedStyle(current).position === "fixed") {
+      return current;
+    }
+
+    current = current.parentElement;
+  }
+
+  return null;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
