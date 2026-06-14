@@ -21,6 +21,7 @@ import {
   PRESSURE_LEDGER_FILENAME,
   PRESSURE_LEDGER_LINE,
   PRESSURE_LEDGER_TEMPLATE,
+  SHAPE_RUN_RETURN_LINE,
   SOURCE_STRATEGY_RELATIVE_DIR,
   STARTER_DIRECTORIES,
   STRATEGY_EXPERIMENTS_DIR,
@@ -241,6 +242,7 @@ async function ensureArchitecturePointer(architecturePath) {
       STRATEGY_GUIDE_LINE,
       STRATEGY_TEMPLATES_LINE,
       PRESSURE_LEDGER_LINE,
+      SHAPE_RUN_RETURN_LINE,
     ]) {
       if (!nextContent.includes(line)) {
         nextContent = `${nextContent.trimEnd()}\n${line}\n`;

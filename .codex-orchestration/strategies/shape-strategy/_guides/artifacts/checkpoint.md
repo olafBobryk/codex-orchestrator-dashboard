@@ -14,6 +14,9 @@ A checkpoint records a meaningful transition in orchestration state.
 A checkpoint is not a commit, and it is not every run boundary. A checkpoint may
 reference a commit as evidence, but Git does not define the checkpoint.
 
+`Status:` is architecture-level strategy state for the checkpoint. It is not a
+dashboard rendering instruction.
+
 ## Relationship To Shapes, Workpieces, Runs, And Commits
 
 - A shape defines the work boundary affected by the transition.

@@ -6,9 +6,11 @@ const INACTIVE_STATUSES = new Set([
   "done",
   "fixed",
   "muted",
+  "planning",
   "resolved",
   "signed_off",
   "superseded",
+  "unsolidified",
   "verified",
 ]);
 
@@ -124,7 +126,10 @@ function readNodes(value) {
         kind: normalizeKey(readString(entry.kind) ?? "chunk"),
         chronology: normalizeKey(readString(entry.chronology) ?? ""),
         status: normalizeKey(readString(entry.status) ?? "active"),
-        muted: entry.muted === true,
+        muted:
+          entry.muted === true ||
+          normalizeKey(readString(entry.status) ?? "") === "planning" ||
+          normalizeKey(readString(entry.status) ?? "") === "unsolidified",
       },
     ];
   });

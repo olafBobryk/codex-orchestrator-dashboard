@@ -1,6 +1,7 @@
 # Run: <name>
 
 Status: active | returned | accepted | blocked | paused
+Mode: subagent | visible-thread | steward | worker | reviewer
 
 Guide: ../_guides/artifacts/run.md
 
@@ -21,6 +22,10 @@ Guide: ../_guides/artifacts/run.md
 - Thread: <current thread id or link>
 - Codex agent: <agent id, worker name, or none>
 
+## Mode
+
+subagent | visible-thread | steward | worker | reviewer
+
 ## Start
 
 - Checkpoint: `<checkpoint-id>` | none
@@ -33,6 +38,18 @@ Guide: ../_guides/artifacts/run.md
 - Worktree: <path or branch, if any>
 - Branch: <branch or none>
 - Base: <commit or branch, if known>
+- HEAD: <commit or none>
+- Preview: <url or none>
+
+## State Summary
+
+<One short steward-maintained summary of current run state.>
+
+## Gate / Return
+
+- Human gate: yes | no
+- Returned checkpoint candidate: yes | no
+- Notes: <what needs steward or human handling>
 
 ## Return Evidence
 

@@ -13,6 +13,8 @@ export const ACCEPTED_STRATEGY_LINE =
 export const STRATEGY_GUIDE_LINE = "- Strategy guide: `_guides/`";
 export const STRATEGY_TEMPLATES_LINE = "- Strategy templates: `_templates/`";
 export const PRESSURE_LEDGER_LINE = "- Pressure ledger: `pressure-ledger.md`";
+export const SHAPE_RUN_RETURN_LINE =
+  "- Return workflow skill: `$shape-run-return` in `/Users/olafbobryk/.codex/skills/shape-run-return/`";
 export const LEGACY_ACCEPTED_STRATEGY_LINE = `- Accepted strategy: \`${LEGACY_STRATEGY_RELATIVE_DIR}/meta/orchestration-shape-strategy.md\``;
 export const LEGACY_GUIDE_ACCEPTED_STRATEGY_LINE = `- Accepted strategy: \`${LEGACY_STRATEGY_RELATIVE_DIR}/guide/orchestration-shape-strategy.md\``;
 export const LEGACY_UNDERSCORE_ACCEPTED_STRATEGY_LINE = `- Accepted strategy: \`${LEGACY_STRATEGY_RELATIVE_DIR}/_guides/orchestration-shape-strategy.md\``;
@@ -141,5 +143,6 @@ ${ACCEPTED_STRATEGY_LINE}
 ${STRATEGY_GUIDE_LINE}
 ${STRATEGY_TEMPLATES_LINE}
 ${PRESSURE_LEDGER_LINE}
+${SHAPE_RUN_RETURN_LINE}
 `;
 }

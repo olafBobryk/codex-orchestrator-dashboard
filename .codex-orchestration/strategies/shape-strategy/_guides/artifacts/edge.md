@@ -20,6 +20,10 @@ connected-component check.
 Map docs can list trunk and flow edges directly. Edge docs are useful when a
 relationship needs its own explanation, evidence, or status.
 
+`Status:` is architecture-level strategy state. Use `planning` for visible
+relationships that are not yet solidified. Use `Visual Weight: muted` only as
+projection language for how strongly an edge should appear.
+
 ## Required Sections
 
 ### Intent
@@ -77,7 +81,7 @@ results, previews, or other artifacts.
 ```markdown
 # Edge: <name>
 
-Status: active | accepted | muted | removed
+Status: planning | active | accepted | removed
 
 ## Intent
 

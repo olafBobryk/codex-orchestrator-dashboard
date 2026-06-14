@@ -15,6 +15,9 @@ or scoped graph view.
 The map sits above shapes, workpieces, runs, checkpoints, and optional agents.
 It answers what should be visible together and why.
 
+`Status:` is architecture-level strategy state for the map. It is not a
+dashboard rendering instruction.
+
 ## End Boundary
 
 Map-level end anchoring is not part of this minimal doc. The dashboard end API
@@ -55,15 +58,31 @@ Each reference should explain what transition the checkpoint marks.
 
 Active run references list runs that are currently relevant to the map.
 
+Active run references are required when a spawned or delegated worker is doing
+substantive visible work inside a shape.
+
 Completed runs can be omitted unless their return evidence is still important
 to the current view.
+
+For dashboard-visible delegated work, active run references should point to
+central steward-checkout run stubs. Worker worktree run docs can be linked as
+evidence from the central run.
 
 ### Agent References
 
 Agent references are optional.
 
-They should be included only when they clarify active ownership, stewardship,
-review, or worker position.
+They should be included when they clarify active ownership, stewardship,
+review, or worker position. They are required when a visible dashboard marker is
+expected for an active worker.
+
+Agent references do not make historical workers active. Only live agent
+statuses should produce markers. Historical agents can stay as docs or evidence
+without appearing as active graph markers.
+
+For dashboard-visible delegated work, agent references should point to central
+steward-checkout agent stubs. Worker worktree agent docs can be linked as
+evidence from the central agent.
 
 ### Trunk / Flow
 
@@ -84,6 +103,11 @@ separate.
 If more than one active component exists and it is not listed here, the
 projection should be treated as patchy or under-specified.
 
+Preview-only or not-yet-solidified work should use `Status: planning` on the
+shape and related workpieces. If that planning work is disconnected from the
+active flow, list it here so the disconnected component is intentional rather
+than accidental.
+
 ### Evidence
 
 Evidence lists material that supports this map.
@@ -96,7 +120,7 @@ commits, branches, worktrees, or notes.
 ```markdown
 # Orchestration Map: <project or scope name>
 
-Status: active | paused | accepted | archived
+Status: active | planning | paused | accepted | archived
 
 ## Intent
 

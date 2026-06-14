@@ -14,6 +14,11 @@ A workpiece doc describes one concrete piece of work.
 The workpiece should be small enough to build, test, review, and reference from
 one or more shapes.
 
+`Status:` is architecture-level strategy state. Use `planning` for visible
+preview or speculative work that is not yet solidified. The dashboard may render
+planning workpieces as muted or deferred nodes, but `muted` should not be used
+as an authored workpiece status.
+
 ## Relationship To Shapes And Runs
 
 - A shape is the boundary around work.
@@ -62,7 +67,7 @@ They should not become a second implementation plan.
 ```markdown
 # Workpiece: <name>
 
-Status: planned | active | returned | accepted | paused
+Status: planning | planned | active | returned | accepted | paused
 
 ## Intent
 

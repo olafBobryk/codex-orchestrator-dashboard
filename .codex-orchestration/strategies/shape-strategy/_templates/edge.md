@@ -1,6 +1,6 @@
 # Edge: <name>
 
-Status: active | accepted | muted | removed
+Status: planning | active | accepted | removed
 
 Guide: ../_guides/artifacts/edge.md
 

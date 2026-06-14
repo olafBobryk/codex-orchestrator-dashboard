@@ -1,12 +1,20 @@
 # Agent: <name>
 
-Status: active | idle | paused | retired
+Status: active | in_progress | paused | returned | accepted | planned | idle | retired
 
 Guide: ../_guides/artifacts/agent.md
 
 ## Role
 
 steward | worker | reviewer | observer
+
+## Mode
+
+subagent | visible-thread | steward | worker | reviewer
+
+## Parent Agent
+
+- Agent: `<agent-id>` | none
 
 ## Authority
 
@@ -33,7 +41,11 @@ writing | non-writing | review-only | unknown
 
 - Thread: <current thread id or link>
 - Codex agent: <agent id, worker name, or none>
+- Worktree: <path or none>
+- Branch: <branch or none>
+- HEAD: <commit or none>
+- Preview: <url or none>
 
 ## Evidence
 
-- <thread id, worktree, commit, handoff, return note, screenshot, preview, or doc>
+- <thread id, worktree, local run/agent doc, commit, handoff, return note, screenshot, preview, or doc>

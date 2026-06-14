@@ -14,6 +14,9 @@ An artifact doc describes a reference that supports orchestration work.
 Artifacts are first-class references, but they do not automatically become graph
 nodes.
 
+`Status:` is architecture-level strategy state for the artifact. It is not a
+dashboard rendering instruction.
+
 ## Relationship To Other Artifacts
 
 Shapes, workpieces, runs, checkpoints, edges, maps, and optional agents can all

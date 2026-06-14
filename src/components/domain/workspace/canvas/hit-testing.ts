@@ -5,6 +5,7 @@ import {
   getMarkerIslandRect,
   getPointToSegmentDistance,
   getRegionAtScreenPoint,
+  type PromotedMarkerHitArea,
 } from "./drawing";
 import type { CanvasLink, CanvasNode, CanvasRegion, GraphMethods } from "./types";
 
@@ -38,6 +39,7 @@ export function resolveGraphHit({
   nodes,
   links,
   regions,
+  promotedMarkerHitAreas = [],
   graph,
   screenX,
   screenY,
@@ -46,6 +48,7 @@ export function resolveGraphHit({
   nodes: NodeObject<CanvasNode>[];
   links: CanvasLink[];
   regions: CanvasRegion[];
+  promotedMarkerHitAreas?: PromotedMarkerHitArea[];
   graph: GraphMethods | undefined;
   screenX: number;
   screenY: number;
@@ -56,9 +59,20 @@ export function resolveGraphHit({
   }
 
   const point = graph.screen2GraphCoords(screenX, screenY);
+  const promotedMarkerIds = new Set(
+    promotedMarkerHitAreas.map((hitArea) => hitArea.marker.id)
+  );
+  const promotedMarker = getPromotedMarkerAtGraphPoint(
+    promotedMarkerHitAreas,
+    point
+  );
+
+  if (promotedMarker) {
+    return promotedMarker;
+  }
 
   for (const node of [...nodes].reverse()) {
-    const marker = getMarkerAtGraphPoint(node, point);
+    const marker = getMarkerAtGraphPoint(node, point, promotedMarkerIds);
 
     if (marker) {
       return { type: "marker", node, marker };
@@ -96,6 +110,28 @@ export function resolveGraphHit({
   return { type: "background" };
 }
 
+function getPromotedMarkerAtGraphPoint(
+  promotedMarkerHitAreas: PromotedMarkerHitArea[],
+  point: { x: number; y: number }
+): GraphHitResult | null {
+  for (const hitArea of [...promotedMarkerHitAreas].reverse()) {
+    if (
+      point.x >= hitArea.rect.left - MARKER_HIT_PADDING &&
+      point.x <= hitArea.rect.right + MARKER_HIT_PADDING &&
+      point.y >= hitArea.rect.top - MARKER_HIT_PADDING &&
+      point.y <= hitArea.rect.bottom + MARKER_HIT_PADDING
+    ) {
+      return {
+        type: "marker",
+        node: hitArea.node,
+        marker: hitArea.marker,
+      };
+    }
+  }
+
+  return null;
+}
+
 function getClosestEdgeAtGraphPoint({
   links,
   point,
@@ -129,14 +165,19 @@ function getClosestEdgeAtGraphPoint({
 
 function getMarkerAtGraphPoint(
   node: NodeObject<CanvasNode>,
-  point: { x: number; y: number }
+  point: { x: number; y: number },
+  hiddenMarkerIds: Set<string>
 ) {
   if (node.markers.length === 0) {
     return null;
   }
 
   return (
-    node.markers.slice(0, 4).find((_, index) => {
+    node.markers.slice(0, 4).find((marker, index) => {
+      if (hiddenMarkerIds.has(marker.id)) {
+        return false;
+      }
+
       const island = getMarkerIslandRect(node, index);
 
       return (

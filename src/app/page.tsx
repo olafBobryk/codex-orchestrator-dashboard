@@ -16,6 +16,11 @@ import {
 } from "@/components/domain/workspace";
 import { readGraphProjection } from "@/lib/graph-projection";
 import { buildMarkdownGraph, readParam } from "@/lib/workspace-dashboard";
+import {
+  PUBLIC_EXAMPLE_WORKSPACE,
+  publicExampleGraph,
+  publicExampleProjects,
+} from "@/lib/public-example";
 
 type PageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -26,6 +31,13 @@ export default async function Home({ searchParams }: PageProps) {
   const requestedWorkspace = readParam(params.workspace);
   const codexProjects = await readCodexProjects();
   const workspace = requestedWorkspace.trim();
+
+  if (
+    workspace === PUBLIC_EXAMPLE_WORKSPACE ||
+    (!workspace && codexProjects.state === "missing_file")
+  ) {
+    return <PublicExampleDashboard />;
+  }
 
   if (!workspace) {
     return <HomePage codexProjects={codexProjects} />;
@@ -69,6 +81,28 @@ export default async function Home({ searchParams }: PageProps) {
           summaries: result.counts.summaries + result.counts.handoffs,
           liveAgents: liveThreads.counts.agents,
           activeThreads: liveThreads.counts.active,
+        }}
+      />
+    </main>
+  );
+}
+
+function PublicExampleDashboard() {
+  return (
+    <main className="relative min-h-screen bg-background lg:h-screen lg:overflow-hidden">
+      <WorkspaceDashboard
+        codexProjects={publicExampleProjects}
+        graph={publicExampleGraph}
+        projectionQualityWarnings={[]}
+        resolvedWorkspace={PUBLIC_EXAMPLE_WORKSPACE}
+        workspace={PUBLIC_EXAMPLE_WORKSPACE}
+        stats={{
+          docs: 1,
+          packets: publicExampleGraph.packets.length,
+          ledgers: 0,
+          summaries: publicExampleGraph.nodes.length,
+          liveAgents: publicExampleGraph.markers.length,
+          activeThreads: 0,
         }}
       />
     </main>

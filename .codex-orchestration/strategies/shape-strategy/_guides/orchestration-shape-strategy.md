@@ -87,12 +87,16 @@ A shape is defined by target node ids plus node-like metadata such as:
 - Id.
 - Label.
 - Color or category.
-- Muted state.
+- Status.
 - Detail.
 - Artifact links.
 
 Shape rendering is a visual overlay around grouped nodes. It must not affect
 graph physics.
+
+Status is architecture-level strategy language. The dashboard may project
+planning-like statuses as visually muted regions, nodes, markers, or edges, but
+authors should not use UI state as orchestration vocabulary.
 
 Shape-in-shape is allowed as a strategy concept. Nested or overlapping shapes
 can represent a larger boundary containing smaller boundaries, as long as the
@@ -163,12 +167,50 @@ Checkpoints do not require Git evidence.
 
 - Default work nodes should render neutral gray unless a project-specific
   category or shape API deliberately assigns stronger meaning.
+- `Status: planning` means visible but not yet solidified work. The dashboard
+  may render it as muted or deferred. `muted` is projection vocabulary, not a
+  recommended authored status.
+- `unsolidified` is accepted as a compatibility alias for `planning`, but
+  `planning` is the canonical authored spelling.
 - Test results belong in workpiece detail blocks by default.
 - Test results should be readable as part of the work node's evidence, not
   forced into markers.
-- Markers represent active workers or agents and where they are now.
+- Markers represent live workers or agents and where they are now.
+- Agent markers should render only for live operational statuses: `active`,
+  `in_progress`, or `paused`. Historical statuses such as `returned`,
+  `accepted`, `planned`, or other non-live states remain available as docs and
+  history, but should not produce graph markers.
 - Other badge-like concepts should not overload markers without being named as
   a separate concept.
+
+## Visibility-Required Delegation
+
+Visible delegated work must appear on the map before substantive mutation.
+
+`agents/*` remains optional for low-ceremony or non-visible work. A project can
+visualize work without durable agent docs when the extra artifact would add
+ceremony without clarity.
+
+`runs/*` is required when a spawned or delegated worker is doing substantive
+visible work inside a shape.
+
+`agents/*` is required when that worker should appear as a dashboard marker.
+
+Run and agent artifacts should be created or updated before substantive
+mutation, then returned, accepted, paused, blocked, or removed from active map
+references when the work stops being active.
+
+For dashboard-visible delegated work, the steward or main checkout owns the
+central projection docs. Worker worktrees may keep local run and agent docs as
+evidence, but those local docs should not be the only source for active or
+returned projection state. The main checkout should contain central run and
+agent stubs when the dashboard is expected to show the work before
+consolidation.
+
+Lifecycle status and execution mode are separate. Use status for lifecycle
+state such as `active`, `paused`, `returned`, `blocked`, `accepted`, or
+`archived`; use mode for execution shape such as `subagent`, `visible-thread`,
+`steward`, `worker`, or `reviewer`.
 
 ## Shape Boundary Grammar
 
@@ -191,7 +233,8 @@ The accepted minimal Markdown checkpoint document is described in
 `artifacts/checkpoint.md`.
 
 An optional, provisional Markdown agent document is sketched in
-`artifacts/agent.md`. Agent docs are not required by default.
+`artifacts/agent.md`. Agent docs are optional unless marker visibility is
+expected.
 
 The accepted minimal Markdown map document is described in
 `artifacts/map.md`.
@@ -204,6 +247,9 @@ The accepted minimal Markdown artifact document is described in
 
 The accepted minimal Markdown pressure ledger document is described in
 `artifacts/pressure-ledger.md`.
+
+Lightweight strategy concepts that are not artifact schemas are recorded in
+`concepts/strategies/approaches.md`.
 
 ### Fixed Decisions
 
@@ -241,6 +287,53 @@ accepted local decisions, or decisions that need steward acceptance.
 Return evidence can overlap with run return artifacts. That overlap is
 acceptable: the shape defines what must come back, while the run produces the
 actual return material.
+
+## Shape Run Return Lifecycle
+
+When a worker finishes a run inside a shape, return it through a consistent
+sequence so the graph stays connected to the steward and Git state.
+
+Use the local `$shape-run-return` skill when available. It is a shape-strategy
+specific companion to generic `$agent-return` and `$agent-worktree-workflow`
+rules; it does not replace generic merge, worktree, or preview safety rules.
+
+The accepted return order is:
+
+1. Inspect return state.
+2. Prepare Git return state.
+3. Update durable orchestration docs.
+4. Verify.
+5. Send the steward packet.
+
+Inspection comes first because the worker needs to know the actual shape, run,
+agent, workpiece, branch, worktree, preview, env, verification, and gate state
+before changing durable docs.
+
+Git return packaging comes before documentation. The docs should record the
+real disposition: committed checkpoint, staged changes, dirty returned
+worktree, retained preview, skipped merge, generated ignored files, or any
+other actual state. Do not leave Git sorting for the steward when the worker
+can safely classify it.
+
+Durable docs are updated after Git disposition is known. Mark workpieces, runs,
+and agents `returned` when they are handed back but not accepted. Leave the
+shape `active` while human gates or future workpieces remain. Do not mark a
+run `accepted` only because verification passed.
+
+Verification follows doc updates so the adapter checks the actual returned map
+state. Run the shape adapter whenever `.codex-orchestration` changes, then run
+repo checks and preview checks relevant to the work.
+
+The steward packet is last. It should report the final documented state, the
+Git disposition, verification results, preview/worktree disposition, env
+disposition, and remaining gates. If the packet is sent to the wrong thread,
+resend it to the corrected thread and state both thread ids in the current
+conversation.
+
+Hard stops remain in force: no commit, merge, push, deploy, worktree removal,
+preview stop, or thread archive unless explicitly authorized; passing checks
+does not mean product acceptance; unresolved architecture, product, security,
+content, deployment, or external-state concerns remain gates.
 
 ## Pressure Ledger
 

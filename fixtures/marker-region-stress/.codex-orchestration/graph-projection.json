@@ -1,0 +1,42 @@
+{
+  "title": "Marker Region Fixture Index",
+  "legend": [
+    { "key": "trunk", "label": "Trunk", "color": "#475569" },
+    { "key": "nested", "label": "Nested Region", "color": "#2563eb" },
+    { "key": "markers", "label": "Markers", "color": "#dc2626" },
+    { "key": "overlap", "label": "Overlap", "color": "#9333ea" }
+  ],
+  "nodes": [
+    { "id": "start", "kind": "checkpoint", "label": "Start", "legendKey": "trunk", "chronology": "start", "status": "verified", "icon": "flag" },
+    { "id": "trunk-a", "label": "Trunk A", "legendKey": "trunk", "status": "verified" },
+    { "id": "trunk-b", "label": "Trunk B", "legendKey": "trunk", "status": "in_progress" },
+    { "id": "nested-a", "label": "Nested A", "legendKey": "nested", "status": "in_progress" },
+    { "id": "nested-b", "label": "Nested B", "legendKey": "nested", "status": "queued" },
+    { "id": "multi-marker", "label": "Multi Marker Node", "legendKey": "markers", "status": "in_progress", "icon": "badge-alert" },
+    { "id": "overlap-a", "label": "Overlap A", "legendKey": "overlap", "status": "needs_human" },
+    { "id": "overlap-b", "label": "Overlap B", "legendKey": "overlap", "status": "fixed" },
+    { "id": "return", "kind": "checkpoint", "label": "Return", "legendKey": "trunk", "status": "queued", "icon": "check" }
+  ],
+  "edges": [
+    { "id": "e-start-a", "source": "start", "target": "trunk-a", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-a-b", "source": "trunk-a", "target": "trunk-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-b-nested-a", "source": "trunk-b", "target": "nested-a", "label": "spawn", "style": "dashed", "directional": true },
+    { "id": "e-nested-a-nested-b", "source": "nested-a", "target": "nested-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-nested-b-marker", "source": "nested-b", "target": "multi-marker", "label": "marker target", "style": "solid", "directional": true },
+    { "id": "e-b-overlap-a", "source": "trunk-b", "target": "overlap-a", "label": "overlap branch", "style": "dashed", "directional": true },
+    { "id": "e-overlap-a-b", "source": "overlap-a", "target": "overlap-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-overlap-b-return", "source": "overlap-b", "target": "return", "label": "return", "style": "dotted", "directional": true }
+  ],
+  "regions": [
+    { "id": "outer", "label": "Outer Overview Region", "legendKey": "trunk", "nodeIds": ["start", "trunk-a", "trunk-b", "return"], "regionIds": ["nested-parent", "overlap-parent"] },
+    { "id": "nested-parent", "label": "Nested Parent", "legendKey": "nested", "regionIds": ["nested-low"] },
+    { "id": "nested-low", "label": "Nested Low Marker Area", "legendKey": "markers", "nodeIds": ["nested-a", "nested-b", "multi-marker"] },
+    { "id": "overlap-parent", "label": "Overlap Parent", "legendKey": "overlap", "nodeIds": ["overlap-a", "overlap-b"] },
+    { "id": "same-node-overlap", "label": "Same Node Overlap", "legendKey": "overlap", "nodeIds": ["multi-marker", "overlap-b"] }
+  ],
+  "markers": [
+    { "id": "marker-main", "targetId": "multi-marker", "label": "Main Marker", "description": "Primary promoted marker.", "color": "#dc2626", "icon": "user-cog", "loader": false },
+    { "id": "marker-review", "targetId": "multi-marker", "label": "Review Marker", "description": "Second marker on same node.", "color": "#9333ea", "icon": "search-check", "loader": false },
+    { "id": "marker-overlap", "targetId": "overlap-b", "label": "Overlap Marker", "description": "Marker in overlapping region.", "color": "#f97316", "icon": "badge-alert", "loader": false }
+  ]
+}

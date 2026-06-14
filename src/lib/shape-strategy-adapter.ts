@@ -41,6 +41,7 @@ type MarkdownDoc = {
 
 type ShapeDoc = MarkdownDoc & {
   workpieceRefs: string[];
+  nestedShapeRefs: string[];
 };
 
 type EdgeDoc = MarkdownDoc & {
@@ -105,6 +106,7 @@ export async function readShapeStrategyProjection(
     ])
   );
   const nodeRefs = createNodeReferenceResolver(shapes, checkpoints);
+  const shapeRegionNodeIds = createShapeRegionNodeIds(shapes);
   const markerActivity = await readAgentMarkerActivity(agents);
   const markerTargetIds = new Set([
     ...workpieces.map((workpiece) => workpiece.id),
@@ -131,6 +133,7 @@ export async function readShapeStrategyProjection(
         label: shape.title,
         status: shape.status ?? "active",
         color: shapeColors.get(shape.id),
+        muted: isPlanningLikeStatus(shape.status),
       })),
     ],
     nodes: [
@@ -140,6 +143,7 @@ export async function readShapeStrategyProjection(
         legendKey: "work",
         color: WORK_COLOR,
         status: workpiece.status ?? "planned",
+        muted: isPlanningLikeStatus(workpiece.status),
         kind: "workpiece",
         summary: readSectionSummary(workpiece.sections.get("intent")),
         detail: readDocDetailBlocks(
@@ -157,6 +161,7 @@ export async function readShapeStrategyProjection(
         legendKey: "checkpoint",
         color: CHECKPOINT_COLOR,
         status: checkpoint.status ?? "active",
+        muted: isPlanningLikeStatus(checkpoint.status),
         kind: "checkpoint",
         chronology: readStartCheckpointId(mapDoc) === checkpoint.id ? "start" : null,
         summary: readSectionSummary(checkpoint.sections.get("transition")),
@@ -203,6 +208,9 @@ export async function readShapeStrategyProjection(
             style: edgeStyleForRelationship(edge.relationship),
             directional: edge.direction !== "undirected",
             status: edge.status ?? "active",
+            muted:
+              isPlanningLikeStatus(edge.status) ||
+              isMutedVisualWeight(edge.visualWeight),
             relativePath: edge.relativePath,
             detail: readDocDetailBlocks(source, edge, [
               "intent",
@@ -228,9 +236,13 @@ export async function readShapeStrategyProjection(
       label: shape.title,
       category: shape.id,
       color: shapeColors.get(shape.id),
-      nodeIds: shape.workpieceRefs.map(referenceToId),
+      status: shape.status ?? "active",
+      muted: isPlanningLikeStatus(shape.status),
+      nodeIds: shapeRegionNodeIds.get(shape.id) ?? [],
+      regionIds: shape.nestedShapeRefs.map(referenceToId),
       detail: readDocDetailBlocks(source, shape, [
         "intent",
+        "nested shape references",
         "fixed decisions",
         "autonomous decisions",
         "escalation triggers",
@@ -308,10 +320,57 @@ async function readShapes(
     shapes.push({
       ...doc,
       workpieceRefs: readReferencePaths(doc.sections.get("workpiece references")),
+      nestedShapeRefs: readReferencePaths(
+        doc.sections.get("nested shape references")
+      ),
     });
   }
 
   return shapes;
+}
+
+function createShapeRegionNodeIds(shapes: ShapeDoc[]) {
+  const shapesById = new Map(shapes.map((shape) => [shape.id, shape]));
+  const resolvedNodeIds = new Map<string, string[]>();
+
+  const resolveShapeNodeIds = (shape: ShapeDoc, ancestry: Set<string>) => {
+    const cached = resolvedNodeIds.get(shape.id);
+
+    if (cached) {
+      return cached;
+    }
+
+    if (ancestry.has(shape.id)) {
+      return shape.workpieceRefs.map(referenceToId);
+    }
+
+    const nextAncestry = new Set(ancestry);
+    nextAncestry.add(shape.id);
+    const nodeIds = new Set(shape.workpieceRefs.map(referenceToId));
+
+    for (const nestedShapeRef of shape.nestedShapeRefs) {
+      const nestedShape = shapesById.get(referenceToId(nestedShapeRef));
+
+      if (!nestedShape) {
+        continue;
+      }
+
+      for (const nodeId of resolveShapeNodeIds(nestedShape, nextAncestry)) {
+        nodeIds.add(nodeId);
+      }
+    }
+
+    const resolved = [...nodeIds];
+    resolvedNodeIds.set(shape.id, resolved);
+
+    return resolved;
+  };
+
+  for (const shape of shapes) {
+    resolveShapeNodeIds(shape, new Set());
+  }
+
+  return resolvedNodeIds;
 }
 
 async function readWorkpieces(
@@ -417,6 +476,10 @@ function createAgentMarkers(
   warnings: GraphProjectionQualityWarning[]
 ) {
   return agents.flatMap((agent) => {
+    if (!shouldRenderAgentMarker(agent.status)) {
+      return [];
+    }
+
     if (!agent.targetId || !targetNodeIds.has(agent.targetId)) {
       warnings.push(
         createWarning("shape-strategy-missing-agent-position", agent.id, [
@@ -433,6 +496,7 @@ function createAgentMarkers(
         label: agent.title,
         description: readAgentDescription(agent),
         color: agentColor(agent.role),
+        muted: isPlanningLikeStatus(agent.status),
         icon: "user-cog",
         loader: markerActivity.get(agent.markerId)?.loader ?? false,
         threadIds: agent.threadIds,
@@ -446,6 +510,16 @@ function createAgentMarkers(
       },
     ];
   });
+}
+
+function shouldRenderAgentMarker(status: string | null) {
+  const normalizedStatus = status?.trim().toLowerCase();
+
+  if (!normalizedStatus) {
+    return true;
+  }
+
+  return ["active", "in_progress", "paused"].includes(normalizedStatus);
 }
 
 async function readEdges(
@@ -764,7 +838,8 @@ function readDocDetailBlocks(
   doc: MarkdownDoc,
   sectionNames: string[]
 ) {
-  return sectionNames.flatMap((sectionName) => {
+  const statusBlock = readStatusDetailBlock(doc);
+  const sectionBlocks = sectionNames.flatMap((sectionName) => {
     const body = doc.sections.get(sectionName);
     const normalizedBody = normalizeMarkdownListBody(body);
 
@@ -789,6 +864,24 @@ function readDocDetailBlocks(
       },
     ];
   });
+
+  return statusBlock ? [statusBlock, ...sectionBlocks] : sectionBlocks;
+}
+
+function readStatusDetailBlock(doc: MarkdownDoc) {
+  if (!doc.status) {
+    return null;
+  }
+
+  return {
+    id: `${doc.id}-status`,
+    name: "Status",
+    icon: "circle",
+    summary: doc.status,
+    color: readStatusDetailColor(doc.status),
+    body: `Status: ${doc.status}`,
+    links: [],
+  };
 }
 
 function readDetailBlockBody(
@@ -967,6 +1060,53 @@ function readDetailBlockColor(sectionName: string) {
     default:
       return null;
   }
+}
+
+function readStatusDetailColor(status: string) {
+  const normalized = normalizeStatusToken(status);
+
+  if (normalized === "planning" || normalized === "unsolidified") {
+    return "#a8a29e";
+  }
+
+  if (normalized === "active") {
+    return "#2563eb";
+  }
+
+  if (normalized === "accepted" || normalized === "verified") {
+    return "#16a34a";
+  }
+
+  if (normalized === "returned") {
+    return "#d97706";
+  }
+
+  if (normalized === "blocked") {
+    return "#dc2626";
+  }
+
+  if (normalized === "paused" || normalized === "planned") {
+    return "#64748b";
+  }
+
+  return "#94a3b8";
+}
+
+function isPlanningLikeStatus(status: string | null | undefined) {
+  const normalized = normalizeStatusToken(status);
+  return (
+    normalized === "planning" ||
+    normalized === "unsolidified" ||
+    normalized === "muted"
+  );
+}
+
+function isMutedVisualWeight(visualWeight: string | null | undefined) {
+  return normalizeStatusToken(visualWeight) === "muted";
+}
+
+function normalizeStatusToken(value: string | null | undefined) {
+  return value?.trim().toLowerCase().replace(/\s+/g, "_") ?? "";
 }
 
 function countMarkdownListItems(body: string) {
