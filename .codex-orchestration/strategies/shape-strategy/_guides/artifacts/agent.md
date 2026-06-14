@@ -13,11 +13,20 @@ An agent doc describes who or what is acting in the orchestration graph.
 
 Agent docs are optional unless marker visibility is expected. A project can
 visualize work without durable agent docs when the extra artifact would add
-ceremony without clarity, but an active worker marker needs an agent doc with a
+ceremony without clarity, but a live worker marker needs an agent doc with a
 current position and runtime identity when available.
 
 `Status:` is architecture-level strategy state for the agent. It is not a
 dashboard rendering instruction.
+
+Agent markers represent live operational presence only. The dashboard should
+render markers for `active`, `in_progress`, and `paused` agents. Historical or
+non-live statuses such as `returned`, `accepted`, `planned`, `idle`, or
+`retired` can remain as docs and evidence, but should not render markers or
+missing-position warnings.
+
+Checkpoint status represents project position. Run docs represent execution
+history. Agent markers represent live operational presence.
 
 ## Steward As Agent
 
@@ -44,6 +53,26 @@ Candidate values:
 - `worker`
 - `reviewer`
 - `observer`
+
+### Mode
+
+Mode describes how the agent is currently operating.
+
+Candidate values:
+
+- `subagent`
+- `visible-thread`
+- `steward`
+- `worker`
+- `reviewer`
+
+Mode is not lifecycle status. Do not encode mode into status.
+
+### Parent Agent
+
+Parent agent records the steward or supervising agent when one exists.
+
+Use `none` when the agent has no useful parent in the graph.
 
 ### Authority
 
@@ -77,7 +106,7 @@ The dashboard can render this as a marker attached to the referenced node. The
 marker is visual position, not a workflow status bucket.
 
 Create or update the agent doc before substantive mutation when the worker
-should be visible as an active dashboard marker.
+should be visible as a live dashboard marker.
 
 ### Runtime Identity
 
@@ -88,6 +117,9 @@ Loader state is derived by the dashboard from the referenced runtime thread
 when available. The agent document should name the identity; it should not store
 ephemeral loader state as durable strategy truth.
 
+Runtime identity can also record worktree path, preview URL, branch, and `HEAD`
+when those facts explain where the worker is operating.
+
 ### Evidence
 
 Evidence lists artifacts that identify or explain the agent.
@@ -95,16 +127,29 @@ Evidence lists artifacts that identify or explain the agent.
 Evidence can include thread ids, worktrees, commits, handoffs, return notes,
 screenshots, previews, or docs.
 
+When a worker runs in an isolated worktree, evidence may link to the local
+agent or run docs in that worktree. Those local docs are evidence; the steward
+checkout still owns the central projection stub when dashboard visibility is
+expected.
+
 ## Candidate Template
 
 ```markdown
 # Agent: <name>
 
-Status: active | idle | paused | retired
+Status: active | in_progress | paused | returned | accepted | planned | idle | retired
 
 ## Role
 
 steward | worker | reviewer | observer
+
+## Mode
+
+subagent | visible-thread | steward | worker | reviewer
+
+## Parent Agent
+
+- Agent: `<agent-id>` | none
 
 ## Authority
 
@@ -131,6 +176,10 @@ writing | non-writing | review-only | unknown
 
 - Thread: <thread id or none>
 - Agent: <agent id, nickname, or none>
+- Worktree: <path or none>
+- Branch: <branch or none>
+- HEAD: <commit or none>
+- Preview: <url or none>
 
 ## Evidence
 

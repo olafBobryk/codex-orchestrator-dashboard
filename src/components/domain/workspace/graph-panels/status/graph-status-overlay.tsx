@@ -2,21 +2,25 @@ import { PanelRightClose } from "lucide-react";
 import { LINK_COLORS } from "../../canvas/constants";
 import type { GraphStatusPanelProps } from "../../canvas/types";
 import { PanelHeader } from "../detail/detail-panel-layout";
-import { MarkerGlyph } from "../preview";
 import { DetailField, DetailSection } from "../shared";
 
 export function GraphStatusOverlay({
   graph,
-  stats,
+  projectionQualityWarnings,
   packetColors,
   visiblePackets,
   flowSignalCounts,
-  runtimeAnnotationCount,
   sourceStatus,
   primaryNodes,
   onSelectNode,
   onClose,
 }: GraphStatusPanelProps) {
+  const summary = buildOverviewSummary({
+    graph,
+    primaryNodes,
+    warningCount: projectionQualityWarnings.length,
+  });
+
   return (
     <aside
       data-graph-status-panel
@@ -39,6 +43,73 @@ export function GraphStatusOverlay({
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+        <DetailSection title="Overview">
+          <div className="grid grid-cols-2 gap-2">
+            <DetailField
+              label="Active work"
+              value={summary.activeWork.count}
+              icon="loader-circle"
+              color={statColor(summary.activeWork.count, "#2563eb")}
+              onClick={createSelectNodeHandler(summary.activeWork.nodeId, onSelectNode)}
+            />
+            <DetailField
+              label="Planning"
+              value={summary.planning.count}
+              icon="eye-off"
+              color="#64748b"
+              onClick={createSelectNodeHandler(summary.planning.nodeId, onSelectNode)}
+            />
+            <DetailField
+              label="Live agents"
+              value={summary.liveAgents.count}
+              icon="user-cog"
+              color={statColor(summary.liveAgents.count, "#0a84ff")}
+              onClick={
+                summary.liveAgents.nodeId
+                  ? () =>
+                      onSelectNode(
+                        summary.liveAgents.nodeId as string,
+                        summary.liveAgents.markerId
+                      )
+                  : undefined
+              }
+            />
+            <DetailField
+              label="Warnings"
+              value={summary.warnings}
+              icon="message-square-text"
+              color={summary.warnings > 0 ? "#dc2626" : "#64748b"}
+            />
+          </div>
+        </DetailSection>
+
+        <DetailSection title="Verification">
+          <div className="grid grid-cols-2 gap-2">
+            <DetailField
+              label="Verified"
+              value={summary.verification.verified.count}
+              icon="check-circle"
+              color={statColor(summary.verification.verified.count, "#16a34a")}
+              onClick={createSelectNodeHandler(
+                summary.verification.verified.nodeId,
+                onSelectNode
+              )}
+            />
+            <DetailField
+              label="Needs check"
+              value={summary.verification.needsCheck.count}
+              icon="circle"
+              color={
+                summary.verification.needsCheck.count > 0 ? "#dc2626" : "#64748b"
+              }
+              onClick={createSelectNodeHandler(
+                summary.verification.needsCheck.nodeId,
+                onSelectNode
+              )}
+            />
+          </div>
+        </DetailSection>
+
         <DetailSection title="Legend">
           {visiblePackets.length > 0 ? (
             <div className="grid grid-cols-2 gap-2">
@@ -90,21 +161,42 @@ export function GraphStatusOverlay({
           )}
         </DetailSection>
 
-        <DetailSection title="Workspace">
+        <DetailSection title="Projection">
           <div className="grid grid-cols-2 gap-2">
-            <DetailField label="Markdown docs" value={stats.docs} />
-            <DetailField label="Packets" value={stats.packets} />
-            <DetailField label="Ledgers" value={stats.ledgers} />
-            <DetailField label="Summaries" value={stats.summaries} />
-          </div>
-        </DetailSection>
-
-        <DetailSection title="Runtime">
-          <div className="grid grid-cols-2 gap-2">
-            <DetailField label="Agents" value={stats.liveAgents} />
-            <DetailField label="Threads" value={stats.activeThreads} />
-            <DetailField label="Recorded" value={runtimeAnnotationCount} />
-            <DetailField label="Sources" value={graph.packets.length} />
+            <DetailField
+              label="Workpieces"
+              value={summary.workpieces.count}
+              icon="circle"
+              color={statColor(summary.workpieces.count, "#737373")}
+              onClick={createSelectNodeHandler(summary.workpieces.nodeId, onSelectNode)}
+            />
+            <DetailField
+              label="Shapes"
+              value={graph.regions.length}
+              icon="layers"
+              color={statColor(graph.regions.length, "#2563eb")}
+            />
+            <DetailField
+              label="Flow edges"
+              value={graph.edges.length}
+              icon="git-branch"
+              color={statColor(graph.edges.length, "#64748b")}
+            />
+            <DetailField
+              label="Live markers"
+              value={summary.liveAgents.count}
+              icon="user-cog"
+              color={statColor(summary.liveAgents.count, "#0a84ff")}
+              onClick={
+                summary.liveAgents.nodeId
+                  ? () =>
+                      onSelectNode(
+                        summary.liveAgents.nodeId as string,
+                        summary.liveAgents.markerId
+                      )
+                  : undefined
+              }
+            />
           </div>
         </DetailSection>
 
@@ -114,55 +206,79 @@ export function GraphStatusOverlay({
           </div>
         </DetailSection>
 
-        <DetailSection title="Nodes">
-          {primaryNodes.length > 0 ? (
-            <div className="grid gap-1.5">
-              {primaryNodes.map((node) => (
-                <div
-                  key={node.id}
-                  className="flex min-h-8 w-full min-w-0 items-center gap-1 rounded-md border border-border bg-card px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
-                >
-                  <button
-                    type="button"
-                    className="inline-flex min-w-0 flex-1 items-center gap-1 text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onSelectNode(node.id);
-                    }}
-                  >
-                    <span
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: node.color }}
-                    />
-                    <span className="min-w-0 flex-1 truncate">{node.label}</span>
-                  </button>
-                  <div className="ml-auto flex shrink-0 gap-1">
-                    {node.markers.slice(0, 2).map((marker) => (
-                      <button
-                        key={marker.id}
-                        type="button"
-                        className="rounded-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                        aria-label={`Open ${marker.label} marker panel`}
-                        title={`Open ${marker.label} marker panel`}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onSelectNode(node.id, marker.id);
-                        }}
-                      >
-                        <MarkerGlyph marker={marker} size="sm" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No projected nodes are visible.
-            </p>
-          )}
-        </DetailSection>
       </div>
     </aside>
   );
+}
+
+type OverviewSummary = {
+  activeWork: SummaryTarget;
+  planning: SummaryTarget;
+  liveAgents: SummaryTarget & { markerId: string | null };
+  workpieces: SummaryTarget;
+  warnings: number;
+  verification: {
+    verified: SummaryTarget;
+    needsCheck: SummaryTarget;
+  };
+};
+
+type SummaryTarget = {
+  count: number;
+  nodeId: string | null;
+};
+
+function buildOverviewSummary({
+  graph,
+  primaryNodes,
+  warningCount,
+}: Pick<GraphStatusPanelProps, "graph" | "primaryNodes"> & {
+  warningCount: number;
+}): OverviewSummary {
+  const activeNodes = primaryNodes.filter((node) => node.status === "in_progress");
+  const planningNodes = primaryNodes.filter((node) => node.status === "deferred");
+  const workpieceNodes = primaryNodes.filter((node) => node.kind !== "checkpoint");
+  const verifiedNodes = primaryNodes.filter((node) =>
+    node.detail.verification.some((item) => item.result === "verified")
+  );
+  const needsCheckNodes = primaryNodes.filter((node) =>
+    node.detail.verification.some((item) =>
+      ["blocked", "needs_human", "unknown"].includes(item.result)
+    )
+  );
+  const firstMarker = graph.markers[0] ?? null;
+
+  return {
+    activeWork: createSummaryTarget(activeNodes),
+    planning: createSummaryTarget(planningNodes),
+    liveAgents: {
+      count: graph.markers.length,
+      nodeId: firstMarker?.targetId ?? null,
+      markerId: firstMarker?.id ?? null,
+    },
+    workpieces: createSummaryTarget(workpieceNodes),
+    warnings: warningCount + graph.missing.length,
+    verification: {
+      verified: createSummaryTarget(verifiedNodes),
+      needsCheck: createSummaryTarget(needsCheckNodes),
+    },
+  };
+}
+
+function createSummaryTarget(nodes: Array<{ id: string }>): SummaryTarget {
+  return {
+    count: nodes.length,
+    nodeId: nodes[0]?.id ?? null,
+  };
+}
+
+function createSelectNodeHandler(
+  nodeId: string | null,
+  onSelectNode: GraphStatusPanelProps["onSelectNode"]
+) {
+  return nodeId ? () => onSelectNode(nodeId) : undefined;
+}
+
+function statColor(count: number, color: string) {
+  return count > 0 ? color : "#64748b";
 }

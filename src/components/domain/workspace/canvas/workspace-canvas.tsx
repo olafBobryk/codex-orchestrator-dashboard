@@ -5,6 +5,7 @@ import {
   OrchestrationGraphCanvas,
   type GraphCanvasStats,
 } from "./graph-canvas-shell";
+import type { GraphProjectionQualityWarning } from "@/lib/graph-projection";
 import type { GraphMarker, OrchestrationGraph } from "@/lib/orchestration-graph";
 import type { GraphCanvasCommandAction } from "./types";
 import { GraphDetailOverlay, GraphStatusOverlay } from "../graph-panels";
@@ -25,6 +26,7 @@ export type WorkspaceCanvasProps = {
   graph: OrchestrationGraph;
   workspace: string;
   stats: GraphCanvasStats;
+  projectionQualityWarnings: GraphProjectionQualityWarning[];
   commandAction?: GraphCanvasCommandAction | null;
 };
 
@@ -32,6 +34,7 @@ export function WorkspaceCanvas({
   graph,
   workspace,
   stats,
+  projectionQualityWarnings,
   commandAction,
 }: WorkspaceCanvasProps) {
   const [markerActivity, setMarkerActivity] = useState(
@@ -117,6 +120,7 @@ export function WorkspaceCanvas({
         graph={liveGraph}
         workspace={workspace}
         stats={stats}
+        projectionQualityWarnings={projectionQualityWarnings}
         commandAction={commandAction}
         renderDetailPanel={(props) => <GraphDetailOverlay {...props} />}
         renderEdgePanel={(props) => <EdgeDetailPanel {...props} />}

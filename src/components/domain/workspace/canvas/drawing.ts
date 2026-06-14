@@ -1,5 +1,5 @@
 import type { NodeObject } from "react-force-graph-2d";
-import type { GraphNode } from "@/lib/orchestration-graph";
+import type { GraphMarker, GraphNode } from "@/lib/orchestration-graph";
 import {
   drawRoundedRect,
   getLinkEndpointId,
@@ -13,7 +13,6 @@ import type {
   GraphMethods,
 } from "./types";
 
-const METABALL_NODE_PADDING = 88;
 const METABALL_BRIDGE_PADDING = 58;
 const METABALL_THRESHOLD = 1;
 const METABALL_GRID_SIZE = 18;
@@ -30,8 +29,27 @@ const REGION_COVER_START_SCREEN_FILL = 0.1;
 const REGION_COVER_FULL_SCREEN_FILL = 0.06;
 const REGION_COVER_VISIBLE_ALPHA = 0.02;
 const REGION_ABSTRACTION_SKIP_ALPHA = 0.5;
-const REGION_CHILD_PADDING = 76;
+const REGION_NODE_BASE_PADDING = 58;
+const REGION_NODE_DEPTH_PADDING = 8;
+const REGION_NODE_MAX_PADDING = 82;
+const REGION_CHILD_BASE_PADDING = 30;
+const REGION_CHILD_DEPTH_PADDING = 8;
+const REGION_CHILD_MAX_PADDING = 54;
 const REGION_INSIDE_LABEL_FONT_SIZE = 18;
+const REGION_INSIDE_LABEL_MIN_FONT_SIZE = 10;
+const REGION_INSIDE_LABEL_AREA_FONT_RATIO = 0.055;
+const REGION_LABEL_COLLISION_GAP = 14;
+const PROMOTED_MARKER_BADGE_SCREEN_SIZE = 34;
+const PROMOTED_MARKER_BADGE_MIN_SIZE = 26;
+const PROMOTED_MARKER_BADGE_MAX_SIZE = 56;
+const PROMOTED_MARKER_BADGE_AREA_GAP_RATIO = 0.014;
+const PROMOTED_MARKER_BADGE_MIN_GAP = 3;
+const PROMOTED_MARKER_BADGE_MAX_GAP = 12;
+const PROMOTED_MARKER_OUTLINE_AREA_GAP_RATIO = 0.006;
+const PROMOTED_MARKER_OUTLINE_MIN_GAP = 1.5;
+const PROMOTED_MARKER_OUTLINE_MAX_GAP = 7;
+const PROMOTED_MARKER_MAX_COLUMNS = 4;
+const PROMOTED_MARKER_TRANSITION_MS = 220;
 const MARKER_LOADER_ROTATION_MS = 1200;
 const MARKER_LOADER_TRANSITION_MS = 620;
 const NODE_HIT_PADDING = 12;
@@ -43,6 +61,51 @@ type MarkerLoaderAnimationState = {
 };
 
 const markerLoaderAnimationState = new Map<string, MarkerLoaderAnimationState>();
+
+type PromotedMarkerRectAnimationState = {
+  fromRect: CanvasGraphRect;
+  targetRect: CanvasGraphRect;
+  changedAt: number;
+  lastSeenAt: number;
+};
+
+const promotedMarkerRectAnimationState = new Map<
+  string,
+  PromotedMarkerRectAnimationState
+>();
+
+export type CanvasGraphRect = {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+};
+
+export type PromotedMarkerHitArea = {
+  node: CanvasNode;
+  marker: GraphMarker;
+  rect: CanvasGraphRect;
+  transitioning: boolean;
+};
+
+export function getPromotedMarkerIds(hitAreas: PromotedMarkerHitArea[]) {
+  return new Set(hitAreas.map((hitArea) => hitArea.marker.id));
+}
+
+type MarkerIslandRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type PromotedMarkerPlacement = {
+  node: NodeObject<CanvasNode>;
+  marker: GraphMarker;
+  index: number;
+  host: RegionField;
+  coverAlpha: number;
+};
 
 export { readCanvasTheme } from "./canvas-theme";
 export {
@@ -58,6 +121,7 @@ export function drawNode({
   context,
   selected,
   selectedMarkerId,
+  promotedMarkerIds,
   theme,
   globalScale,
 }: {
@@ -65,6 +129,7 @@ export function drawNode({
   context: CanvasRenderingContext2D;
   selected: boolean;
   selectedMarkerId: string | null;
+  promotedMarkerIds?: Set<string>;
   theme: CanvasTheme;
   globalScale: number;
 }) {
@@ -99,7 +164,14 @@ export function drawNode({
   context.lineWidth = 1.5;
   context.stroke();
 
-  drawNodeMarkers({ node, context, radius, selectedMarkerId, theme });
+  drawNodeMarkers({
+    node,
+    context,
+    radius,
+    selectedMarkerId,
+    promotedMarkerIds,
+    theme,
+  });
 
   if (iconAlpha > 0.02) {
     context.globalAlpha = iconAlpha;
@@ -181,9 +253,9 @@ export function drawRegionOverlays({
   context: CanvasRenderingContext2D;
   theme: CanvasTheme;
   globalScale: number;
-}) {
+}): CanvasGraphRect[] {
   if (regions.length === 0) {
-    return;
+    return [];
   }
 
   const regionState = getRegionRenderState({
@@ -192,6 +264,8 @@ export function drawRegionOverlays({
     context,
     globalScale,
   });
+
+  const labelRects: RegionLabelRect[] = [];
 
   for (const regionField of [...regionState.regionFields].sort(
     compareRegionCoverOrder
@@ -275,9 +349,12 @@ export function drawRegionOverlays({
       region: regionField.region,
       theme,
       globalScale,
+      placedRects: labelRects,
     });
     context.restore();
   }
+
+  return labelRects;
 }
 
 function compareRegionCoverOrder(left: RegionField, right: RegionField) {
@@ -297,6 +374,99 @@ function getRegionCoverAlphaFromScreenFill(screenFill: number) {
 
 function getRegionLabelAlpha(region: CanvasRegion, alpha: number) {
   return region.muted ? alpha * 0.42 : alpha;
+}
+
+export function drawPromotedMarkerIslands({
+  regions,
+  nodes,
+  context,
+  globalScale,
+  selectedMarkerId,
+  avoidanceRects,
+}: {
+  regions: CanvasRegion[];
+  nodes: NodeObject<CanvasNode>[];
+  context: CanvasRenderingContext2D;
+  globalScale: number;
+  selectedMarkerId: string | null;
+  avoidanceRects: CanvasGraphRect[];
+}): PromotedMarkerHitArea[] {
+  if (regions.length === 0) {
+    return [];
+  }
+
+  const regionState = getRegionRenderState({
+    regions,
+    nodes,
+    context,
+    globalScale,
+  });
+  const promotedMarkers = collectPromotedMarkers({
+    regions,
+    nodes,
+    regionState,
+  });
+  prunePromotedMarkerRectAnimations(promotedMarkers);
+
+  const placedRects = [...avoidanceRects];
+  const hitAreas: PromotedMarkerHitArea[] = [];
+  const hostCounts = countPromotedMarkersByHost(promotedMarkers);
+  const hostIndexes = new Map<string, number>();
+
+  for (const promoted of promotedMarkers) {
+    const hostId = promoted.host.region.id;
+    const hostIndex = hostIndexes.get(hostId) ?? 0;
+    const hostCount = hostCounts.get(hostId) ?? 1;
+    const gap = getPromotedMarkerBadgeGap(promoted.host.field);
+    const targetRect = resolveCompactPromotedMarkerRect({
+      promoted,
+      placedRects,
+      globalScale,
+      gap,
+      hostIndex,
+      hostCount,
+    });
+    const selected = selectedMarkerId === promoted.marker.id;
+    const renderRect = resolvePromotedMarkerRenderRect(
+      promoted.marker.id,
+      targetRect
+    );
+    const transitioning = isPromotedMarkerRectTransitioning(promoted.marker.id);
+
+    context.save();
+    context.globalAlpha = promoted.marker.muted ? 0.48 : 1;
+    drawPromotedMarkerRegionRing({
+      context,
+      promoted,
+      globalScale,
+      hostIndex,
+      alpha: 1,
+    });
+    drawCompactPromotedMarkerBadge({
+      context,
+      marker: promoted.marker,
+      rect: renderRect,
+      selected,
+    });
+    drawPromotedMarkerLoader({
+      context,
+      marker: promoted.marker,
+      rect: renderRect,
+      selected,
+    });
+    context.restore();
+
+    placedRects.push(expandCanvasRect(targetRect, gap / 2));
+    hostIndexes.set(hostId, hostIndex + 1);
+    hitAreas.push({
+      node: promoted.node,
+      marker: promoted.marker,
+      rect: renderRect,
+      transitioning,
+    });
+  }
+
+  return hitAreas;
 }
 
 function drawRegionInternalsFill({
@@ -344,28 +514,55 @@ function drawFilledRegionLabel({
   region,
   theme,
   globalScale,
+  placedRects,
 }: {
   context: CanvasRenderingContext2D;
   field: MetaballField;
   region: CanvasRegion;
   theme: CanvasTheme;
   globalScale: number;
+  placedRects: RegionLabelRect[];
 }) {
   const anchor = getRegionLabelCenter(field);
+  const fieldWidth = field.bounds.right - field.bounds.left;
+  const fieldHeight = field.bounds.bottom - field.bounds.top;
+  const screenArea = Math.max(
+    1,
+    fieldWidth * fieldHeight * globalScale * globalScale
+  );
+  const screenFontSize = clamp(
+    Math.sqrt(screenArea) * REGION_INSIDE_LABEL_AREA_FONT_RATIO,
+    REGION_INSIDE_LABEL_MIN_FONT_SIZE,
+    REGION_INSIDE_LABEL_FONT_SIZE
+  );
   const maxWidth = Math.max(120, (field.bounds.right - field.bounds.left) * 0.84);
-  const fontSize =
-    REGION_INSIDE_LABEL_FONT_SIZE / Math.max(0.16, globalScale);
-  const lineHeight = fontSize * 1.15;
+  const fontSize = screenFontSize / Math.max(0.16, globalScale);
 
   context.fillStyle = theme.surfaceForeground;
   context.font = `700 ${fontSize}px ui-sans-serif, system-ui`;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  wrapCanvasText(context, region.label, maxWidth, 3).forEach((line, index, lines) => {
+  const lines = wrapCanvasText(context, region.label, maxWidth, 3);
+  const lineHeight = fontSize * 1.2;
+  const labelWidth = Math.max(
+    fontSize,
+    ...lines.map((line) => context.measureText(line).width)
+  );
+  const labelHeight = getRegionLabelHeight(fontSize, lineHeight, lines.length);
+  const labelAnchor = resolveRegionLabelAnchor({
+    anchor,
+    bounds: field.bounds,
+    labelWidth,
+    labelHeight,
+    globalScale,
+    placedRects,
+  });
+
+  lines.forEach((line, index) => {
     context.fillText(
       line,
-      anchor.x,
-      anchor.y + (index - (lines.length - 1) / 2) * lineHeight
+      labelAnchor.x,
+      labelAnchor.y + (index - (lines.length - 1) / 2) * lineHeight
     );
   });
 }
@@ -634,17 +831,249 @@ function regionContainsNode(
   });
 }
 
+function collectPromotedMarkers({
+  regions,
+  nodes,
+  regionState,
+}: {
+  regions: CanvasRegion[];
+  nodes: NodeObject<CanvasNode>[];
+  regionState: RegionRenderState;
+}) {
+  const promoted: PromotedMarkerPlacement[] = [];
+
+  for (const node of nodes) {
+    if (node.markers.length === 0) {
+      continue;
+    }
+
+    const host = resolvePromotedMarkerHost({
+      nodeId: node.id,
+      regions,
+      regionState,
+    });
+
+    if (!host) {
+      continue;
+    }
+
+    node.markers.slice(0, 4).forEach((marker, index) => {
+      promoted.push({
+        node,
+        marker,
+        index,
+        host: host.regionField,
+        coverAlpha: host.coverAlpha,
+      });
+    });
+  }
+
+  return promoted.sort((left, right) => {
+    return (
+      left.host.order - right.host.order ||
+      left.index - right.index ||
+      left.marker.id.localeCompare(right.marker.id)
+    );
+  });
+}
+
+function resolvePromotedMarkerHost({
+  nodeId,
+  regions,
+  regionState,
+}: {
+  nodeId: string;
+  regions: CanvasRegion[];
+  regionState: RegionRenderState;
+}) {
+  const regionsById = new Map(regions.map((region) => [region.id, region]));
+  const containingFields = regionState.regionFields
+    .map((regionField) => ({
+      regionField,
+      coverAlpha: regionState.coverAlphaByRegionId.get(regionField.region.id) ?? 0,
+    }))
+    .filter(({ regionField, coverAlpha }) => {
+      return (
+        coverAlpha > REGION_COVER_VISIBLE_ALPHA &&
+        regionContainsNode(regionField.region, nodeId, regionsById, new Set())
+      );
+    });
+
+  const visibleHosts = containingFields.filter(({ regionField }) => {
+    return (
+      getRegionCoveredAncestorDepthCount({
+        region: regionField.region,
+        regions,
+        regionState,
+      }) < 2 &&
+      !hasVisibleCoveredAncestor({
+        region: regionField.region,
+        regions,
+        regionState,
+      })
+    );
+  });
+  const candidates =
+    visibleHosts.length > 0
+      ? visibleHosts
+      : containingFields;
+
+  return (
+    candidates.sort((left, right) => {
+      return (
+        right.regionField.depth - left.regionField.depth ||
+        right.coverAlpha - left.coverAlpha ||
+        left.regionField.order - right.regionField.order
+      );
+    })[0] ?? null
+  );
+}
+
+function prunePromotedMarkerRectAnimations(
+  promotedMarkers: PromotedMarkerPlacement[]
+) {
+  const promotedMarkerIds = new Set(
+    promotedMarkers.map((promoted) => promoted.marker.id)
+  );
+
+  for (const markerId of promotedMarkerRectAnimationState.keys()) {
+    if (!promotedMarkerIds.has(markerId)) {
+      promotedMarkerRectAnimationState.delete(markerId);
+    }
+  }
+}
+
+function resolvePromotedMarkerRenderRect(
+  markerId: string,
+  targetRect: CanvasGraphRect
+) {
+  const now = readAnimationNow();
+  const current = promotedMarkerRectAnimationState.get(markerId);
+
+  if (!current) {
+    promotedMarkerRectAnimationState.set(markerId, {
+      fromRect: targetRect,
+      targetRect,
+      changedAt: now,
+      lastSeenAt: now,
+    });
+
+    return targetRect;
+  }
+
+  if (!canvasRectsAlmostEqual(current.targetRect, targetRect)) {
+    const fromRect = interpolateCanvasRectPosition(
+      current.fromRect,
+      current.targetRect,
+      getPromotedMarkerRectTransitionProgress(current, now)
+    );
+
+    current.fromRect = fromRect;
+    current.targetRect = targetRect;
+    current.changedAt = now;
+  }
+
+  current.lastSeenAt = now;
+
+  return interpolateCanvasRectPosition(
+    current.fromRect,
+    current.targetRect,
+    getPromotedMarkerRectTransitionProgress(current, now)
+  );
+}
+
+function isPromotedMarkerRectTransitioning(markerId: string) {
+  const current = promotedMarkerRectAnimationState.get(markerId);
+
+  if (!current) {
+    return false;
+  }
+
+  return readAnimationNow() - current.changedAt < PROMOTED_MARKER_TRANSITION_MS;
+}
+
+function getPromotedMarkerRectTransitionProgress(
+  state: PromotedMarkerRectAnimationState,
+  now: number
+) {
+  return smoothStep(
+    0,
+    1,
+    (now - state.changedAt) / PROMOTED_MARKER_TRANSITION_MS
+  );
+}
+
+function countPromotedMarkersByHost(promotedMarkers: PromotedMarkerPlacement[]) {
+  const counts = new Map<string, number>();
+
+  for (const promoted of promotedMarkers) {
+    const hostId = promoted.host.region.id;
+    counts.set(hostId, (counts.get(hostId) ?? 0) + 1);
+  }
+
+  return counts;
+}
+
+function resolveCompactPromotedMarkerRect({
+  promoted,
+  placedRects,
+  globalScale,
+  gap,
+  hostIndex,
+  hostCount,
+}: {
+  promoted: PromotedMarkerPlacement;
+  placedRects: CanvasGraphRect[];
+  globalScale: number;
+  gap: number;
+  hostIndex: number;
+  hostCount: number;
+}) {
+  const size = getPromotedMarkerBadgeSize(globalScale);
+  const center = getRegionLabelCenter(promoted.host.field);
+  const field = promoted.host.field;
+  const baseX = field.bounds.right + gap + size / 2;
+  const baseY =
+    center.y + (hostIndex - (hostCount - 1) / 2) * (size + gap * 0.7);
+  let fallbackRect: CanvasGraphRect | null = null;
+
+  for (let column = 0; column < PROMOTED_MARKER_MAX_COLUMNS; column += 1) {
+    for (const yOffset of createPromotedMarkerYOffsetOrder(size, gap)) {
+      const candidateCenter = {
+        x: baseX + column * (size + gap),
+        y: baseY + yOffset,
+      };
+      const rect = createCanvasRectFromCenter(candidateCenter, size, size);
+      const expandedRect = expandCanvasRect(rect, gap);
+
+      fallbackRect = rect;
+
+      if (
+        !placedRects.some((placedRect) =>
+          regionLabelRectsOverlap(expandedRect, placedRect)
+        )
+      ) {
+        return rect;
+      }
+    }
+  }
+
+  return fallbackRect ?? createCanvasRectFromCenter({ x: baseX, y: baseY }, size, size);
+}
+
 function drawNodeMarkers({
   node,
   context,
   radius,
   selectedMarkerId,
+  promotedMarkerIds,
   theme,
 }: {
   node: NodeObject<CanvasNode>;
   context: CanvasRenderingContext2D;
   radius: number;
   selectedMarkerId: string | null;
+  promotedMarkerIds?: Set<string>;
   theme: CanvasTheme;
 }) {
   if (node.markers.length === 0) {
@@ -656,6 +1085,10 @@ function drawNodeMarkers({
   const ringGap = 8;
 
   node.markers.slice(0, 4).forEach((marker, index) => {
+    if (promotedMarkerIds?.has(marker.id)) {
+      return;
+    }
+
     const ringRadius = radius + ringGap + index * 5;
     const island = getMarkerIslandRect(node, index);
     const selected = selectedMarkerId === marker.id;
@@ -687,45 +1120,157 @@ function drawNodeMarkers({
       context.stroke();
     }
 
-    drawRoundedRect(context, island.x, island.y, island.width, island.height, 12);
-    context.fillStyle = theme.surface;
-    context.fill();
-    context.strokeStyle = marker.color;
-    context.lineWidth = selected ? 2.5 : 1.5;
-    context.stroke();
-
-    drawRoundedRect(context, island.x + 8, island.y + 8, 34, 34, 9);
-    context.fillStyle = marker.color;
-    context.fill();
-    drawCanvasIcon({
+    drawMarkerIsland({
       context,
-      icon: marker.icon,
-      x: island.x + 25,
-      y: island.y + island.height / 2,
-      size: 20,
-      color: "#ffffff",
+      marker,
+      island,
+      selected,
+      theme,
     });
-
-    context.fillStyle = theme.surfaceForeground;
-    context.font = "600 12px ui-sans-serif, system-ui";
-    context.textAlign = "left";
-    context.fillText(
-      truncateCanvasText(context, marker.label, island.width - 54),
-      island.x + 50,
-      island.y + 21
-    );
-    context.fillStyle = "rgba(148, 163, 184, 0.92)";
-    context.font = "500 10px ui-sans-serif, system-ui";
-    context.fillText(
-      truncateCanvasText(
-        context,
-        marker.description ?? (marker.muted ? "Muted marker" : "Active marker"),
-        island.width - 54
-      ),
-      island.x + 50,
-      island.y + 35
-    );
     context.restore();
+  });
+}
+
+function drawMarkerIsland({
+  context,
+  marker,
+  island,
+  selected,
+  theme,
+}: {
+  context: CanvasRenderingContext2D;
+  marker: GraphMarker;
+  island: MarkerIslandRect;
+  selected: boolean;
+  theme: CanvasTheme;
+}) {
+  drawRoundedRect(context, island.x, island.y, island.width, island.height, 12);
+  context.fillStyle = theme.surface;
+  context.fill();
+  context.strokeStyle = marker.color;
+  context.lineWidth = selected ? 2.5 : 1.5;
+  context.stroke();
+
+  drawRoundedRect(context, island.x + 8, island.y + 8, 34, 34, 9);
+  context.fillStyle = marker.color;
+  context.fill();
+  drawCanvasIcon({
+    context,
+    icon: marker.icon,
+    x: island.x + 25,
+    y: island.y + island.height / 2,
+    size: 20,
+    color: "#ffffff",
+  });
+
+  context.fillStyle = theme.surfaceForeground;
+  context.font = "600 12px ui-sans-serif, system-ui";
+  context.textAlign = "left";
+  context.fillText(
+    truncateCanvasText(context, marker.label, island.width - 54),
+    island.x + 50,
+    island.y + 21
+  );
+  context.fillStyle = "rgba(148, 163, 184, 0.92)";
+  context.font = "500 10px ui-sans-serif, system-ui";
+  context.fillText(
+    truncateCanvasText(
+      context,
+      marker.description ?? (marker.muted ? "Muted marker" : "Active marker"),
+      island.width - 54
+    ),
+    island.x + 50,
+    island.y + 35
+  );
+}
+
+function drawCompactPromotedMarkerBadge({
+  context,
+  marker,
+  rect,
+  selected,
+}: {
+  context: CanvasRenderingContext2D;
+  marker: GraphMarker;
+  rect: CanvasGraphRect;
+  selected: boolean;
+}) {
+  const size = Math.min(rect.right - rect.left, rect.bottom - rect.top);
+  const radius = Math.max(6, size * 0.26);
+
+  drawRoundedRect(context, rect.left, rect.top, size, size, radius);
+  context.fillStyle = marker.color;
+  context.fill();
+  context.strokeStyle = selected ? "#ffffff" : "rgba(255,255,255,0.72)";
+  context.lineWidth = selected ? Math.max(2, size * 0.08) : Math.max(1.2, size * 0.045);
+  context.stroke();
+
+  drawCanvasIcon({
+    context,
+    icon: marker.icon,
+    x: (rect.left + rect.right) / 2,
+    y: (rect.top + rect.bottom) / 2,
+    size: size * 0.58,
+    color: "#ffffff",
+  });
+}
+
+function drawPromotedMarkerRegionRing({
+  context,
+  promoted,
+  globalScale,
+  hostIndex,
+  alpha,
+}: {
+  context: CanvasRenderingContext2D;
+  promoted: PromotedMarkerPlacement;
+  globalScale: number;
+  hostIndex: number;
+  alpha: number;
+}) {
+  const outlineWidth = getMetaballBoundaryLineWidth(globalScale);
+  const outlineGap = getPromotedMarkerOutlineGap(promoted.host.field);
+  const expansion =
+    hostIndex * (outlineWidth + outlineGap);
+  const expandedField = expandMetaballField(promoted.host.field, expansion);
+
+  drawMetaballBoundary({
+    context,
+    field: expandedField,
+    color: promoted.marker.color,
+    muted: promoted.marker.muted,
+    alpha: alpha * 0.78,
+    globalScale,
+    lineWidth: outlineWidth,
+  });
+}
+
+function drawPromotedMarkerLoader({
+  context,
+  marker,
+  rect,
+  selected,
+}: {
+  context: CanvasRenderingContext2D;
+  marker: GraphMarker;
+  rect: CanvasGraphRect;
+  selected: boolean;
+}) {
+  updateMarkerLoaderAnimationState(marker.id, marker.loader, readAnimationNow());
+
+  if (!marker.loader && !isMarkerLoaderTransitioning(marker.id)) {
+    return;
+  }
+
+  drawMarkerLoaderRing({
+    markerId: marker.id,
+    context,
+    x: (rect.left + rect.right) / 2,
+    y: (rect.top + rect.bottom) / 2,
+    radius: Math.max(8, (rect.right - rect.left) * 0.42),
+    color: "#ffffff",
+    lineWidth: selected ? 3.2 : 2.4,
+    loading: marker.loader,
   });
 }
 
@@ -1310,6 +1855,8 @@ type RegionField = {
   order: number;
 };
 
+type RegionLabelRect = CanvasGraphRect;
+
 type RegionRenderState = {
   regionFields: RegionField[];
   regionDepths: Map<string, number>;
@@ -1510,8 +2057,14 @@ function createRegionFields({
       childFields.length === 0
         ? 0
         : Math.max(...childFields.map((field) => field.depth)) + 1;
-    const nodePadding = METABALL_NODE_PADDING + depth * 24;
-    const childPadding = REGION_CHILD_PADDING + depth * 22;
+    const nodePadding = Math.min(
+      REGION_NODE_MAX_PADDING,
+      REGION_NODE_BASE_PADDING + depth * REGION_NODE_DEPTH_PADDING
+    );
+    const childPadding = Math.min(
+      REGION_CHILD_MAX_PADDING,
+      REGION_CHILD_BASE_PADDING + depth * REGION_CHILD_DEPTH_PADDING
+    );
     const nodeBlobs = region.nodeIds
       .map((nodeId) => nodesById.get(nodeId))
       .filter((node): node is NodeObject<CanvasNode> => Boolean(node))
@@ -1521,12 +2074,13 @@ function createRegionFields({
         radius: (node.visualRadius ?? 48) + nodePadding,
       }));
     const childBlobs = childFields.map(({ field }) => {
-      const width = field.bounds.right - field.bounds.left;
-      const height = field.bounds.bottom - field.bounds.top;
+      const bounds = getMetaballBlobBounds(field.blobs);
+      const width = bounds.right - bounds.left;
+      const height = bounds.bottom - bounds.top;
 
       return {
-        x: (field.bounds.left + field.bounds.right) / 2,
-        y: (field.bounds.top + field.bounds.bottom) / 2,
+        x: (bounds.left + bounds.right) / 2,
+        y: (bounds.top + bounds.bottom) / 2,
         radius: Math.max(width, height) / 2 + childPadding,
       };
     });
@@ -1553,6 +2107,15 @@ function createRegionFields({
   return regions
     .map((region) => buildRegionField(region, new Set()))
     .filter((field): field is RegionField => Boolean(field));
+}
+
+function getMetaballBlobBounds(blobs: FieldBlob[]) {
+  return {
+    left: Math.min(...blobs.map((blob) => blob.x - blob.radius)),
+    right: Math.max(...blobs.map((blob) => blob.x + blob.radius)),
+    top: Math.min(...blobs.map((blob) => blob.y - blob.radius)),
+    bottom: Math.max(...blobs.map((blob) => blob.y + blob.radius)),
+  };
 }
 
 function getRegionChildIdsForRendering(
@@ -1710,7 +2273,11 @@ function createMetaballBridges(blobs: FieldBlob[]): FieldBridge[] {
       y1: from.y,
       x2: to.x,
       y2: to.y,
-      radius: Math.min(from.radius, to.radius, METABALL_NODE_PADDING + METABALL_BRIDGE_PADDING),
+      radius: Math.min(
+        from.radius,
+        to.radius,
+        REGION_NODE_MAX_PADDING + METABALL_BRIDGE_PADDING
+      ),
     });
     connected.add(best.to);
   }
@@ -1725,6 +2292,7 @@ function drawMetaballBoundary({
   muted,
   alpha = 1,
   globalScale,
+  lineWidth,
 }: {
   context: CanvasRenderingContext2D;
   field: MetaballField;
@@ -1732,13 +2300,14 @@ function drawMetaballBoundary({
   muted: boolean;
   alpha?: number;
   globalScale: number;
+  lineWidth?: number;
 }) {
   const geometry = getMetaballGeometry(field, globalScale);
 
   context.save();
   context.globalAlpha = (muted ? 0.42 : 0.9) * alpha;
   context.strokeStyle = color;
-  context.lineWidth = 2.1 / Math.max(0.7, globalScale);
+  context.lineWidth = lineWidth ?? getMetaballBoundaryLineWidth(globalScale);
   context.lineCap = "round";
   context.lineJoin = "round";
 
@@ -2140,6 +2709,227 @@ function smoothStep(edge0: number, edge1: number, value: number) {
   const x = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
 
   return x * x * (3 - 2 * x);
+}
+
+function clamp(value: number, minimum: number, maximum: number) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function createCanvasRectFromCenter(
+  center: { x: number; y: number },
+  width: number,
+  height: number
+): CanvasGraphRect {
+  return {
+    left: center.x - width / 2,
+    right: center.x + width / 2,
+    top: center.y - height / 2,
+    bottom: center.y + height / 2,
+  };
+}
+
+function expandCanvasRect(rect: CanvasGraphRect, amount: number): CanvasGraphRect {
+  return {
+    left: rect.left - amount,
+    right: rect.right + amount,
+    top: rect.top - amount,
+    bottom: rect.bottom + amount,
+  };
+}
+
+function interpolateCanvasRectPosition(
+  source: CanvasGraphRect,
+  target: CanvasGraphRect,
+  progress: number
+) {
+  const t = clamp(progress, 0, 1);
+  const width = target.right - target.left;
+  const height = target.bottom - target.top;
+  const sourceCenter = getCanvasRectCenter(source);
+  const targetCenter = getCanvasRectCenter(target);
+
+  return createCanvasRectFromCenter(
+    {
+      x: lerp(sourceCenter.x, targetCenter.x, t),
+      y: lerp(sourceCenter.y, targetCenter.y, t),
+    },
+    width,
+    height
+  );
+}
+
+function getCanvasRectCenter(rect: CanvasGraphRect) {
+  return {
+    x: (rect.left + rect.right) / 2,
+    y: (rect.top + rect.bottom) / 2,
+  };
+}
+
+function canvasRectsAlmostEqual(left: CanvasGraphRect, right: CanvasGraphRect) {
+  return (
+    Math.abs(left.left - right.left) < 0.5 &&
+    Math.abs(left.right - right.right) < 0.5 &&
+    Math.abs(left.top - right.top) < 0.5 &&
+    Math.abs(left.bottom - right.bottom) < 0.5
+  );
+}
+
+function lerp(source: number, target: number, progress: number) {
+  return source + (target - source) * progress;
+}
+
+function getPromotedMarkerBadgeSize(globalScale: number) {
+  return clamp(
+    PROMOTED_MARKER_BADGE_SCREEN_SIZE / Math.max(0.2, globalScale),
+    PROMOTED_MARKER_BADGE_MIN_SIZE,
+    PROMOTED_MARKER_BADGE_MAX_SIZE
+  );
+}
+
+function getPromotedMarkerBadgeGap(field: MetaballField) {
+  return clamp(
+    getRegionAreaLength(field) * PROMOTED_MARKER_BADGE_AREA_GAP_RATIO,
+    PROMOTED_MARKER_BADGE_MIN_GAP,
+    PROMOTED_MARKER_BADGE_MAX_GAP
+  );
+}
+
+function getPromotedMarkerOutlineGap(field: MetaballField) {
+  return clamp(
+    getRegionAreaLength(field) * PROMOTED_MARKER_OUTLINE_AREA_GAP_RATIO,
+    PROMOTED_MARKER_OUTLINE_MIN_GAP,
+    PROMOTED_MARKER_OUTLINE_MAX_GAP
+  );
+}
+
+function getRegionAreaLength(field: MetaballField) {
+  const width = Math.max(1, field.bounds.right - field.bounds.left);
+  const height = Math.max(1, field.bounds.bottom - field.bounds.top);
+
+  return Math.sqrt(width * height);
+}
+
+function createPromotedMarkerYOffsetOrder(size: number, gap: number) {
+  const offsets = [0];
+  const step = size + gap * 0.7;
+
+  for (let index = 1; index <= 4; index += 1) {
+    offsets.push(-step * index, step * index);
+  }
+
+  return offsets;
+}
+
+function expandMetaballField(field: MetaballField, amount: number): MetaballField {
+  const blobs = field.blobs.map((blob) => ({
+    ...blob,
+    radius: blob.radius + amount,
+  }));
+  const bridges = field.bridges.map((bridge) => ({
+    ...bridge,
+    radius: bridge.radius + amount,
+  }));
+
+  return {
+    blobs,
+    bridges,
+    cacheKey: createMetaballFieldCacheKey(blobs, bridges),
+    bounds: {
+      left: field.bounds.left - amount,
+      right: field.bounds.right + amount,
+      top: field.bounds.top - amount,
+      bottom: field.bounds.bottom + amount,
+    },
+  };
+}
+
+function getMetaballBoundaryLineWidth(globalScale: number) {
+  return 2.1 / Math.max(0.7, globalScale);
+}
+
+function resolveRegionLabelAnchor({
+  anchor,
+  bounds,
+  labelWidth,
+  labelHeight,
+  globalScale,
+  placedRects,
+}: {
+  anchor: { x: number; y: number };
+  bounds: MetaballField["bounds"];
+  labelWidth: number;
+  labelHeight: number;
+  globalScale: number;
+  placedRects: RegionLabelRect[];
+}) {
+  const gap = REGION_LABEL_COLLISION_GAP / Math.max(0.16, globalScale);
+  const step = labelHeight + gap;
+  const candidates = [
+    anchor.y,
+    anchor.y - step,
+    anchor.y + step,
+    anchor.y - step * 2,
+    anchor.y + step * 2,
+    anchor.y - step * 3,
+    anchor.y + step * 3,
+  ];
+  const halfWidth = labelWidth / 2 + gap / 2;
+  const halfHeight = labelHeight / 2 + gap / 2;
+  const minY = bounds.top + halfHeight;
+  const maxY = bounds.bottom - halfHeight;
+  const fallbackY = clamp(anchor.y, minY, maxY);
+  const y =
+    candidates.find((candidateY) => {
+      const clampedY = clamp(candidateY, minY, maxY);
+      const rect = createRegionLabelRect(anchor.x, clampedY, halfWidth, halfHeight);
+
+      return !placedRects.some((placedRect) =>
+        regionLabelRectsOverlap(rect, placedRect)
+      );
+    }) ?? fallbackY;
+  const rect = createRegionLabelRect(anchor.x, y, halfWidth, halfHeight);
+
+  placedRects.push(rect);
+
+  return {
+    x: anchor.x,
+    y,
+  };
+}
+
+function createRegionLabelRect(
+  x: number,
+  y: number,
+  halfWidth: number,
+  halfHeight: number
+): RegionLabelRect {
+  return {
+    left: x - halfWidth,
+    right: x + halfWidth,
+    top: y - halfHeight,
+    bottom: y + halfHeight,
+  };
+}
+
+function regionLabelRectsOverlap(left: RegionLabelRect, right: RegionLabelRect) {
+  return !(
+    left.right <= right.left ||
+    left.left >= right.right ||
+    left.bottom <= right.top ||
+    left.top >= right.bottom
+  );
+}
+
+function getRegionLabelHeight(
+  fontSize: number,
+  lineHeight: number,
+  lineCount: number
+) {
+  if (lineCount <= 1) {
+    return fontSize;
+  }
+
+  return lineHeight * (lineCount - 1) + fontSize;
 }
 
 export function getGraphNodeDisplayId(

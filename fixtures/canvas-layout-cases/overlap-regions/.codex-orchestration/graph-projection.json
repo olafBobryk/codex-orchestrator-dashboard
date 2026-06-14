@@ -1,0 +1,35 @@
+{
+  "title": "Overlap Regions Case",
+  "legend": [
+    { "key": "trunk", "label": "Trunk", "color": "#475569" },
+    { "key": "overlap-a", "label": "Overlap A", "color": "#9333ea" },
+    { "key": "overlap-b", "label": "Overlap B", "color": "#f97316" }
+  ],
+  "nodes": [
+    { "id": "start", "kind": "checkpoint", "label": "Start", "legendKey": "trunk", "chronology": "start", "status": "verified", "icon": "flag" },
+    { "id": "shared-a", "label": "Shared A", "legendKey": "overlap-a", "status": "in_progress" },
+    { "id": "shared-b", "label": "Shared B", "legendKey": "overlap-a", "status": "needs_human" },
+    { "id": "shared-c", "label": "Shared C", "legendKey": "overlap-b", "status": "fixed" },
+    { "id": "partial-a", "label": "Partial A", "legendKey": "overlap-b", "status": "queued" },
+    { "id": "partial-b", "label": "Partial B", "legendKey": "overlap-b", "status": "queued" },
+    { "id": "return", "kind": "checkpoint", "label": "Return", "legendKey": "trunk", "status": "queued", "icon": "check" }
+  ],
+  "edges": [
+    { "id": "e-start-shared-a", "source": "start", "target": "shared-a", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-shared-a-shared-b", "source": "shared-a", "target": "shared-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-shared-b-shared-c", "source": "shared-b", "target": "shared-c", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-shared-c-partial-a", "source": "shared-c", "target": "partial-a", "label": "branch", "style": "dashed", "directional": true },
+    { "id": "e-partial-a-partial-b", "source": "partial-a", "target": "partial-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-partial-b-return", "source": "partial-b", "target": "return", "label": "return", "style": "dotted", "directional": true }
+  ],
+  "regions": [
+    { "id": "identical-a", "label": "Identical Region A", "legendKey": "overlap-a", "nodeIds": ["shared-a", "shared-b", "shared-c"] },
+    { "id": "identical-b", "label": "Identical Region B", "legendKey": "overlap-b", "nodeIds": ["shared-a", "shared-b", "shared-c"] },
+    { "id": "partial-overlap-a", "label": "Partial Overlap A", "legendKey": "overlap-a", "nodeIds": ["shared-b", "shared-c", "partial-a"] },
+    { "id": "partial-overlap-b", "label": "Partial Overlap B", "legendKey": "overlap-b", "nodeIds": ["shared-c", "partial-a", "partial-b"] }
+  ],
+  "markers": [
+    { "id": "marker-shared-b", "targetId": "shared-b", "label": "Shared Marker", "description": "Marker on identical overlap.", "color": "#9333ea", "icon": "badge-alert", "loader": false },
+    { "id": "marker-partial-a", "targetId": "partial-a", "label": "Partial Marker", "description": "Marker on partial overlap.", "color": "#f97316", "icon": "route", "loader": false }
+  ]
+}

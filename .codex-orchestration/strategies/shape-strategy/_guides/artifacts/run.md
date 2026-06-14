@@ -24,6 +24,11 @@ A run doc is required when a spawned or delegated worker is doing substantive
 visible work inside a shape. Create or update it before substantive mutation so
 the map does not hide active delegated work.
 
+When delegated work runs in an isolated worktree, the steward checkout should
+contain a central run stub if the dashboard should show that work. The worker
+worktree may keep fuller local run evidence, but it should not be the only
+projection source.
+
 ## Relationship To Shapes And Workpieces
 
 - A shape defines the work boundary.
@@ -66,6 +71,14 @@ for the run.
 This should be enough to find the execution context later without making the
 dashboard depend on live Codex runtime state.
 
+### Mode
+
+Mode records how the run is being executed, such as `subagent` or
+`visible-thread`.
+
+Mode is separate from lifecycle status. The same run can be promoted from
+`subagent` to `visible-thread` without changing run identity.
+
 ### Start
 
 Start records where the run began.
@@ -82,6 +95,21 @@ It can include thread id, Codex agent id, worktree path, branch, base commit, or
 other context needed to find where the work happened later.
 
 This section should stay factual. It should not become a second run plan.
+
+### State Summary
+
+State summary is a short steward-maintained note about where the run currently
+stands.
+
+It is useful in central stubs because the main checkout may need to summarize a
+worker worktree without copying all local detail.
+
+### Gate / Return
+
+Gate / Return records whether the run is blocked, returned for review, or
+waiting on a human/steward decision.
+
+It should distinguish a real human gate from routine returned evidence.
 
 ### Return Evidence
 
@@ -115,6 +143,8 @@ nodes unless they change orchestration state or need steward attention.
 
 Status: active | returned | accepted | blocked | paused
 
+Mode: subagent | visible-thread | steward | worker | reviewer
+
 ## Intent
 
 <What this run is trying to do inside the shape boundary.>
@@ -132,6 +162,10 @@ Status: active | returned | accepted | blocked | paused
 - Thread: <current thread id or link>
 - Codex agent: <agent id, worker name, or none>
 
+## Mode
+
+<subagent | visible-thread | steward | worker | reviewer>
+
 ## Start
 
 - Checkpoint: `<checkpoint-id>` | none
@@ -144,6 +178,18 @@ Status: active | returned | accepted | blocked | paused
 - Worktree: <path or branch, if any>
 - Branch: <branch or none>
 - Base: <commit or branch, if known>
+- HEAD: <commit or none>
+- Preview: <url or none>
+
+## State Summary
+
+<One short steward-maintained summary of current run state.>
+
+## Gate / Return
+
+- Human gate: yes | no
+- Returned checkpoint candidate: yes | no
+- Notes: <what needs steward or human handling>
 
 ## Return Evidence
 

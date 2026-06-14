@@ -103,6 +103,104 @@ projection vocabulary and as a legacy adapter alias only.
 Decision:
 Absorbed by the status-to-projection contract.
 
+## Entry: Shape Run Return Order Was Product-Local Only
+
+Date: 2026-06-13
+Status: absorbed
+
+Pressure:
+lower + sideways
+
+Signal:
+A product worktree discovered a better shape run return order, but the
+corrected lifecycle lived only in the product docs and local skill, not in the
+source shape-strategy template.
+
+Why It Matters:
+Future initialized repos could keep sending steward packets before Git
+disposition, durable docs, and verification were final.
+
+Affected Artifacts:
+- `strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
+- `.codex-orchestration/architecture.md`
+- `/Users/olafbobryk/.codex/skills/shape-run-return/SKILL.md`
+
+Recommended Response:
+Backport the lifecycle into the canonical strategy guide and expose the
+`$shape-run-return` workflow from architecture pointers. Keep the reusable
+workflow skill in the personal Codex skills directory for now.
+
+Decision:
+Absorbed by the Shape Run Return Lifecycle section.
+
+## Entry: Historical Agent Rendered As Live Marker
+
+Date: 2026-06-13
+Status: absorbed
+
+Pressure:
+lower
+
+Signal:
+An accepted historical worker agent still rendered as an active dashboard
+marker at a checkpoint, even though there was no live worker thread at that
+position.
+
+Why It Matters:
+The graph blurred run history, checkpoint/project state, and live operational
+presence. Dead worker markers make accepted or returned work look active.
+
+Affected Artifacts:
+- `src/lib/shape-strategy-adapter.ts`
+- `strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
+- `strategies/shape-strategy/_guides/artifacts/agent.md`
+- `strategies/shape-strategy/_guides/dashboard-contract-notes.md`
+- `strategies/shape-strategy/_templates/agent.md`
+
+Recommended Response:
+Render agent markers only for live statuses: `active`, `in_progress`, and
+`paused`. Keep historical agents in docs/history without graph markers or
+missing-position warnings.
+
+Decision:
+Absorbed by the live-marker status contract.
+
+## Entry: Worktree-Local Worker Docs Disappeared From Steward Dashboard
+
+Date: 2026-06-14
+Status: absorbed
+
+Pressure:
+lower + sideways
+
+Signal:
+Visible worker threads correctly wrote run and agent docs inside isolated
+worktrees, but the dashboard was pointed at the steward/main checkout and
+therefore did not show those active or returned workers.
+
+Why It Matters:
+If worker worktree docs are the only source of projection state, the dashboard
+can look stale or false until consolidation. That increases closeout ceremony
+and hides work that the steward is actively supervising.
+
+Affected Artifacts:
+- `strategies/shape-strategy/_guides/concepts/strategies/approaches.md`
+- `strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
+- `strategies/shape-strategy/_guides/artifacts/agent.md`
+- `strategies/shape-strategy/_guides/artifacts/run.md`
+- `strategies/shape-strategy/_guides/artifacts/map.md`
+- `strategies/shape-strategy/_guides/dashboard-contract-notes.md`
+- `strategies/shape-strategy/_templates/agent.md`
+- `strategies/shape-strategy/_templates/run.md`
+
+Recommended Response:
+Use central steward projection stubs in the main checkout for dashboard-visible
+delegated work. Treat worktree-local run and agent docs as evidence unless the
+steward explicitly authorizes workers to update central projection docs.
+
+Decision:
+Absorbed by the Central Steward Projection approach.
+
 ## Entry: Pressure Ledger Becomes Missing Feedback Artifact
 
 Date: 2026-06-11

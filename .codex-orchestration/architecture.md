@@ -27,6 +27,8 @@ Status: accepted-surface-only
   `strategies/shape-strategy/_guides/dashboard-contract-notes.md`
 - Strategy templates:
   `strategies/shape-strategy/_templates/`
+- Return workflow skill:
+  `$shape-run-return` in `/Users/olafbobryk/.codex/skills/shape-run-return/`
 - Runtime architecture:
   `runtime-architecture.md`
 - Local fixtures:

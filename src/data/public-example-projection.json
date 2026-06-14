@@ -1,0 +1,375 @@
+{
+  "title": "Linear Shape Strategy Map",
+  "legend": [
+    {
+      "key": "work",
+      "label": "Workpiece",
+      "color": "#737373"
+    },
+    {
+      "key": "checkpoint",
+      "label": "Checkpoint",
+      "color": "#d97706"
+    },
+    {
+      "key": "setup",
+      "label": "Setup Shape",
+      "color": "#2563eb"
+    },
+    {
+      "key": "public-proof",
+      "label": "Public Proof Shape",
+      "color": "#16a34a"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "cp-start",
+      "kind": "checkpoint",
+      "label": "Steward Start",
+      "legendKey": "checkpoint",
+      "icon": "flag",
+      "chronology": "start",
+      "status": "verified",
+      "detail": [
+        {
+          "id": "transition",
+          "name": "Transition",
+          "icon": "flag",
+          "summary": "outbound",
+          "color": "#d97706",
+          "body": "The steward opens a small, bounded shape-strategy pass."
+        }
+      ]
+    },
+    {
+      "id": "workspace-contract",
+      "label": "Workspace Contract",
+      "legendKey": "work",
+      "status": "verified",
+      "detail": [
+        {
+          "id": "intent",
+          "name": "Intent",
+          "icon": "eye",
+          "summary": "local sidecar boundary",
+          "color": "#2563eb",
+          "body": "Keep the dashboard as a local visualization sidecar, not a Codex replacement."
+        },
+        {
+          "id": "tests",
+          "name": "Tests",
+          "icon": "check",
+          "summary": "2/2",
+          "color": "#16a34a",
+          "body": "- Dashboard reads a selected workspace.\n- Public demo contains no private filesystem paths."
+        }
+      ]
+    },
+    {
+      "id": "markdown-source",
+      "label": "Markdown Source",
+      "legendKey": "work",
+      "status": "verified",
+      "detail": [
+        {
+          "id": "intent",
+          "name": "Intent",
+          "icon": "eye",
+          "summary": "plain docs",
+          "color": "#2563eb",
+          "body": "Use plain Markdown artifacts under .codex-orchestration as the durable source."
+        },
+        {
+          "id": "artifacts",
+          "name": "Artifacts",
+          "icon": "link",
+          "summary": "3 links",
+          "color": "#2563eb",
+          "links": [
+            {
+              "label": "map.md",
+              "relativePath": "map.md",
+              "kind": "artifact"
+            },
+            {
+              "label": "shapes/",
+              "relativePath": "shapes/README.md",
+              "kind": "artifact"
+            },
+            {
+              "label": "workpieces/",
+              "relativePath": "workpieces/README.md",
+              "kind": "artifact"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "strategy-template",
+      "label": "Strategy Template",
+      "legendKey": "work",
+      "status": "verified",
+      "detail": [
+        {
+          "id": "intent",
+          "name": "Intent",
+          "icon": "eye",
+          "summary": "repeatable init",
+          "color": "#2563eb",
+          "body": "Give new repos a clean starter map, guides, templates, and pressure ledger."
+        }
+      ]
+    },
+    {
+      "id": "projection-adapter",
+      "label": "Projection Adapter",
+      "legendKey": "work",
+      "status": "in_progress",
+      "detail": [
+        {
+          "id": "intent",
+          "name": "Intent",
+          "icon": "eye",
+          "summary": "Markdown to graph",
+          "color": "#2563eb",
+          "body": "Translate authored strategy docs into the dashboard graph projection in memory."
+        },
+        {
+          "id": "tests",
+          "name": "Tests",
+          "icon": "check",
+          "summary": "4/4",
+          "color": "#16a34a",
+          "body": "- Workpieces render as primary nodes.\n- Shapes render as regions.\n- Checkpoints render as checkpoint nodes.\n- Missing references warn without crashing."
+        }
+      ]
+    },
+    {
+      "id": "graph-legibility",
+      "label": "Graph Legibility",
+      "legendKey": "work",
+      "status": "in_progress",
+      "detail": [
+        {
+          "id": "intent",
+          "name": "Intent",
+          "icon": "eye",
+          "summary": "readable trunk",
+          "color": "#2563eb",
+          "body": "Prefer a chronological trunk that is easy to scan before adding advanced branch complexity."
+        },
+        {
+          "id": "return-evidence",
+          "name": "Return Evidence",
+          "icon": "archive",
+          "summary": "linear map requested",
+          "color": "#16a34a",
+          "body": "The public example should make the dashboard understandable before it demonstrates complex detours."
+        }
+      ]
+    },
+    {
+      "id": "public-example",
+      "label": "Public Example",
+      "legendKey": "work",
+      "status": "queued",
+      "detail": [
+        {
+          "id": "intent",
+          "name": "Intent",
+          "icon": "eye",
+          "summary": "static dashboard",
+          "color": "#2563eb",
+          "body": "Deploy the real dashboard surface with a static projection JSON instead of private local data."
+        },
+        {
+          "id": "commit-evidence",
+          "name": "Commit Evidence",
+          "icon": "git-branch",
+          "summary": "branch source",
+          "color": "#9333ea",
+          "body": "codex/public-static-example"
+        }
+      ]
+    },
+    {
+      "id": "readme-link",
+      "label": "README Link",
+      "legendKey": "work",
+      "status": "queued",
+      "detail": [
+        {
+          "id": "acceptance",
+          "name": "Acceptance",
+          "icon": "check",
+          "summary": "2 criteria",
+          "color": "#16a34a",
+          "body": "- README points to the stable public Vercel URL.\n- README states that the public example is static."
+        }
+      ]
+    },
+    {
+      "id": "cp-return",
+      "kind": "checkpoint",
+      "label": "Public Proof Return",
+      "legendKey": "checkpoint",
+      "icon": "flag",
+      "status": "queued",
+      "detail": [
+        {
+          "id": "return-evidence",
+          "name": "Return Evidence",
+          "icon": "archive",
+          "summary": "ready for review",
+          "color": "#16a34a",
+          "body": "The public example is deployed and the source branch contains the copied dashboard plus static JSON."
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-to-contract",
+      "source": "cp-start",
+      "target": "workspace-contract",
+      "label": "starts",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "contract-to-markdown",
+      "source": "workspace-contract",
+      "target": "markdown-source",
+      "label": "defines",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "markdown-to-template",
+      "source": "markdown-source",
+      "target": "strategy-template",
+      "label": "informs",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "template-to-adapter",
+      "source": "strategy-template",
+      "target": "projection-adapter",
+      "label": "feeds",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "adapter-to-legibility",
+      "source": "projection-adapter",
+      "target": "graph-legibility",
+      "label": "renders",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "legibility-to-public-example",
+      "source": "graph-legibility",
+      "target": "public-example",
+      "label": "publishes",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "public-example-to-readme",
+      "source": "public-example",
+      "target": "readme-link",
+      "label": "documents",
+      "style": "solid",
+      "directional": true
+    },
+    {
+      "id": "readme-to-return",
+      "source": "readme-link",
+      "target": "cp-return",
+      "label": "returns",
+      "style": "solid",
+      "directional": true
+    }
+  ],
+  "regions": [
+    {
+      "id": "shape-setup",
+      "label": "Setup Shape",
+      "legendKey": "setup",
+      "nodeIds": [
+        "workspace-contract",
+        "markdown-source",
+        "strategy-template",
+        "projection-adapter"
+      ],
+      "detail": [
+        {
+          "id": "fixed-decisions",
+          "name": "Fixed Decisions",
+          "icon": "lock",
+          "summary": "3 items",
+          "color": "#d97706",
+          "body": "Local sidecar boundary, plain Markdown source, and static public sample data."
+        },
+        {
+          "id": "autonomous-decisions",
+          "name": "Autonomous Decisions",
+          "icon": "user",
+          "summary": "1 item",
+          "color": "#2563eb",
+          "body": "The worker can choose the exact public sample labels and detail copy."
+        }
+      ]
+    },
+    {
+      "id": "shape-public-proof",
+      "label": "Public Proof Shape",
+      "legendKey": "public-proof",
+      "nodeIds": [
+        "graph-legibility",
+        "public-example",
+        "readme-link"
+      ],
+      "detail": [
+        {
+          "id": "fixed-decisions",
+          "name": "Fixed Decisions",
+          "icon": "lock",
+          "summary": "2 items",
+          "color": "#d97706",
+          "body": "Use the copied dashboard UI and keep the Vercel URL stable."
+        },
+        {
+          "id": "return-evidence",
+          "name": "Return Evidence",
+          "icon": "archive",
+          "summary": "deployed",
+          "color": "#16a34a",
+          "body": "The branch source and public Vercel deployment are the review artifacts."
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "public-worker",
+      "targetId": "projection-adapter",
+      "label": "Worker",
+      "description": "Static public example worker is focused on the adapter-to-dashboard proof.",
+      "color": "#2563eb",
+      "icon": "user-cog",
+      "loader": true,
+      "links": [
+        {
+          "label": "Static projection",
+          "relativePath": "src/data/public-example-projection.json",
+          "kind": "artifact"
+        }
+      ]
+    }
+  ]
+}

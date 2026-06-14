@@ -1,0 +1,41 @@
+{
+  "title": "Cross Region Links Case",
+  "legend": [
+    { "key": "trunk", "label": "Trunk", "color": "#475569" },
+    { "key": "left", "label": "Left Region", "color": "#2563eb" },
+    { "key": "right", "label": "Right Region", "color": "#16a34a" },
+    { "key": "cousin", "label": "Cousin Region", "color": "#9333ea" }
+  ],
+  "nodes": [
+    { "id": "start", "kind": "checkpoint", "label": "Start", "legendKey": "trunk", "chronology": "start", "status": "verified", "icon": "flag" },
+    { "id": "hub", "label": "Hub", "legendKey": "trunk", "status": "in_progress" },
+    { "id": "left-a", "label": "Left A", "legendKey": "left", "status": "in_progress" },
+    { "id": "left-b", "label": "Left B", "legendKey": "left", "status": "queued" },
+    { "id": "right-a", "label": "Right A", "legendKey": "right", "status": "in_progress" },
+    { "id": "right-b", "label": "Right B", "legendKey": "right", "status": "queued" },
+    { "id": "cousin-a", "label": "Cousin A", "legendKey": "cousin", "status": "in_progress" },
+    { "id": "cousin-b", "label": "Cousin B", "legendKey": "cousin", "status": "queued" },
+    { "id": "return", "kind": "checkpoint", "label": "Return", "legendKey": "trunk", "status": "queued", "icon": "check" }
+  ],
+  "edges": [
+    { "id": "e-start-hub", "source": "start", "target": "hub", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-hub-left-a", "source": "hub", "target": "left-a", "label": "left spawn", "style": "dashed", "directional": true },
+    { "id": "e-left-a-left-b", "source": "left-a", "target": "left-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-hub-right-a", "source": "hub", "target": "right-a", "label": "right spawn", "style": "dashed", "directional": true },
+    { "id": "e-right-a-right-b", "source": "right-a", "target": "right-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-hub-cousin-a", "source": "hub", "target": "cousin-a", "label": "cousin spawn", "style": "dashed", "directional": true },
+    { "id": "e-cousin-a-cousin-b", "source": "cousin-a", "target": "cousin-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-left-b-right-b", "source": "left-b", "target": "right-b", "label": "sibling cross", "style": "dotted", "directional": true },
+    { "id": "e-right-a-cousin-b", "source": "right-a", "target": "cousin-b", "label": "cousin cross", "style": "dotted", "directional": true },
+    { "id": "e-left-a-cousin-a", "source": "left-a", "target": "cousin-a", "label": "cousin cross", "style": "dotted", "directional": true },
+    { "id": "e-cousin-b-return", "source": "cousin-b", "target": "return", "label": "return", "style": "dotted", "directional": true }
+  ],
+  "regions": [
+    { "id": "left-region", "label": "Left Sibling Region", "legendKey": "left", "nodeIds": ["left-a", "left-b"] },
+    { "id": "right-region", "label": "Right Sibling Region", "legendKey": "right", "nodeIds": ["right-a", "right-b"] },
+    { "id": "cousin-region", "label": "Cousin Region", "legendKey": "cousin", "nodeIds": ["cousin-a", "cousin-b"] }
+  ],
+  "markers": [
+    { "id": "marker-left-b", "targetId": "left-b", "label": "Left Marker", "description": "Low-noise marker.", "color": "#2563eb", "icon": "route", "loader": false }
+  ]
+}

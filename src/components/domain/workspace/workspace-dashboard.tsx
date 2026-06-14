@@ -142,6 +142,7 @@ export function WorkspaceDashboard({
           graph={graph}
           workspace={resolvedWorkspace}
           stats={stats}
+          projectionQualityWarnings={projectionQualityWarnings}
           commandAction={graphCommand}
         />
       </div>

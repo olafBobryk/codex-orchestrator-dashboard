@@ -12,6 +12,7 @@ import type {
   GraphRegion,
   OrchestrationGraph,
 } from "@/lib/orchestration-graph";
+import type { GraphProjectionQualityWarning } from "@/lib/graph-projection";
 
 export type CanvasNode = GraphNode & {
   color: string;
@@ -64,6 +65,7 @@ export type OrchestrationGraphCanvasProps = {
   graph: OrchestrationGraph;
   workspace: string;
   stats: GraphCanvasStats;
+  projectionQualityWarnings: GraphProjectionQualityWarning[];
   commandAction?: GraphCanvasCommandAction | null;
   renderDetailPanel: (props: GraphDetailPanelProps) => ReactNode;
   renderEdgePanel: (props: GraphEdgePanelProps) => ReactNode;
@@ -151,6 +153,7 @@ export type GraphMarkdownViewerProps = {
 export type GraphStatusPanelProps = {
   graph: OrchestrationGraph;
   stats: GraphCanvasStats;
+  projectionQualityWarnings: GraphProjectionQualityWarning[];
   packetColors: Map<string, string>;
   visiblePackets: GraphPacketGroup[];
   flowSignalCounts: Array<{ type: GraphEdge["type"]; count: number }>;

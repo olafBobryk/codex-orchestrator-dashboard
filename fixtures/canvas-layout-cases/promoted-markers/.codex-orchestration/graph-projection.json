@@ -1,0 +1,34 @@
+{
+  "title": "Promoted Markers Case",
+  "legend": [
+    { "key": "trunk", "label": "Trunk", "color": "#475569" },
+    { "key": "region", "label": "Covering Region", "color": "#2563eb" },
+    { "key": "marker", "label": "Marker Nodes", "color": "#dc2626" }
+  ],
+  "nodes": [
+    { "id": "start", "kind": "checkpoint", "label": "Start", "legendKey": "trunk", "chronology": "start", "status": "verified", "icon": "flag" },
+    { "id": "cover-a", "label": "Cover A", "legendKey": "region", "status": "in_progress" },
+    { "id": "cover-b", "label": "Cover B", "legendKey": "region", "status": "queued" },
+    { "id": "multi", "label": "Multi Marker Target", "legendKey": "marker", "status": "in_progress", "icon": "badge-alert" },
+    { "id": "neighbor", "label": "Neighbor Marker Target", "legendKey": "marker", "status": "fixed" },
+    { "id": "return", "kind": "checkpoint", "label": "Return", "legendKey": "trunk", "status": "queued", "icon": "check" }
+  ],
+  "edges": [
+    { "id": "e-start-cover-a", "source": "start", "target": "cover-a", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-cover-a-cover-b", "source": "cover-a", "target": "cover-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-cover-b-multi", "source": "cover-b", "target": "multi", "label": "target", "style": "solid", "directional": true },
+    { "id": "e-cover-b-neighbor", "source": "cover-b", "target": "neighbor", "label": "target", "style": "dashed", "directional": true },
+    { "id": "e-neighbor-return", "source": "neighbor", "target": "return", "label": "return", "style": "dotted", "directional": true }
+  ],
+  "regions": [
+    { "id": "outer-cover", "label": "Outer Cover Region", "legendKey": "region", "nodeIds": ["cover-a", "cover-b"], "regionIds": ["inner-cover"] },
+    { "id": "inner-cover", "label": "Inner Cover Region", "legendKey": "marker", "nodeIds": ["multi", "neighbor"] }
+  ],
+  "markers": [
+    { "id": "marker-loader", "targetId": "multi", "label": "Loader", "description": "Only active loader in this case.", "color": "#dc2626", "icon": "loader", "loader": true },
+    { "id": "marker-review", "targetId": "multi", "label": "Review", "description": "Second marker on same node.", "color": "#9333ea", "icon": "search-check", "loader": false },
+    { "id": "marker-risk", "targetId": "multi", "label": "Risk", "description": "Third marker on same node.", "color": "#f97316", "icon": "triangle-alert", "loader": false },
+    { "id": "marker-muted", "targetId": "multi", "label": "Muted", "description": "Muted same-node marker.", "color": "#64748b", "icon": "bell-off", "status": "muted", "loader": false },
+    { "id": "marker-neighbor", "targetId": "neighbor", "label": "Neighbor", "description": "Second node marker for collision checks.", "color": "#2563eb", "icon": "user-cog", "loader": false }
+  ]
+}

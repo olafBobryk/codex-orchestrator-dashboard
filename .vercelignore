@@ -1,13 +1,10 @@
+.codex/
+.codex-orchestration/service/
 .next/
 node_modules/
-out/
+coverage/
 dist/
-build/
-.env*
-!.env.example
-.codex/tmp/
-.codex-orchestration/service/
-.vercel/
+out/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

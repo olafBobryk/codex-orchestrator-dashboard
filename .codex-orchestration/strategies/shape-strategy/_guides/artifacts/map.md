@@ -64,6 +64,10 @@ substantive visible work inside a shape.
 Completed runs can be omitted unless their return evidence is still important
 to the current view.
 
+For dashboard-visible delegated work, active run references should point to
+central steward-checkout run stubs. Worker worktree run docs can be linked as
+evidence from the central run.
+
 ### Agent References
 
 Agent references are optional.
@@ -71,6 +75,14 @@ Agent references are optional.
 They should be included when they clarify active ownership, stewardship,
 review, or worker position. They are required when a visible dashboard marker is
 expected for an active worker.
+
+Agent references do not make historical workers active. Only live agent
+statuses should produce markers. Historical agents can stay as docs or evidence
+without appearing as active graph markers.
+
+For dashboard-visible delegated work, agent references should point to central
+steward-checkout agent stubs. Worker worktree agent docs can be linked as
+evidence from the central agent.
 
 ### Trunk / Flow
 

@@ -30,6 +30,7 @@ type GraphSidePanelProps = Pick<
   graph: OrchestrationGraph;
   workspace: string;
   stats: GraphCanvasStats;
+  projectionQualityWarnings: OrchestrationGraphCanvasProps["projectionQualityWarnings"];
   packetColors: Map<string, string>;
   visiblePackets: GraphPacketGroup[];
   flowSignalCounts: Array<{ type: GraphEdge["type"]; count: number }>;
@@ -62,6 +63,7 @@ export function GraphSidePanel({
   graph,
   workspace,
   stats,
+  projectionQualityWarnings,
   packetColors,
   visiblePackets,
   flowSignalCounts,
@@ -174,6 +176,7 @@ export function GraphSidePanel({
             renderStatusPanel({
               graph,
               stats,
+              projectionQualityWarnings,
               packetColors,
               visiblePackets,
               flowSignalCounts,

@@ -1,0 +1,40 @@
+{
+  "title": "Nested Regions Case",
+  "legend": [
+    { "key": "trunk", "label": "Trunk", "color": "#475569" },
+    { "key": "parent", "label": "Parent Region", "color": "#2563eb" },
+    { "key": "child", "label": "Child Region", "color": "#16a34a" }
+  ],
+  "nodes": [
+    { "id": "start", "kind": "checkpoint", "label": "Start", "legendKey": "trunk", "chronology": "start", "status": "verified", "icon": "flag" },
+    { "id": "root-a", "label": "Root A", "legendKey": "trunk", "status": "verified" },
+    { "id": "root-b", "label": "Root B", "legendKey": "trunk", "status": "in_progress" },
+    { "id": "child-a", "label": "Child A", "legendKey": "child", "status": "in_progress" },
+    { "id": "child-b", "label": "Child B", "legendKey": "child", "status": "queued" },
+    { "id": "child-c", "label": "Child C", "legendKey": "child", "status": "fixed" },
+    { "id": "inferred-a", "label": "Inferred A", "legendKey": "parent", "status": "queued" },
+    { "id": "inferred-b", "label": "Inferred B", "legendKey": "parent", "status": "queued" },
+    { "id": "return", "kind": "checkpoint", "label": "Return", "legendKey": "trunk", "status": "queued", "icon": "check" }
+  ],
+  "edges": [
+    { "id": "e-start-root-a", "source": "start", "target": "root-a", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-root-a-root-b", "source": "root-a", "target": "root-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-root-b-child-a", "source": "root-b", "target": "child-a", "label": "spawn", "style": "dashed", "directional": true },
+    { "id": "e-child-a-child-b", "source": "child-a", "target": "child-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-child-b-child-c", "source": "child-b", "target": "child-c", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-root-b-inferred-a", "source": "root-b", "target": "inferred-a", "label": "spawn", "style": "dashed", "directional": true },
+    { "id": "e-inferred-a-inferred-b", "source": "inferred-a", "target": "inferred-b", "label": "sequence", "style": "solid", "directional": true },
+    { "id": "e-child-c-return", "source": "child-c", "target": "return", "label": "return", "style": "dotted", "directional": true },
+    { "id": "e-inferred-b-return", "source": "inferred-b", "target": "return", "label": "return", "style": "dotted", "directional": true }
+  ],
+  "regions": [
+    { "id": "program", "label": "Program Region", "legendKey": "trunk", "nodeIds": ["start", "root-a", "root-b", "return"], "regionIds": ["explicit-parent"] },
+    { "id": "explicit-parent", "label": "Explicit Parent Region", "legendKey": "parent", "regionIds": ["explicit-child"] },
+    { "id": "explicit-child", "label": "Explicit Child Region", "legendKey": "child", "nodeIds": ["child-a", "child-b", "child-c"] },
+    { "id": "inferred-parent", "label": "Inferred Parent Region", "legendKey": "parent", "nodeIds": ["inferred-a", "inferred-b", "root-b"] },
+    { "id": "inferred-child", "label": "Inferred Child Region", "legendKey": "child", "nodeIds": ["inferred-a", "inferred-b"] }
+  ],
+  "markers": [
+    { "id": "nested-marker", "targetId": "child-b", "label": "Nested Marker", "description": "Marker inside explicit child.", "color": "#2563eb", "icon": "layers", "loader": false }
+  ]
+}

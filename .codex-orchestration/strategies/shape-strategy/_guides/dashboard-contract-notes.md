@@ -68,6 +68,12 @@ consume.
 - A marker attaches to a target node.
 - Markers need id, target id, label, color, muted state, and icon.
 - Markers do not need position for now.
+- Agent markers represent live operational presence only. Returned, accepted,
+  planned, idle, retired, or otherwise historical agents should remain
+  available as docs/history without rendering as active markers.
+- Returned workers and blocked workers may need a separate review-candidate or
+  gate treatment later. That treatment should be visually distinct from live
+  agent presence and should not reuse live markers as progress badges.
 - Marker icons should render as icons, with a neutral default icon fallback.
 - Marker loader state is runtime adapter state. Strategy docs may reference the
   agent/thread identity that lets the dashboard infer loading, but should not
@@ -92,6 +98,9 @@ consume.
   checkpoint edges, worker markers, node detail, and return evidence.
 - Runs do not need a primary projection layer until visual testing proves that
   indirect representation is insufficient.
+- The dashboard should read central steward projection docs from the selected
+  workspace. Worktree-local run and agent docs can be linked as evidence but
+  should not become separate projection sources by default.
 
 ### Detail
 

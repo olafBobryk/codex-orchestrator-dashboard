@@ -6,7 +6,7 @@ orchestration Markdown docs.
 Public static example:
 
 - Live demo: https://codex-orchestrator-public-example.vercel.app
-- Source: https://github.com/olafBobryk/codex-orchestrator-dashboard/tree/codex/public-static-example/public-example
+- Source: https://github.com/olafBobryk/codex-orchestrator-dashboard/tree/main
 
 The public example is a static, hardcoded demo. The real sidecar remains a
 local filesystem-backed app that reads project `.codex-orchestration/` docs.
