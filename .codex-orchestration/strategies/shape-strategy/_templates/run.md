@@ -39,7 +39,14 @@ subagent | visible-thread | steward | worker | reviewer
 - Branch: <branch or none>
 - Base: <commit or branch, if known>
 - HEAD: <commit or none>
-- Preview: <url or none>
+
+## Preview
+
+- Owner: sidecar | worker-temp | external | none
+- URL: <verified live URL or none>
+- Disposition: sidecar-used | left-running | stopped | unavailable
+- PID: <pid or none>
+- Notes: <temporary verification vs durable review>
 
 ## State Summary
 

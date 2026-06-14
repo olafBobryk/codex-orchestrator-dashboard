@@ -160,3 +160,32 @@ human gates, promote to visible thread when needed, and update central run and
 agent docs consistently. Because Codex does not currently provide a native
 continuous steward loop primitive, this should start as explicit steward turns,
 a goal-backed steward session, or a future app/runtime capability.
+
+## Review Preview Ownership
+
+Runs should return the most direct valid review target.
+
+For UI or app-facing work, that usually means a verified live review URL. If no
+live URL is available, the run should say `unavailable` and explain why.
+
+Long-lived review preview should be steward or sidecar owned when available.
+Worker dev servers are temporary verification tools unless explicitly retained.
+
+Preview state belongs on the run as lightweight closeout information, not as a
+separate workflow system by default. Record:
+
+- owner: `sidecar`, `worker-temp`, `external`, or `none`;
+- disposition: `sidecar-used`, `left-running`, `stopped`, or `unavailable`;
+- verified URL or `none`;
+- PID when known;
+- whether the URL is durable review or temporary verification.
+
+Use random or free ports for temporary worker previews to avoid collisions.
+Stable review should prefer a sidecar or steward-owned service over random
+worker ports.
+
+Never report a URL as live after stopping its server.
+
+The reusable `$preview-restart` skill can recover stale preview links, prefer a
+durable sidecar when available, or start a temporary verification preview on a
+free port when needed.
