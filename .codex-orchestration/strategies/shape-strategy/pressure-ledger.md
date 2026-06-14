@@ -201,6 +201,39 @@ steward explicitly authorizes workers to update central projection docs.
 Decision:
 Absorbed by the Central Steward Projection approach.
 
+## Entry: Worker Preview Ports Became Stale Review Links
+
+Date: 2026-06-14
+Status: absorbed
+
+Pressure:
+lower + sideways
+
+Signal:
+Worker threads started temporary dev servers on ad hoc ports, stopped or lost
+those processes during closeout, and then stale localhost URLs remained in the
+review surface.
+
+Why It Matters:
+The user needs review links to stay trustworthy across threads. A stopped
+worker preview should not be reported as live, and durable review should not
+depend on an unmanaged temporary port.
+
+Affected Artifacts:
+- `strategies/shape-strategy/_guides/concepts/strategies/approaches.md`
+- `strategies/shape-strategy/_guides/artifacts/run.md`
+- `strategies/shape-strategy/_templates/run.md`
+- `/Users/olafbobryk/.codex/skills/preview-restart/SKILL.md`
+- `/Users/olafbobryk/.codex/skills/shape-run-return/SKILL.md`
+
+Recommended Response:
+Keep preview state linked to runs. Prefer sidecar/steward-owned review URLs for
+durable review, use worker dev servers as temporary verification unless
+retained, and require preview owner/disposition in handoffs.
+
+Decision:
+Absorbed by the Review Preview Ownership approach and `preview-restart` skill.
+
 ## Entry: Pressure Ledger Becomes Missing Feedback Artifact
 
 Date: 2026-06-11

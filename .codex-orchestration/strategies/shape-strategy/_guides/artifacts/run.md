@@ -96,6 +96,27 @@ other context needed to find where the work happened later.
 
 This section should stay factual. It should not become a second run plan.
 
+### Preview
+
+Preview records the current review target for UI or app-facing work.
+
+Long-lived review preview should be steward or sidecar owned when available.
+Worker dev servers are temporary verification tools unless explicitly retained.
+
+Every UI/app-changing run should return the most direct valid review target:
+a verified live URL, or `unavailable` with an explicit reason.
+
+Use these fields:
+
+- `Owner`: `sidecar`, `worker-temp`, `external`, or `none`.
+- `URL`: verified live URL or `none`.
+- `Disposition`: `sidecar-used`, `left-running`, `stopped`, or `unavailable`.
+- `PID`: process id when known, otherwise `none`.
+- `Notes`: what the URL serves and whether it is durable review or temporary
+  verification.
+
+Never call a URL live after stopping the server that serves it.
+
 ### State Summary
 
 State summary is a short steward-maintained note about where the run currently
@@ -179,7 +200,14 @@ Mode: subagent | visible-thread | steward | worker | reviewer
 - Branch: <branch or none>
 - Base: <commit or branch, if known>
 - HEAD: <commit or none>
-- Preview: <url or none>
+
+## Preview
+
+- Owner: sidecar | worker-temp | external | none
+- URL: <verified live URL or none>
+- Disposition: sidecar-used | left-running | stopped | unavailable
+- PID: <pid or none>
+- Notes: <temporary verification vs durable review>
 
 ## State Summary
 
