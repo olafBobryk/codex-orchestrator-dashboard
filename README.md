@@ -1,6 +1,6 @@
 # Codex Orchestrator Dashboard
 
-![Codex Orchestrator layered model](docs/assets/readme-layered-model.png)
+![Codex Orchestrator Dashboard preview](docs/assets/readme-dashboard-preview.png)
 
 A local-first orchestration visualizer for Codex-heavy projects.
 
@@ -9,6 +9,8 @@ are separate products. The adapter is the link between them.
 
 The strategy is replaceable. The dashboard is reusable. The adapter is the
 contract between them.
+
+![Codex Orchestrator layered model](docs/assets/readme-layered-model.png)
 
 ## The Layered Model
 
