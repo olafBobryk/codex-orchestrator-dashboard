@@ -1,6 +1,10 @@
 import { existsSync, watch, type FSWatcher } from "node:fs";
 import path from "node:path";
 import { NextRequest } from "next/server";
+import {
+  createPublicDemoDisabledResponse,
+  isPublicDemoMode,
+} from "@/lib/public-demo-mode";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -13,6 +17,10 @@ const IGNORED_REFRESH_PATH_PREFIXES = [
 ];
 
 export async function GET(request: NextRequest) {
+  if (isPublicDemoMode()) {
+    return createPublicDemoDisabledResponse();
+  }
+
   const workspace = request.nextUrl.searchParams.get("workspace") ?? "";
   const workspacePath = path.resolve(/*turbopackIgnore: true*/ workspace);
   const orchestrationPath = path.join(

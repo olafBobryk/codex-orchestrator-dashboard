@@ -8,6 +8,10 @@ import {
 import type { GraphProjectionQualityWarning } from "@/lib/graph-projection";
 import type { GraphMarker, OrchestrationGraph } from "@/lib/orchestration-graph";
 import type { GraphCanvasCommandAction } from "./types";
+import {
+  isPublicDemoDashboard,
+  type DashboardMode,
+} from "../dashboard-mode";
 import { GraphDetailOverlay, GraphStatusOverlay } from "../graph-panels";
 import { EdgeDetailPanel } from "../graph-panels/detail/edge-detail-panel";
 import { MarkdownReferenceViewer } from "../graph-panels/detail/markdown-reference-viewer";
@@ -24,6 +28,7 @@ type MarkerActivityResponse = {
 
 export type WorkspaceCanvasProps = {
   graph: OrchestrationGraph;
+  dashboardMode?: DashboardMode;
   workspace: string;
   stats: GraphCanvasStats;
   projectionQualityWarnings: GraphProjectionQualityWarning[];
@@ -32,6 +37,7 @@ export type WorkspaceCanvasProps = {
 
 export function WorkspaceCanvas({
   graph,
+  dashboardMode = "local",
   workspace,
   stats,
   projectionQualityWarnings,
@@ -44,12 +50,17 @@ export function WorkspaceCanvas({
     () => graph.markers.map((marker) => marker.id),
     [graph.markers]
   );
+  const publicDemo = isPublicDemoDashboard(dashboardMode);
   const liveGraph = useMemo(
-    () => mergeMarkerActivity(graph, markerActivity),
-    [graph, markerActivity]
+    () => (publicDemo ? graph : mergeMarkerActivity(graph, markerActivity)),
+    [graph, markerActivity, publicDemo]
   );
 
   useEffect(() => {
+    if (publicDemo) {
+      return;
+    }
+
     if (!workspace.trim() || markerIds.length === 0) {
       return;
     }
@@ -112,12 +123,13 @@ export function WorkspaceCanvas({
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, [markerIds, workspace]);
+  }, [markerIds, publicDemo, workspace]);
 
   return (
     <>
       <OrchestrationGraphCanvas
         graph={liveGraph}
+        dashboardMode={dashboardMode}
         workspace={workspace}
         stats={stats}
         projectionQualityWarnings={projectionQualityWarnings}

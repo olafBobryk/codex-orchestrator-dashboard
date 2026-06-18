@@ -47,7 +47,7 @@ type GraphSidePanelProps = Pick<
   selectedEdgeSourceNode: GraphNode | null;
   selectedEdgeTargetNode: GraphNode | null;
   selectedRegion: CanvasRegion | null;
-  onOpenMarkdownReference: (reference: GraphMarkdownReference) => void;
+  onOpenMarkdownReference?: (reference: GraphMarkdownReference) => void;
   onCloseMarkdownReference: () => void;
   onSelectMarker: (markerId: string | null) => void;
   onSelectNode: (nodeId: string, markerId?: string | null) => void;

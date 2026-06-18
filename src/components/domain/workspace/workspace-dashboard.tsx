@@ -16,10 +16,15 @@ import {
 } from "./dashboard-surface-map";
 import { WorkspaceCanvas } from "./canvas";
 import { WorkspaceSidebar } from "./sidebar";
+import {
+  isPublicDemoDashboard,
+  type DashboardMode,
+} from "./dashboard-mode";
 import { GraphProjectionQualityToast } from "./status";
 
 export function WorkspaceDashboard({
   codexProjects,
+  dashboardMode = "local",
   graph,
   projectionQualityWarnings,
   resolvedWorkspace,
@@ -27,6 +32,7 @@ export function WorkspaceDashboard({
   workspace,
 }: {
   codexProjects: CodexProjectReadResult;
+  dashboardMode?: DashboardMode;
   graph: OrchestrationGraph;
   projectionQualityWarnings: GraphProjectionQualityWarning[];
   resolvedWorkspace: string;
@@ -43,10 +49,11 @@ export function WorkspaceDashboard({
       buildDashboardSurfaceMap({
         codexProjects,
         currentWorkspace: resolvedWorkspace,
+        dashboardMode,
         graph,
         workspace: resolvedWorkspace,
       }),
-    [codexProjects, graph, resolvedWorkspace]
+    [codexProjects, dashboardMode, graph, resolvedWorkspace]
   );
   const closeCommand = () => {
     setCommandOpen(false);
@@ -60,7 +67,9 @@ export function WorkspaceDashboard({
     }
 
     if (action.type === "open-external-link") {
-      window.location.href = action.href;
+      if (!isPublicDemoDashboard(dashboardMode)) {
+        window.location.href = action.href;
+      }
       closeCommand();
       return;
     }
@@ -121,6 +130,7 @@ export function WorkspaceDashboard({
         codexProjects={codexProjects}
         workspace={workspace}
         resolvedWorkspace={resolvedWorkspace}
+        dashboardMode={dashboardMode}
         commandOpen={commandOpen}
         onOpenCommand={() => setCommandOpen(true)}
       />
@@ -140,6 +150,7 @@ export function WorkspaceDashboard({
         />
         <WorkspaceCanvas
           graph={graph}
+          dashboardMode={dashboardMode}
           workspace={resolvedWorkspace}
           stats={stats}
           projectionQualityWarnings={projectionQualityWarnings}

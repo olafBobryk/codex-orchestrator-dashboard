@@ -14,6 +14,7 @@ import {
   useState,
 } from "react";
 import { Button } from "@/components/ui/button";
+import { isPublicDemoDashboard } from "../dashboard-mode";
 import {
   countFlowSignals,
   countRuntimeAnnotations,
@@ -73,6 +74,7 @@ const PROMOTED_MARKER_TRANSITION_REDRAW_MS = 280;
 
 export function OrchestrationGraphCanvas({
   graph,
+  dashboardMode = "local",
   workspace,
   stats,
   projectionQualityWarnings,
@@ -182,6 +184,7 @@ export function OrchestrationGraphCanvas({
           ? "status"
           : null;
   const initialFocusKey = `${layoutKey}:${size.width}x${size.height}`;
+  const publicDemo = isPublicDemoDashboard(dashboardMode);
 
   const fitInitialGraph = useCallback((durationMs = INITIAL_FIT_DURATION_MS) => {
     const instance = graphRef.current;
@@ -446,16 +449,18 @@ export function OrchestrationGraphCanvas({
         return;
       }
 
-      setSelectedNodeId(null);
-      setSelectedEdgeId(null);
-      setSelectedMarkerId(null);
-      setSelectedRegionId(null);
-      setMarkdownReference(commandAction.reference);
-      setStatusPanelOpen(false);
+      if (!publicDemo) {
+        setSelectedNodeId(null);
+        setSelectedEdgeId(null);
+        setSelectedMarkerId(null);
+        setSelectedRegionId(null);
+        setMarkdownReference(commandAction.reference);
+        setStatusPanelOpen(false);
+      }
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [commandAction]);
+  }, [commandAction, publicDemo]);
 
   useEffect(() => {
     if (markerLoaderSnapshotRef.current === null) {
@@ -722,7 +727,7 @@ export function OrchestrationGraphCanvas({
           renderRegionPanel={renderRegionPanel}
           renderMarkdownViewer={renderMarkdownViewer}
           renderStatusPanel={renderStatusPanel}
-          onOpenMarkdownReference={setMarkdownReference}
+          onOpenMarkdownReference={publicDemo ? undefined : setMarkdownReference}
           onCloseMarkdownReference={() => setMarkdownReference(null)}
           onSelectMarker={setSelectedMarkerId}
           onSelectNode={(nodeId, markerId) => {

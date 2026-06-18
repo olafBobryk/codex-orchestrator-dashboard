@@ -42,13 +42,15 @@ function EntityLinkButton({
   workspace: string;
   onOpenMarkdownReference?: (reference: GraphMarkdownReference) => void;
 }) {
-  const href = link.relativePath
-    ? createVsCodeDocHref(workspace, link.relativePath)
-    : link.href;
   const canOpenMarkdown =
     Boolean(link.relativePath) &&
     link.relativePath?.toLowerCase().endsWith(".md") === true &&
     Boolean(onOpenMarkdownReference);
+  const href = link.relativePath
+    ? canOpenMarkdown
+      ? null
+      : createVsCodeDocHref(workspace, link.relativePath)
+    : link.href;
   const children = (
     <>
       <ExternalLink className="h-3 w-3 shrink-0" />
@@ -78,9 +80,17 @@ function EntityLinkButton({
     );
   }
 
+  if (link.relativePath && !onOpenMarkdownReference) {
+    return (
+      <div className="flex w-full min-w-0 items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <a
-      href={href}
+      href={href ?? undefined}
       className="flex w-full min-w-0 items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
     >
       {children}

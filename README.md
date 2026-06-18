@@ -1,15 +1,25 @@
 # Codex Orchestrator Dashboard
 
 A narrow local Next.js + shadcn/ui sidecar for reading project-local Codex
-orchestration Markdown docs.
+orchestration Markdown docs and visualizing their shape-strategy graph.
 
-Public static example:
+Public demo:
 
 - Live demo: https://codex-orchestrator-public-example.vercel.app
 - Source: https://github.com/olafBobryk/codex-orchestrator-dashboard/tree/main
 
-The public example is a static, hardcoded demo. The real sidecar remains a
-local filesystem-backed app that reads project `.codex-orchestration/` docs.
+The public demo is built from the root dashboard app with
+`NEXT_PUBLIC_DEMO=true`. It uses a committed, hardcoded, sanitized fixture and
+the same dashboard UI, components, graph contract, and data model as the local
+app.
+
+Public demo mode does not expose local filesystem reads, Codex runtime polling,
+service controls, editor links, API-backed actions, private project paths, or
+private orchestration data. Relative artifact references are rendered as static
+evidence only.
+
+The real sidecar remains a local filesystem-backed app that reads project
+`.codex-orchestration/` docs.
 
 The app reads from:
 
@@ -33,6 +43,12 @@ Run locally:
 
 ```bash
 npm run dev
+```
+
+Run the sanitized public demo locally:
+
+```bash
+NEXT_PUBLIC_DEMO=true npm run dev
 ```
 
 Initialize the current shape strategy in another repo:

@@ -13,6 +13,7 @@ import type {
   OrchestrationGraph,
 } from "@/lib/orchestration-graph";
 import type { GraphProjectionQualityWarning } from "@/lib/graph-projection";
+import type { DashboardMode } from "../dashboard-mode";
 
 export type CanvasNode = GraphNode & {
   color: string;
@@ -63,6 +64,7 @@ export type SignalMeta = {
 
 export type OrchestrationGraphCanvasProps = {
   graph: OrchestrationGraph;
+  dashboardMode?: DashboardMode;
   workspace: string;
   stats: GraphCanvasStats;
   projectionQualityWarnings: GraphProjectionQualityWarning[];
@@ -90,7 +92,7 @@ export type GraphDetailPanelProps = {
   edges: GraphEdge[];
   relatedNodes: GraphNode[];
   workspace: string;
-  onOpenMarkdownReference: (reference: GraphMarkdownReference) => void;
+  onOpenMarkdownReference?: (reference: GraphMarkdownReference) => void;
   onSelectMarker: (markerId: string | null) => void;
   onClose: () => void;
 };
@@ -130,7 +132,7 @@ export type GraphCanvasCommandAction =
 export type GraphRegionPanelProps = {
   region: CanvasRegion;
   workspace: string;
-  onOpenMarkdownReference: (reference: GraphMarkdownReference) => void;
+  onOpenMarkdownReference?: (reference: GraphMarkdownReference) => void;
   onSelectNode: (nodeId: string) => void;
   onClose: () => void;
 };
@@ -140,7 +142,7 @@ export type GraphEdgePanelProps = {
   sourceNode: GraphNode | null;
   targetNode: GraphNode | null;
   workspace: string;
-  onOpenMarkdownReference: (reference: GraphMarkdownReference) => void;
+  onOpenMarkdownReference?: (reference: GraphMarkdownReference) => void;
   onClose: () => void;
 };
 

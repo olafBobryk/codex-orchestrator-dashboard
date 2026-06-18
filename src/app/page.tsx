@@ -21,12 +21,17 @@ import {
   publicExampleGraph,
   publicExampleProjects,
 } from "@/lib/public-example";
+import { isPublicDemoMode } from "@/lib/public-demo-mode";
 
 type PageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function Home({ searchParams }: PageProps) {
+  if (isPublicDemoMode()) {
+    return <PublicExampleDashboard />;
+  }
+
   const params = (await searchParams) ?? {};
   const requestedWorkspace = readParam(params.workspace);
   const codexProjects = await readCodexProjects();
@@ -93,15 +98,16 @@ function PublicExampleDashboard() {
       <WorkspaceDashboard
         codexProjects={publicExampleProjects}
         graph={publicExampleGraph}
+        dashboardMode="public-demo"
         projectionQualityWarnings={[]}
         resolvedWorkspace={PUBLIC_EXAMPLE_WORKSPACE}
         workspace={PUBLIC_EXAMPLE_WORKSPACE}
         stats={{
-          docs: 1,
+          docs: publicExampleGraph.nodes.length + publicExampleGraph.regions.length,
           packets: publicExampleGraph.packets.length,
           ledgers: 0,
           summaries: publicExampleGraph.nodes.length,
-          liveAgents: publicExampleGraph.markers.length,
+          liveAgents: 0,
           activeThreads: 0,
         }}
       />
