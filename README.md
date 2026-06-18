@@ -6,6 +6,7 @@ orchestration Markdown docs and visualizing their shape-strategy graph.
 Public demo:
 
 - Live demo: https://codex-orchestrator-public-example.vercel.app
+- Verified preview for this implementation: https://codex-orchestrator-public-example-jron1kidg.vercel.app
 - Source: https://github.com/olafBobryk/codex-orchestrator-dashboard/tree/main
 
 The public demo is built from the root dashboard app with
