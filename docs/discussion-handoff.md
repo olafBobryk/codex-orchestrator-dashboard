@@ -6,9 +6,8 @@ Discussion only. Do not implement yet.
 
 ## Origin
 
-This project is a sibling exploration from:
-
-`/Users/olafbobryk/Documents/Code/Personal/2026/codex-ui`
+This project began as a sibling exploration from a local Codex overlay
+prototype.
 
 The existing app, Codex Skill Overlay, is a lightweight Electron overlay for
 selecting Codex skills and composing prompts. It did not become a durable habit.
@@ -53,7 +52,7 @@ Suggested shape:
 
 ```text
 Central app:
-~/Documents/Code/Personal/2026/codex-orchestrator-dashboard
+<dashboard-repo>
 
 Per-project state:
 <project>/.codex-orchestration/
@@ -133,4 +132,3 @@ The smallest useful version likely does four things:
 - `bubble concern`
 - `handoff pointer`
 - `next action`
-

@@ -28,7 +28,7 @@ Status: accepted-surface-only
 - Strategy templates:
   `strategies/shape-strategy/_templates/`
 - Return workflow skill:
-  `$shape-run-return` in `/Users/olafbobryk/.codex/skills/shape-run-return/`
+  `$shape-run-return` in `$CODEX_HOME/skills/shape-run-return/`
 - Runtime architecture:
   `runtime-architecture.md`
 - Local fixtures:

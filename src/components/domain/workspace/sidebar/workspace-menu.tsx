@@ -55,7 +55,7 @@ export function WorkspacePathMenu({ workspace }: { workspace: string }) {
                 id="workspace"
                 name="workspace"
                 defaultValue={workspace}
-                placeholder="/Users/name/path/to/project"
+                placeholder="/absolute/path/to/project"
                 className="font-mono text-xs"
               />
               <Button type="submit">
