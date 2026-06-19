@@ -45,6 +45,7 @@ import {
 } from "./graph-canvas-tooltip";
 import { GraphSidePanel } from "./graph-side-panel";
 import { type GraphHitResult, resolveGraphHit } from "./hit-testing";
+import { ReadmeScreenshotStageControls } from "./readme-screenshot-stage-controls";
 import type {
   GraphMarkdownReference,
   GraphMethods,
@@ -71,6 +72,7 @@ const MIN_INITIAL_ZOOM = 0.02;
 const MAX_INITIAL_ZOOM = 2.5;
 const MARKER_LOADER_TRANSITION_REDRAW_MS = 760;
 const PROMOTED_MARKER_TRANSITION_REDRAW_MS = 280;
+const README_STAGE_CAPTURE_ENABLED = process.env.NEXT_PUBLIC_CAPTURE === "true";
 
 export function OrchestrationGraphCanvas({
   graph,
@@ -98,6 +100,17 @@ export function OrchestrationGraphCanvas({
   const [markdownReference, setMarkdownReference] =
     useState<GraphMarkdownReference | null>(null);
   const [statusPanelOpen, setStatusPanelOpen] = useState(true);
+  const [readmeStageControlsHidden, setReadmeStageControlsHidden] =
+    useState(false);
+  const [readmeStageCapture, setReadmeStageCapture] = useState<{
+    dataUrl: string | null;
+    error: string | null;
+    rendering: boolean;
+  }>({
+    dataUrl: null,
+    error: null,
+    rendering: false,
+  });
   const [graphMountVersion, setGraphMountVersion] = useState(0);
   const [hoveredGraphTooltip, setHoveredGraphTooltip] =
     useState<HoveredGraphTooltip | null>(null);
@@ -185,6 +198,7 @@ export function OrchestrationGraphCanvas({
           : null;
   const initialFocusKey = `${layoutKey}:${size.width}x${size.height}`;
   const publicDemo = isPublicDemoDashboard(dashboardMode);
+  const readmeStageMode = README_STAGE_CAPTURE_ENABLED;
 
   const fitInitialGraph = useCallback((durationMs = INITIAL_FIT_DURATION_MS) => {
     const instance = graphRef.current;
@@ -244,6 +258,101 @@ export function OrchestrationGraphCanvas({
   const markCameraInteraction = useCallback(() => {
     userCameraInteractedKeyRef.current = initialFocusKey;
   }, [initialFocusKey]);
+
+  const renderReadmeStageCapture = useCallback(async () => {
+    setReadmeStageControlsHidden(true);
+    setReadmeStageCapture({
+      dataUrl: null,
+      error: null,
+      rendering: true,
+    });
+
+    try {
+      await waitForReadmeCaptureFrame();
+
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(document.body, {
+        backgroundColor: getComputedStyle(document.body).backgroundColor,
+        cacheBust: true,
+        filter: (node) => {
+          if (!(node instanceof Element)) {
+            return true;
+          }
+
+          return !node.closest(
+            "[data-readme-stage-controls], [data-readme-stage-result]"
+          );
+        },
+        height: window.innerHeight,
+        pixelRatio: 1,
+        width: window.innerWidth,
+      });
+
+      setReadmeStageCapture({
+        dataUrl,
+        error: null,
+        rendering: false,
+      });
+    } catch (error) {
+      setReadmeStageCapture({
+        dataUrl: null,
+        error:
+          error instanceof Error
+            ? error.message
+            : "The screenshot renderer failed.",
+        rendering: false,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!readmeStageMode) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+
+      if (key === "h") {
+        event.preventDefault();
+        setReadmeStageControlsHidden((hidden) => !hidden);
+        return;
+      }
+
+      if (key === "c") {
+        event.preventDefault();
+        void renderReadmeStageCapture();
+        return;
+      }
+
+      if (key === "f") {
+        event.preventDefault();
+        userCameraInteractedKeyRef.current = null;
+        void fitInitialGraph(SETTLED_FIT_DURATION_MS);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [fitInitialGraph, readmeStageMode, renderReadmeStageCapture]);
+
+  useEffect(() => {
+    if (!readmeStageMode) {
+      return;
+    }
+
+    document.documentElement.dataset.readmeStage = readmeStageControlsHidden
+      ? "clean"
+      : "editing";
+
+    return () => {
+      delete document.documentElement.dataset.readmeStage;
+    };
+  }, [readmeStageControlsHidden, readmeStageMode]);
 
   const selectEdge = useCallback((edgeId: string) => {
     setSelectedNodeId(null);
@@ -776,6 +885,28 @@ export function OrchestrationGraphCanvas({
             <PanelRightOpen />
           </Button>
         ) : null}
+
+        {readmeStageMode ? (
+          <ReadmeScreenshotStageControls
+            captureError={readmeStageCapture.error}
+            capturedImageUrl={readmeStageCapture.dataUrl}
+            capturing={readmeStageCapture.rendering}
+            controlsHidden={readmeStageControlsHidden}
+            onClearCapture={() =>
+              setReadmeStageCapture({
+                dataUrl: null,
+                error: null,
+                rendering: false,
+              })
+            }
+            onFit={() => {
+              userCameraInteractedKeyRef.current = null;
+              void fitInitialGraph(SETTLED_FIT_DURATION_MS);
+            }}
+            onHide={() => setReadmeStageControlsHidden(true)}
+            onRender={renderReadmeStageCapture}
+          />
+        ) : null}
       </div>
     </section>
   );
@@ -811,6 +942,15 @@ function getGraphFitBounds(
       bottom: Number.NEGATIVE_INFINITY,
     }
   );
+}
+
+async function waitForReadmeCaptureFrame() {
+  await new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => resolve());
+    });
+  });
+  await new Promise((resolve) => window.setTimeout(resolve, 80));
 }
 
 function getVisibleFitViewport(

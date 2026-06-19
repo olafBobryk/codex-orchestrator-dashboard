@@ -36,1101 +36,535 @@
       "icon": "flag",
       "chronology": "start",
       "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Purpose",
-          "icon": "flag",
-          "summary": "accepted start checkpoint",
-          "color": "#d97706",
-          "body": "A bounded orchestration pass starts from an explicit checkpoint before implementation branches are opened."
-        }
-      ],
-      "links": [
-        {
-          "label": "Start checkpoint",
-          "relativePath": "public-demo/checkpoints/start.md",
-          "kind": "artifact"
-        }
-      ]
-    },
-    {
-      "id": "template-initialization",
-      "label": "Template Initialization",
-      "legendKey": "core",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "box",
-          "summary": "repository scaffold and orchestration docs",
-          "color": "#737373",
-          "body": "Initialize the working surface, clone the reusable orchestration structure, and define the first map contract."
-        }
-      ],
-      "links": [
-        {
-          "label": "Initialization workpiece",
-          "relativePath": "public-demo/workpieces/template-initialization.md",
-          "kind": "artifact"
-        }
-      ]
-    },
-    {
-      "id": "documentation-baseline",
-      "label": "Documentation Baseline",
-      "legendKey": "core",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "file-text",
-          "summary": "source docs classified",
-          "color": "#737373",
-          "body": "Classify source documents, identify reusable guidance, and separate current strategy from legacy notes."
-        }
-      ]
-    },
-    {
-      "id": "source-inventory",
-      "label": "Design Source Inventory",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "scan",
-          "summary": "source surfaces inventoried",
-          "color": "#2563eb",
-          "body": "Inventory source surfaces and reconcile typography, tokens, primitives, and interaction assumptions."
-        }
-      ]
-    },
-    {
-      "id": "foundation-tokens",
-      "label": "Foundation Tokens",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "palette",
-          "summary": "base variables",
-          "color": "#2563eb",
-          "body": "Promote foundational color, spacing, and type decisions into reusable implementation tokens."
-        }
-      ]
-    },
-    {
-      "id": "core-primitives",
-      "label": "Core Primitives",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "component",
-          "summary": "shared primitives",
-          "color": "#2563eb",
-          "body": "Build the low-level UI primitives used by later page and shell systems."
-        }
-      ]
-    },
-    {
-      "id": "placeholder-assets",
-      "label": "Placeholder Asset Seed",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "image",
-          "summary": "temporary media system",
-          "color": "#2563eb",
-          "body": "Seed safe temporary assets so downstream preview pages can render without private media."
-        }
-      ]
-    },
-    {
-      "id": "interaction-model",
-      "label": "Interaction Model",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "mouse-pointer",
-          "summary": "interaction behavior",
-          "color": "#2563eb",
-          "body": "Define shared hover, focus, pointer, and motion behavior before page systems consume it."
-        }
-      ]
-    },
-    {
-      "id": "internal-review-surface",
-      "label": "Internal Review Surface",
-      "legendKey": "review",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Gate",
-          "icon": "check",
-          "summary": "branch accepted",
-          "color": "#9333ea",
-          "body": "Review the design-system branch and make it available to page-system work."
-        }
-      ]
-    },
-    {
-      "id": "design-system-ready",
-      "kind": "checkpoint",
-      "label": "Design System Ready",
-      "legendKey": "checkpoint",
-      "icon": "flag",
-      "status": "verified",
+      "summary": "entry checkpoint",
       "detail": [
         {
           "id": "summary",
           "name": "Checkpoint",
           "icon": "flag",
-          "summary": "page branches can start",
+          "summary": "start condition accepted",
           "color": "#d97706",
-          "body": "The design-system branch has enough verified primitives for content and shell branches to proceed."
+          "body": "The map begins from an explicit start checkpoint before any branch work opens."
         }
       ]
     },
     {
-      "id": "content-source-discovery",
-      "label": "Content Source Discovery",
-      "legendKey": "branch",
+      "id": "project-framing",
+      "label": "Project Framing",
+      "legendKey": "core",
       "status": "complete",
+      "summary": "scope and constraints",
       "detail": [
         {
           "id": "summary",
-          "name": "Work",
-          "icon": "search",
-          "summary": "content requirements",
-          "color": "#2563eb",
-          "body": "Identify content structures, policy-page requirements, and reusable markdown rendering needs."
-        }
-      ]
-    },
-    {
-      "id": "policy-page-composition",
-      "label": "Policy Page Composition",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
+          "name": "Workpiece",
           "icon": "file-text",
-          "summary": "concrete content page",
-          "color": "#2563eb",
-          "body": "Compose one complete content page to prove the markdown and layout contract."
+          "summary": "scope written down",
+          "color": "#737373",
+          "body": "Define the useful boundary, the current strategy, and what the demo should prove."
         }
       ]
     },
     {
-      "id": "markdown-renderer",
-      "label": "Markdown Renderer Extraction",
-      "legendKey": "branch",
+      "id": "strategy-outline",
+      "label": "Strategy Outline",
+      "legendKey": "core",
       "status": "complete",
+      "summary": "shape strategy sketched",
       "detail": [
         {
           "id": "summary",
-          "name": "Work",
-          "icon": "code",
-          "summary": "shared renderer",
-          "color": "#2563eb",
-          "body": "Extract reusable rendering behavior from the concrete content page."
-        }
-      ]
-    },
-    {
-      "id": "markdown-test-surface",
-      "label": "Markdown Test Surface",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "flask-conical",
-          "summary": "renderer coverage",
-          "color": "#2563eb",
-          "body": "Exercise headings, lists, inline marks, links, and edge cases through a static test page."
-        }
-      ]
-    },
-    {
-      "id": "content-system-verification",
-      "label": "Content System Verification",
-      "legendKey": "review",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Gate",
-          "icon": "check",
-          "summary": "content branch accepted",
-          "color": "#9333ea",
-          "body": "Verify the content branch before it joins the page-system baseline."
-        }
-      ]
-    },
-    {
-      "id": "shell-source-discovery",
-      "label": "Shell Source Discovery",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "search",
-          "summary": "shell requirements",
-          "color": "#2563eb",
-          "body": "Identify navigation, header, footer, and global shell requirements."
-        }
-      ]
-    },
-    {
-      "id": "navigation-architecture",
-      "label": "Navigation Architecture",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
+          "name": "Workpiece",
           "icon": "map",
-          "summary": "information architecture",
-          "color": "#2563eb",
-          "body": "Define route groups, navigation hierarchy, and persistent shell behavior."
-        }
-      ]
-    },
-    {
-      "id": "desktop-navigation",
-      "label": "Desktop Navigation",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "panel-top",
-          "summary": "header navigation",
-          "color": "#2563eb",
-          "body": "Implement the desktop header and top-level navigation model."
-        }
-      ]
-    },
-    {
-      "id": "mobile-navigation",
-      "label": "Mobile Navigation",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "menu",
-          "summary": "mobile menu",
-          "color": "#2563eb",
-          "body": "Implement responsive navigation behavior for constrained screens."
-        }
-      ]
-    },
-    {
-      "id": "prefooter-section",
-      "label": "Prefooter Section",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "layout",
-          "summary": "shared transition section",
-          "color": "#2563eb",
-          "body": "Add a reusable transitional section consumed by major pages."
-        }
-      ]
-    },
-    {
-      "id": "footer-system",
-      "label": "Footer System",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "panel-bottom",
-          "summary": "global footer",
-          "color": "#2563eb",
-          "body": "Implement the shared footer and supporting link groups."
-        }
-      ]
-    },
-    {
-      "id": "shell-verification",
-      "label": "Shell Verification",
-      "legendKey": "review",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Gate",
-          "icon": "check",
-          "summary": "shell branch accepted",
-          "color": "#9333ea",
-          "body": "Verify shell behavior before it joins the page-system baseline."
-        }
-      ]
-    },
-    {
-      "id": "page-systems-baseline",
-      "kind": "checkpoint",
-      "label": "Page Systems Baseline",
-      "legendKey": "checkpoint",
-      "icon": "flag",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Checkpoint",
-          "icon": "flag",
-          "summary": "content and shell branches joined",
-          "color": "#d97706",
-          "body": "Content and shell work have both returned into a shared page-system baseline."
-        }
-      ]
-    },
-    {
-      "id": "remote-preview-setup",
-      "label": "Remote Preview Setup",
-      "legendKey": "core",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "cloud",
-          "summary": "review preview established",
+          "summary": "strategy becomes visible",
           "color": "#737373",
-          "body": "Create a public-safe remote preview baseline without exposing private runtime details."
+          "body": "Translate the initial notes into a small graph shape with clear handoff points."
         }
       ]
     },
     {
-      "id": "remote-preview-baseline",
+      "id": "framing-checkpoint",
       "kind": "checkpoint",
-      "label": "Remote Preview Baseline",
+      "label": "Framing Checkpoint",
       "legendKey": "checkpoint",
       "icon": "flag",
       "status": "verified",
+      "summary": "parallel work can begin",
       "detail": [
         {
           "id": "summary",
           "name": "Checkpoint",
           "icon": "flag",
-          "summary": "remote preview ready",
+          "summary": "initial shape accepted",
           "color": "#d97706",
-          "body": "A remote preview is established as a shared baseline for downstream branches."
+          "body": "The initialization shape has enough clarity for parallel branches to start."
         }
       ]
     },
     {
-      "id": "contact-source-discovery",
-      "label": "Contact Flow Discovery",
+      "id": "canvas-navigation",
+      "label": "Canvas Navigation",
       "legendKey": "branch",
       "status": "complete",
+      "summary": "graph movement and selection",
       "detail": [
         {
           "id": "summary",
-          "name": "Work",
+          "name": "Nested child shape",
+          "icon": "mouse-pointer",
+          "summary": "navigation behavior",
+          "color": "#2563eb",
+          "body": "Prove panning, zooming, selection, and shape hit targets inside the dashboard canvas."
+        }
+      ]
+    },
+    {
+      "id": "node-detail-panels",
+      "label": "Node Detail Panels",
+      "legendKey": "branch",
+      "status": "complete",
+      "summary": "details and markers",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Nested child shape",
+          "icon": "panel-right",
+          "summary": "selected node context",
+          "color": "#2563eb",
+          "body": "Show the supporting detail panel for selected workpieces, checkpoints, and markers."
+        }
+      ]
+    },
+    {
+      "id": "summary-panel",
+      "label": "Summary Panel",
+      "legendKey": "branch",
+      "status": "complete",
+      "summary": "status overview",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Nested child shape",
+          "icon": "layout-dashboard",
+          "summary": "high-level graph context",
+          "color": "#2563eb",
+          "body": "Provide a compact overview for people who have not read the underlying orchestration notes."
+        }
+      ]
+    },
+    {
+      "id": "search-surface",
+      "label": "Search Surface",
+      "legendKey": "branch",
+      "status": "complete",
+      "summary": "quick navigation",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Nested child shape",
           "icon": "search",
-          "summary": "interaction sources",
+          "summary": "find graph entities",
           "color": "#2563eb",
-          "body": "Identify the contact flow inputs, validation needs, and downstream handoff points."
+          "body": "Keep search and command navigation scoped to public, in-memory graph data."
         }
       ]
     },
     {
-      "id": "contact-flow-plan",
-      "label": "Contact Flow Plan",
+      "id": "fixture-contract",
+      "label": "Fixture Contract",
       "legendKey": "branch",
       "status": "complete",
+      "summary": "public graph shape",
       "detail": [
         {
           "id": "summary",
-          "name": "Work",
-          "icon": "list-checks",
-          "summary": "flow plan",
+          "name": "Parallel shape",
+          "icon": "braces",
+          "summary": "safe data contract",
           "color": "#2563eb",
-          "body": "Plan the contact flow across UI, server-side handling, and scheduling integration."
+          "body": "Model the demo from a generic projection so the dashboard can render without private project context."
         }
       ]
     },
     {
-      "id": "contact-ui-system",
-      "label": "Contact UI System",
+      "id": "public-safety-pass",
+      "label": "Public Safety Pass",
       "legendKey": "branch",
       "status": "complete",
+      "summary": "public-safe review",
       "detail": [
         {
           "id": "summary",
-          "name": "Work",
-          "icon": "form-input",
-          "summary": "form experience",
+          "name": "Parallel shape",
+          "icon": "shield-check",
+          "summary": "unsafe context removed",
           "color": "#2563eb",
-          "body": "Implement the public form surface, field states, validation display, and confirmation state."
+          "body": "Remove private paths, real services, runtime identifiers, and project-specific copy from the public fixture."
         }
       ]
     },
     {
-      "id": "contact-server-flow",
-      "label": "Contact Server Flow",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "server",
-          "summary": "submission handling",
-          "color": "#2563eb",
-          "body": "Route submitted data through a safe server-side handoff path."
-        }
-      ]
-    },
-    {
-      "id": "calendar-handoff",
-      "label": "Calendar Handoff",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "calendar",
-          "summary": "scheduling handoff",
-          "color": "#2563eb",
-          "body": "Integrate the scheduling handoff and post-submit routing behavior."
-        }
-      ]
-    },
-    {
-      "id": "contact-verification",
-      "label": "Contact Flow Verification",
-      "legendKey": "review",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Gate",
-          "icon": "check",
-          "summary": "contact flow accepted",
-          "color": "#9333ea",
-          "body": "Verify the full contact flow before returning it to the baseline."
-        }
-      ]
-    },
-    {
-      "id": "contact-baseline",
+      "id": "integration-checkpoint",
       "kind": "checkpoint",
-      "label": "Contact Flow Baseline",
+      "label": "Integration Checkpoint",
       "legendKey": "checkpoint",
       "icon": "flag",
       "status": "verified",
+      "summary": "parallel tracks joined",
       "detail": [
         {
           "id": "summary",
           "name": "Checkpoint",
           "icon": "flag",
-          "summary": "contact branch returned",
+          "summary": "branches reconciled",
           "color": "#d97706",
-          "body": "The contact flow is accepted as a ready baseline for demo review."
+          "body": "The nested dashboard track and fixture-contract track are joined outside their shapes."
         }
       ]
     },
     {
-      "id": "static-page-strategy",
-      "label": "Static Page Pattern",
-      "legendKey": "branch",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "layout-template",
-          "summary": "repeatable page pattern",
-          "color": "#2563eb",
-          "body": "Define the reusable static-page implementation pattern before fanout."
-        }
-      ]
-    },
-    {
-      "id": "home-page-preview",
-      "label": "Home Page Preview",
-      "legendKey": "branch",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "home",
-          "summary": "pattern proof",
-          "color": "#2563eb",
-          "body": "Use the first page to prove the static-page pattern."
-        }
-      ]
-    },
-    {
-      "id": "static-page-template-baseline",
-      "kind": "checkpoint",
-      "label": "Static Page Template Baseline",
-      "legendKey": "checkpoint",
-      "icon": "flag",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Checkpoint",
-          "icon": "flag",
-          "summary": "fanout can start",
-          "color": "#d97706",
-          "body": "The first page proves the pattern and unlocks the parallel static-page fanout."
-        }
-      ]
-    },
-    {
-      "id": "about-page-preview",
-      "label": "About Page Preview",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "file",
-          "summary": "static page branch",
-          "color": "#2563eb",
-          "body": "Implement a generic about-style content page from the shared pattern."
-        }
-      ]
-    },
-    {
-      "id": "work-index-preview",
-      "label": "Work Index Preview",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "grid",
-          "summary": "index page branch",
-          "color": "#2563eb",
-          "body": "Implement a generic index page from the shared pattern."
-        }
-      ]
-    },
-    {
-      "id": "service-index-preview",
-      "label": "Service Index Preview",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "list",
-          "summary": "listing page branch",
-          "color": "#2563eb",
-          "body": "Implement a generic service-listing page from the shared pattern."
-        }
-      ]
-    },
-    {
-      "id": "service-detail-preview",
-      "label": "Service Detail Preview",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "file-stack",
-          "summary": "detail page branch",
-          "color": "#2563eb",
-          "body": "Implement a generic service-detail page from the shared pattern."
-        }
-      ]
-    },
-    {
-      "id": "journal-index-preview",
-      "label": "Journal Index Preview",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "newspaper",
-          "summary": "article index branch",
-          "color": "#2563eb",
-          "body": "Implement a generic article-index page from the shared pattern."
-        }
-      ]
-    },
-    {
-      "id": "journal-detail-preview",
-      "label": "Journal Detail Preview",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "file-text",
-          "summary": "article detail branch",
-          "color": "#2563eb",
-          "body": "Implement a generic article-detail page from the shared pattern."
-        }
-      ]
-    },
-    {
-      "id": "static-pages-baseline",
-      "kind": "checkpoint",
-      "label": "Static Pages Review Baseline",
-      "legendKey": "checkpoint",
-      "icon": "flag",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Checkpoint",
-          "icon": "flag",
-          "summary": "fanout returned",
-          "color": "#d97706",
-          "body": "The static-page fanout has returned into a reviewable baseline."
-        }
-      ]
-    },
-    {
-      "id": "first-demo-preview",
-      "label": "First Demo Preview",
+      "id": "delivery-package",
+      "label": "Delivery Package",
       "legendKey": "ready",
-      "status": "verified",
+      "status": "complete",
+      "summary": "final shape output",
       "detail": [
         {
           "id": "summary",
-          "name": "Milestone",
-          "icon": "monitor",
-          "summary": "reviewable preview",
+          "name": "Final shape",
+          "icon": "package-check",
+          "summary": "reviewable package",
           "color": "#16a34a",
-          "body": "Package the current baseline into a reviewable public-safe preview."
+          "body": "Collect the verified graph, capture-ready view, and README framing into one delivery package."
         }
       ]
     },
     {
-      "id": "review-intake",
-      "label": "Review Intake",
-      "legendKey": "review",
+      "id": "readme-assets",
+      "label": "README Assets",
+      "legendKey": "ready",
       "status": "complete",
+      "summary": "public preview assets",
       "detail": [
         {
           "id": "summary",
-          "name": "Gate",
-          "icon": "message-square",
-          "summary": "feedback captured",
-          "color": "#9333ea",
-          "body": "Capture review feedback as scoped follow-up work instead of changing the source strategy ad hoc."
+          "name": "Final shape",
+          "icon": "image",
+          "summary": "screenshots and diagrams",
+          "color": "#16a34a",
+          "body": "Prepare public-facing assets that explain the dashboard without exposing local runtime data."
         }
       ]
     },
     {
-      "id": "demo-repass",
-      "label": "Demo Repass",
-      "legendKey": "review",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "refresh-cw",
-          "summary": "feedback pass",
-          "color": "#9333ea",
-          "body": "Apply the accepted feedback pass and return to the main line."
-        }
-      ]
-    },
-    {
-      "id": "content-model-strategy",
-      "label": "Content Model Strategy",
+      "id": "delivery-workpiece",
+      "label": "Delivery Workpiece",
       "legendKey": "core",
       "status": "complete",
+      "summary": "ship-ready workpiece",
       "detail": [
         {
           "id": "summary",
-          "name": "Work",
-          "icon": "database",
-          "summary": "future content model",
+          "name": "Workpiece",
+          "icon": "send",
+          "summary": "ready for final review",
           "color": "#737373",
-          "body": "Define how structured content can be introduced after the static baseline is stable."
+          "body": "A final concrete workpiece carries the verified demo and README updates into delivery review."
         }
       ]
     },
     {
-      "id": "metadata-discovery",
-      "label": "Metadata Source Discovery",
-      "legendKey": "branch",
-      "status": "complete",
+      "id": "delivery-checkpoint",
+      "kind": "checkpoint",
+      "label": "Delivery Checkpoint",
+      "legendKey": "checkpoint",
+      "icon": "flag",
+      "status": "signed_off",
+      "summary": "delivery accepted",
       "detail": [
         {
           "id": "summary",
-          "name": "Work",
-          "icon": "search",
-          "summary": "metadata inputs",
-          "color": "#2563eb",
-          "body": "Identify route metadata, social preview, and icon requirements."
-        }
-      ]
-    },
-    {
-      "id": "app-icons",
-      "label": "App Icons",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "sparkles",
-          "summary": "icon assets",
-          "color": "#2563eb",
-          "body": "Prepare public-safe icon and app manifest assets."
-        }
-      ]
-    },
-    {
-      "id": "default-metadata",
-      "label": "Default Metadata",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "tags",
-          "summary": "global defaults",
-          "color": "#2563eb",
-          "body": "Set global title, description, viewport, and indexing defaults."
-        }
-      ]
-    },
-    {
-      "id": "route-metadata",
-      "label": "Route Metadata Pattern",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "route",
-          "summary": "per-route metadata",
-          "color": "#2563eb",
-          "body": "Define the pattern for route-level metadata overrides."
-        }
-      ]
-    },
-    {
-      "id": "social-preview",
-      "label": "Social Preview Metadata",
-      "legendKey": "branch",
-      "status": "complete",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Work",
-          "icon": "share-2",
-          "summary": "sharing metadata",
-          "color": "#2563eb",
-          "body": "Add safe default metadata for link previews."
-        }
-      ]
-    },
-    {
-      "id": "metadata-verification",
-      "label": "Metadata Verification",
-      "legendKey": "review",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Gate",
-          "icon": "check",
-          "summary": "metadata accepted",
-          "color": "#9333ea",
-          "body": "Verify metadata coverage before readiness planning."
-        }
-      ]
-    },
-    {
-      "id": "production-readiness",
-      "label": "Production Readiness",
-      "legendKey": "ready",
-      "status": "queued",
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Planning",
-          "icon": "rocket",
-          "summary": "final readiness queue",
-          "color": "#16a34a",
-          "body": "Collect final readiness checks after content, metadata, and preview baselines are stable."
+          "name": "Checkpoint",
+          "icon": "flag",
+          "summary": "public demo ready",
+          "color": "#d97706",
+          "body": "The simplified public demo is ready for README capture and public review."
         }
       ]
     }
   ],
   "edges": [
-    { "id": "start-to-template", "source": "start", "target": "template-initialization", "label": "starts", "status": "verified", "directional": true },
-    { "id": "template-to-docs", "source": "template-initialization", "target": "documentation-baseline", "label": "then", "status": "complete", "directional": true },
-    { "id": "docs-to-source", "source": "documentation-baseline", "target": "source-inventory", "label": "then", "status": "complete", "directional": true },
-    { "id": "source-to-tokens", "source": "source-inventory", "target": "foundation-tokens", "label": "then", "status": "complete", "directional": true },
-    { "id": "tokens-to-primitives", "source": "foundation-tokens", "target": "core-primitives", "label": "then", "status": "complete", "directional": true },
-    { "id": "primitives-to-assets", "source": "core-primitives", "target": "placeholder-assets", "label": "asset seed", "status": "complete", "directional": true },
-    { "id": "primitives-to-interaction", "source": "core-primitives", "target": "interaction-model", "label": "interaction branch", "status": "complete", "directional": true },
-    { "id": "primitives-to-review", "source": "core-primitives", "target": "internal-review-surface", "label": "review branch", "status": "verified", "directional": true },
-    { "id": "interaction-to-review", "source": "interaction-model", "target": "internal-review-surface", "label": "returns", "status": "verified", "directional": true },
-    { "id": "review-to-design-ready", "source": "internal-review-surface", "target": "design-system-ready", "label": "checkpoint", "status": "verified", "directional": true },
-    { "id": "design-ready-to-content", "source": "design-system-ready", "target": "content-source-discovery", "label": "content branch", "status": "complete", "directional": true },
-    { "id": "content-to-policy", "source": "content-source-discovery", "target": "policy-page-composition", "label": "then", "status": "complete", "directional": true },
-    { "id": "policy-to-renderer", "source": "policy-page-composition", "target": "markdown-renderer", "label": "extract", "status": "complete", "directional": true },
-    { "id": "renderer-to-test", "source": "markdown-renderer", "target": "markdown-test-surface", "label": "test", "status": "complete", "directional": true },
-    { "id": "test-to-content-verification", "source": "markdown-test-surface", "target": "content-system-verification", "label": "verify", "status": "verified", "directional": true },
-    { "id": "content-to-page-baseline", "source": "content-system-verification", "target": "page-systems-baseline", "label": "joins", "status": "verified", "directional": true },
-    { "id": "design-ready-to-shell", "source": "design-system-ready", "target": "shell-source-discovery", "label": "shell branch", "status": "complete", "directional": true },
-    { "id": "shell-to-ia", "source": "shell-source-discovery", "target": "navigation-architecture", "label": "then", "status": "complete", "directional": true },
-    { "id": "ia-to-desktop", "source": "navigation-architecture", "target": "desktop-navigation", "label": "desktop", "status": "complete", "directional": true },
-    { "id": "desktop-to-mobile", "source": "desktop-navigation", "target": "mobile-navigation", "label": "mobile", "status": "complete", "directional": true },
-    { "id": "mobile-to-prefooter", "source": "mobile-navigation", "target": "prefooter-section", "label": "then", "status": "complete", "directional": true },
-    { "id": "prefooter-to-footer", "source": "prefooter-section", "target": "footer-system", "label": "then", "status": "complete", "directional": true },
-    { "id": "footer-to-shell-verification", "source": "footer-system", "target": "shell-verification", "label": "verify", "status": "verified", "directional": true },
-    { "id": "shell-to-page-baseline", "source": "shell-verification", "target": "page-systems-baseline", "label": "joins", "status": "verified", "directional": true },
-    { "id": "page-baseline-to-remote", "source": "page-systems-baseline", "target": "remote-preview-setup", "label": "preview setup", "status": "verified", "directional": true },
-    { "id": "remote-to-baseline", "source": "remote-preview-setup", "target": "remote-preview-baseline", "label": "checkpoint", "status": "verified", "directional": true },
-    { "id": "remote-to-assets", "source": "remote-preview-baseline", "target": "placeholder-assets", "label": "asset branch", "status": "complete", "directional": true, "style": "dashed" },
-    { "id": "remote-to-contact", "source": "remote-preview-baseline", "target": "contact-source-discovery", "label": "contact branch", "status": "complete", "directional": true },
-    { "id": "contact-discovery-to-plan", "source": "contact-source-discovery", "target": "contact-flow-plan", "label": "then", "status": "complete", "directional": true },
-    { "id": "contact-plan-to-ui", "source": "contact-flow-plan", "target": "contact-ui-system", "label": "ui", "status": "complete", "directional": true },
-    { "id": "contact-ui-to-server", "source": "contact-ui-system", "target": "contact-server-flow", "label": "server", "status": "complete", "directional": true },
-    { "id": "contact-server-to-calendar", "source": "contact-server-flow", "target": "calendar-handoff", "label": "handoff", "status": "complete", "directional": true },
-    { "id": "calendar-to-contact-verification", "source": "calendar-handoff", "target": "contact-verification", "label": "verify", "status": "verified", "directional": true },
-    { "id": "contact-verification-to-baseline", "source": "contact-verification", "target": "contact-baseline", "label": "checkpoint", "status": "verified", "directional": true },
-    { "id": "assets-to-static-strategy", "source": "placeholder-assets", "target": "static-page-strategy", "label": "static page pattern", "status": "verified", "directional": true },
-    { "id": "static-strategy-to-home", "source": "static-page-strategy", "target": "home-page-preview", "label": "prove pattern", "status": "verified", "directional": true },
-    { "id": "home-to-template-baseline", "source": "home-page-preview", "target": "static-page-template-baseline", "label": "checkpoint", "status": "verified", "directional": true },
-    { "id": "template-baseline-to-about", "source": "static-page-template-baseline", "target": "about-page-preview", "label": "fanout", "status": "complete", "directional": true },
-    { "id": "template-baseline-to-work", "source": "static-page-template-baseline", "target": "work-index-preview", "label": "fanout", "status": "complete", "directional": true },
-    { "id": "template-baseline-to-service-index", "source": "static-page-template-baseline", "target": "service-index-preview", "label": "fanout", "status": "complete", "directional": true },
-    { "id": "template-baseline-to-service-detail", "source": "static-page-template-baseline", "target": "service-detail-preview", "label": "fanout", "status": "complete", "directional": true },
-    { "id": "template-baseline-to-journal-index", "source": "static-page-template-baseline", "target": "journal-index-preview", "label": "fanout", "status": "complete", "directional": true },
-    { "id": "template-baseline-to-journal-detail", "source": "static-page-template-baseline", "target": "journal-detail-preview", "label": "fanout", "status": "complete", "directional": true },
-    { "id": "about-to-static-baseline", "source": "about-page-preview", "target": "static-pages-baseline", "label": "returns", "status": "complete", "directional": true },
-    { "id": "work-to-static-baseline", "source": "work-index-preview", "target": "static-pages-baseline", "label": "returns", "status": "complete", "directional": true },
-    { "id": "service-index-to-static-baseline", "source": "service-index-preview", "target": "static-pages-baseline", "label": "returns", "status": "complete", "directional": true },
-    { "id": "service-detail-to-static-baseline", "source": "service-detail-preview", "target": "static-pages-baseline", "label": "returns", "status": "complete", "directional": true },
-    { "id": "journal-index-to-static-baseline", "source": "journal-index-preview", "target": "static-pages-baseline", "label": "returns", "status": "complete", "directional": true },
-    { "id": "journal-detail-to-static-baseline", "source": "journal-detail-preview", "target": "static-pages-baseline", "label": "returns", "status": "complete", "directional": true },
-    { "id": "contact-to-demo", "source": "contact-baseline", "target": "first-demo-preview", "label": "demo input", "status": "verified", "directional": true },
-    { "id": "static-to-demo", "source": "static-pages-baseline", "target": "first-demo-preview", "label": "demo input", "status": "verified", "directional": true },
-    { "id": "demo-to-review", "source": "first-demo-preview", "target": "review-intake", "label": "review", "status": "complete", "directional": true },
-    { "id": "review-to-repass", "source": "review-intake", "target": "demo-repass", "label": "accepted feedback", "status": "complete", "directional": true },
-    { "id": "repass-to-content-model", "source": "demo-repass", "target": "content-model-strategy", "label": "next branch", "status": "complete", "directional": true },
-    { "id": "content-model-to-metadata", "source": "content-model-strategy", "target": "metadata-discovery", "label": "metadata branch", "status": "complete", "directional": true },
-    { "id": "metadata-to-icons", "source": "metadata-discovery", "target": "app-icons", "label": "icons", "status": "complete", "directional": true },
-    { "id": "icons-to-defaults", "source": "app-icons", "target": "default-metadata", "label": "defaults", "status": "complete", "directional": true },
-    { "id": "defaults-to-routes", "source": "default-metadata", "target": "route-metadata", "label": "routes", "status": "complete", "directional": true },
-    { "id": "routes-to-social", "source": "route-metadata", "target": "social-preview", "label": "share previews", "status": "complete", "directional": true },
-    { "id": "social-to-metadata-verification", "source": "social-preview", "target": "metadata-verification", "label": "verify", "status": "verified", "directional": true },
-    { "id": "metadata-to-production", "source": "metadata-verification", "target": "production-readiness", "label": "readiness", "status": "queued", "directional": true }
-  ],
-  "regions": [
     {
-      "id": "template-initialization-region",
-      "label": "Template Initialization",
-      "legendKey": "core",
-      "nodeIds": ["template-initialization", "documentation-baseline"],
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Shape",
-          "summary": "initialize the strategy surface",
-          "body": "The initialization shape creates the reusable orchestration baseline and classifies source documents."
-        }
-      ]
+      "id": "start-to-project-framing",
+      "source": "start",
+      "target": "project-framing",
+      "label": "start initialization",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
     },
     {
-      "id": "design-system-population-region",
-      "label": "Design System Population",
-      "legendKey": "branch",
-      "nodeIds": ["source-inventory", "foundation-tokens", "core-primitives", "placeholder-assets", "interaction-model", "internal-review-surface"],
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Shape",
-          "summary": "shared UI foundations",
-          "body": "The design-system shape prepares source inventory, tokens, primitives, assets, interactions, and review evidence."
-        }
-      ]
+      "id": "project-framing-to-strategy-outline",
+      "source": "project-framing",
+      "target": "strategy-outline",
+      "label": "shape the strategy",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
     },
     {
-      "id": "content-page-system-region",
-      "label": "Content Page System",
-      "legendKey": "branch",
-      "nodeIds": ["content-source-discovery", "policy-page-composition", "markdown-renderer", "markdown-test-surface", "content-system-verification"],
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Shape",
-          "summary": "content rendering branch",
-          "body": "The content branch proves a concrete markdown page, extracts a renderer, and verifies the reusable system."
-        }
-      ]
+      "id": "strategy-outline-to-framing-checkpoint",
+      "source": "strategy-outline",
+      "target": "framing-checkpoint",
+      "label": "accept framing",
+      "style": "solid",
+      "status": "verified",
+      "directional": true
     },
     {
-      "id": "shell-navigation-system-region",
-      "label": "Shell Navigation System",
-      "legendKey": "branch",
-      "nodeIds": ["shell-source-discovery", "navigation-architecture", "desktop-navigation", "mobile-navigation", "prefooter-section", "footer-system", "shell-verification"],
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Shape",
-          "summary": "global shell branch",
-          "body": "The shell branch handles navigation architecture, responsive navigation, shared transition sections, and footer composition."
-        }
-      ]
+      "id": "framing-to-canvas-navigation",
+      "source": "framing-checkpoint",
+      "target": "canvas-navigation",
+      "label": "open dashboard track",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
     },
     {
-      "id": "remote-preview-region",
-      "label": "Remote Preview Baseline",
-      "legendKey": "core",
-      "nodeIds": ["remote-preview-setup", "remote-preview-baseline"],
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Shape",
-          "summary": "review preview checkpoint",
-          "body": "The preview shape establishes a public-safe remote baseline consumed by later review and fanout branches."
-        }
-      ]
+      "id": "canvas-navigation-to-node-detail-panels",
+      "source": "canvas-navigation",
+      "target": "node-detail-panels",
+      "label": "expand detail behavior",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
     },
     {
-      "id": "contact-flow-region",
-      "label": "Contact Flow System",
-      "legendKey": "branch",
-      "nodeIds": ["contact-source-discovery", "contact-flow-plan", "contact-ui-system", "contact-server-flow", "calendar-handoff", "contact-verification", "contact-baseline"],
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Shape",
-          "summary": "contact branch",
-          "body": "The contact shape moves from source discovery through UI, server flow, handoff, verification, and a returned baseline."
-        }
-      ]
+      "id": "framing-to-summary-panel",
+      "source": "framing-checkpoint",
+      "target": "summary-panel",
+      "label": "open context track",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
     },
     {
-      "id": "static-page-fanout-region",
-      "label": "Static Page Fanout",
-      "legendKey": "branch",
-      "nodeIds": ["static-page-strategy", "home-page-preview", "static-page-template-baseline", "about-page-preview", "work-index-preview", "service-index-preview", "service-detail-preview", "journal-index-preview", "journal-detail-preview", "static-pages-baseline"],
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Shape",
-          "summary": "parallel static pages",
-          "body": "The static-page shape proves one page pattern, fans into several page branches, and returns those branches to a review baseline."
-        }
-      ]
+      "id": "summary-panel-to-search-surface",
+      "source": "summary-panel",
+      "target": "search-surface",
+      "label": "add navigation surface",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
     },
     {
-      "id": "review-intake-region",
-      "label": "Review Intake",
-      "legendKey": "review",
-      "nodeIds": ["first-demo-preview", "review-intake", "demo-repass"],
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Shape",
-          "summary": "demo feedback loop",
-          "body": "The review shape captures accepted feedback and executes one bounded repass before returning to strategy work."
-        }
-      ]
+      "id": "framing-to-fixture-contract",
+      "source": "framing-checkpoint",
+      "target": "fixture-contract",
+      "label": "open fixture track",
+      "style": "dashed",
+      "status": "complete",
+      "directional": true
     },
     {
-      "id": "metadata-readiness-region",
-      "label": "Metadata Readiness",
-      "legendKey": "ready",
-      "nodeIds": ["content-model-strategy", "metadata-discovery", "app-icons", "default-metadata", "route-metadata", "social-preview", "metadata-verification", "production-readiness"],
-      "detail": [
-        {
-          "id": "summary",
-          "name": "Shape",
-          "summary": "readiness branch",
-          "body": "The metadata shape defines future content modeling, metadata defaults, social preview data, verification, and production readiness planning."
-        }
-      ]
+      "id": "fixture-contract-to-public-safety-pass",
+      "source": "fixture-contract",
+      "target": "public-safety-pass",
+      "label": "sanitize fixture",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
+    },
+    {
+      "id": "node-detail-panels-to-integration",
+      "source": "node-detail-panels",
+      "target": "integration-checkpoint",
+      "label": "join detail track",
+      "style": "solid",
+      "status": "verified",
+      "directional": true
+    },
+    {
+      "id": "search-surface-to-integration",
+      "source": "search-surface",
+      "target": "integration-checkpoint",
+      "label": "join summary track",
+      "style": "solid",
+      "status": "verified",
+      "directional": true
+    },
+    {
+      "id": "public-safety-pass-to-integration",
+      "source": "public-safety-pass",
+      "target": "integration-checkpoint",
+      "label": "join fixture track",
+      "style": "solid",
+      "status": "verified",
+      "directional": true
+    },
+    {
+      "id": "integration-to-delivery-package",
+      "source": "integration-checkpoint",
+      "target": "delivery-package",
+      "label": "enter final shape",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
+    },
+    {
+      "id": "delivery-package-to-readme-assets",
+      "source": "delivery-package",
+      "target": "readme-assets",
+      "label": "prepare assets",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
+    },
+    {
+      "id": "readme-assets-to-delivery-workpiece",
+      "source": "readme-assets",
+      "target": "delivery-workpiece",
+      "label": "produce delivery workpiece",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
+    },
+    {
+      "id": "delivery-workpiece-to-delivery-checkpoint",
+      "source": "delivery-workpiece",
+      "target": "delivery-checkpoint",
+      "label": "accept delivery",
+      "style": "solid",
+      "status": "signed_off",
+      "directional": true
     }
   ],
   "markers": [
     {
-      "id": "accepted-design-system-run",
-      "targetId": "design-system-ready",
-      "label": "Accepted run",
-      "description": "A completed branch returned into the design-system readiness checkpoint.",
+      "id": "review-gate-marker",
+      "targetId": "integration-checkpoint",
+      "label": "Review gate",
+      "description": "Parallel work joins here before the final delivery shape opens.",
+      "color": "#9333ea",
+      "icon": "check-circle"
+    },
+    {
+      "id": "preview-baseline-marker",
+      "targetId": "delivery-workpiece",
+      "label": "Preview baseline",
+      "description": "A stable public preview is ready for README asset capture.",
       "color": "#16a34a",
-      "icon": "check",
-      "loader": false,
-      "links": [
+      "icon": "monitor-check"
+    }
+  ],
+  "regions": [
+    {
+      "id": "initialization-shape",
+      "label": "Initialization Shape",
+      "category": "core",
+      "color": "#737373",
+      "nodeIds": [
+        "project-framing",
+        "strategy-outline"
+      ],
+      "detail": [
         {
-          "label": "Accepted run note",
-          "relativePath": "public-demo/runs/design-system-population.md",
-          "kind": "artifact"
+          "id": "summary",
+          "name": "Shape",
+          "summary": "initial framing shape",
+          "body": "A small opening shape turns the start checkpoint into a usable strategy map."
         }
       ]
     },
     {
-      "id": "joined-page-system-run",
-      "targetId": "page-systems-baseline",
-      "label": "Joined branches",
-      "description": "Content and shell branches returned into the page-system baseline.",
-      "color": "#16a34a",
-      "icon": "merge",
-      "loader": false
+      "id": "dashboard-track-shape",
+      "label": "Dashboard Track",
+      "category": "branch",
+      "color": "#2563eb",
+      "regionIds": [
+        "canvas-detail-shape",
+        "context-navigation-shape"
+      ],
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Shape",
+          "summary": "parent shape with nested children",
+          "body": "This parent shape shows that a branch can contain smaller child shapes while still participating in the wider graph."
+        }
+      ]
     },
     {
-      "id": "review-feedback-marker",
-      "targetId": "review-intake",
-      "label": "Review gate",
-      "description": "Reviewer feedback is captured as scoped follow-up work before a repass begins.",
-      "color": "#9333ea",
-      "icon": "message-square",
-      "loader": false
+      "id": "canvas-detail-shape",
+      "label": "Canvas + Detail",
+      "category": "branch",
+      "color": "#2563eb",
+      "nodeIds": [
+        "canvas-navigation",
+        "node-detail-panels"
+      ],
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Child shape",
+          "summary": "canvas interaction child",
+          "body": "This nested child shape owns movement, selection, and detail-panel behavior."
+        }
+      ]
+    },
+    {
+      "id": "context-navigation-shape",
+      "label": "Context Navigation",
+      "category": "branch",
+      "color": "#2563eb",
+      "nodeIds": [
+        "summary-panel",
+        "search-surface"
+      ],
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Child shape",
+          "summary": "summary and search child",
+          "body": "This nested child shape keeps public viewers oriented without private project context."
+        }
+      ]
+    },
+    {
+      "id": "fixture-contract-shape",
+      "label": "Fixture Contract",
+      "category": "branch",
+      "color": "#2563eb",
+      "nodeIds": [
+        "fixture-contract",
+        "public-safety-pass"
+      ],
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Shape",
+          "summary": "parallel fixture branch",
+          "body": "A parallel shape proves the public fixture contract while dashboard behavior is prepared."
+        }
+      ]
+    },
+    {
+      "id": "delivery-prep-shape",
+      "label": "Delivery Preparation",
+      "category": "ready",
+      "color": "#16a34a",
+      "nodeIds": [
+        "delivery-package",
+        "readme-assets"
+      ],
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Shape",
+          "summary": "final preparation shape",
+          "body": "The last shape prepares a concrete delivery workpiece and final checkpoint."
+        }
+      ]
     }
   ]
 }
