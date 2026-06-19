@@ -5,8 +5,8 @@ import {
   OrchestrationGraphCanvas,
   type GraphCanvasStats,
 } from "./graph-canvas-shell";
-import type { GraphProjectionQualityWarning } from "@/lib/graph-projection";
-import type { GraphMarker, OrchestrationGraph } from "@/lib/orchestration-graph";
+import type { GraphProjectionQualityWarning } from "@/lib/graph/projection";
+import type { GraphMarker, OrchestrationGraph } from "@/lib/graph/orchestration-graph";
 import type { GraphCanvasCommandAction } from "./types";
 import {
   isPublicDemoDashboard,

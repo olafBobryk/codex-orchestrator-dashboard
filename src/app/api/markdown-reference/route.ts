@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { readMarkdownReference } from "@/lib/markdown-reference";
+import { readMarkdownReference } from "@/lib/orchestration/markdown-reference";
 import {
   createPublicDemoDisabledResponse,
   isPublicDemoMode,
-} from "@/lib/public-demo-mode";
+} from "@/lib/demo/public-demo-mode";
 
 export const dynamic = "force-dynamic";
 

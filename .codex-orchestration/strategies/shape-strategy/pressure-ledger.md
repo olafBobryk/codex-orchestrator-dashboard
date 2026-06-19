@@ -92,8 +92,8 @@ Affected Artifacts:
 - `strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
 - `strategies/shape-strategy/_guides/artifacts/shape.md`
 - `strategies/shape-strategy/_guides/artifacts/workpiece.md`
-- `src/lib/shape-strategy-adapter.ts`
-- `src/lib/graph-projection.ts`
+- `src/lib/strategies/shape-strategy-adapter.ts`
+- `src/lib/graph/projection.ts`
 
 Recommended Response:
 Use `Status: planning` for visible but not yet solidified work. Keep `muted` as
@@ -150,7 +150,7 @@ The graph blurred run history, checkpoint/project state, and live operational
 presence. Dead worker markers make accepted or returned work look active.
 
 Affected Artifacts:
-- `src/lib/shape-strategy-adapter.ts`
+- `src/lib/strategies/shape-strategy-adapter.ts`
 - `strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
 - `strategies/shape-strategy/_guides/artifacts/agent.md`
 - `strategies/shape-strategy/_guides/dashboard-contract-notes.md`

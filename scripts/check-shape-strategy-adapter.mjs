@@ -5,8 +5,8 @@ import process from "node:process";
 import {
   formatSamples,
   inspectGraphProjectionQuality,
-} from "../src/lib/graph-projection-quality.mjs";
-import { readShapeStrategyProjection } from "../src/lib/shape-strategy-adapter.ts";
+} from "../src/lib/graph/projection-quality.mjs";
+import { readShapeStrategyProjection } from "../src/lib/strategies/shape-strategy-adapter.ts";
 
 const inputPath = process.argv[2] ?? process.cwd();
 const workspace = path.resolve(inputPath);

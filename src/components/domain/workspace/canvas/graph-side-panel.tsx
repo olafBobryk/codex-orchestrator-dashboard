@@ -7,7 +7,7 @@ import type {
   GraphNode,
   GraphPacketGroup,
   OrchestrationGraph,
-} from "@/lib/orchestration-graph";
+} from "@/lib/graph/orchestration-graph";
 import type {
   CanvasNode,
   CanvasRegion,

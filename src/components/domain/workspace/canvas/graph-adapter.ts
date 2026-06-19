@@ -5,7 +5,7 @@ import type {
   GraphNode,
   GraphPacketGroup,
   OrchestrationGraph,
-} from "@/lib/orchestration-graph";
+} from "@/lib/graph/orchestration-graph";
 import {
   DEFAULT_GRAPH_NEUTRAL_STROKE,
   GRAPH_EDGE_SIGNAL_ORDER,

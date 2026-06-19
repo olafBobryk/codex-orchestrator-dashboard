@@ -1,6 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import type { GraphDetailBlock } from "@/lib/orchestration-graph";
+import type { GraphDetailBlock } from "@/lib/graph/orchestration-graph";
 import type { GraphMarkdownReference } from "../../canvas/types";
 import { DetailSection, EntityLinks } from "../shared";
 

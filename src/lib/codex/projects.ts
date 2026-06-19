@@ -3,7 +3,7 @@ import { readFile, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { ORCHESTRATION_DIR } from "@/lib/orchestration";
+import { ORCHESTRATION_DIR } from "@/lib/orchestration/workspace";
 
 export type CodexProject = {
   path: string;

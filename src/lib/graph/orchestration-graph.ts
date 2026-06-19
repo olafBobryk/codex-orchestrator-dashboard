@@ -1,5 +1,5 @@
-import type { CodexLiveThread } from "./codex-threads";
-import type { OrchestrationDoc } from "./orchestration";
+import type { CodexLiveThread } from "@/lib/codex/threads";
+import type { OrchestrationDoc } from "@/lib/orchestration/workspace";
 
 export const GRAPH_CONTRACT_VERSION = "p8-c1";
 

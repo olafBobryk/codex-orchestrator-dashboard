@@ -37,7 +37,12 @@ Useful scripts:
 - App entry: `src/app/page.tsx`
 - Dashboard/domain components: `src/components/domain/`
 - Shared UI primitives: `src/components/ui/`
-- Graph/data/adapter logic: `src/lib/`
+- Codex runtime readers: `src/lib/codex/`
+- Demo-only helpers: `src/lib/demo/`
+- Graph contract and projection code: `src/lib/graph/`
+- Strategy adapters: `src/lib/strategies/`
+- Workspace Markdown readers: `src/lib/orchestration/`
+- Git and service helpers: `src/lib/git/`, `src/lib/service/`
 - Public demo fixture: `src/data/public-example-projection.json`
 - Local service scripts: `scripts/service.mjs`, `scripts/service-runner.mjs`
 - Strategy init/update scripts: `scripts/init-shape-strategy.mjs`,
@@ -45,6 +50,8 @@ Useful scripts:
 - Public README assets: `docs/assets/`
 - Architecture docs: `docs/architecture.md`, `.codex-orchestration/architecture.md`,
   `.codex-orchestration/runtime-architecture.md`
+- Historical planning notes and legacy UI references: `docs/archive/`
+- Test fixtures: `fixtures/`
 
 ## Product Boundary
 

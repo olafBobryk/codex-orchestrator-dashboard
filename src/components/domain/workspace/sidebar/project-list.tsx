@@ -5,7 +5,7 @@ import { Folder } from "lucide-react";
 import type { SVGProps } from "react";
 import { useEffect, useState } from "react";
 import { Loader } from "@/components/ui/loader";
-import type { CodexProject, CodexProjectActivity } from "@/lib/codex-projects";
+import type { CodexProject, CodexProjectActivity } from "@/lib/codex/projects";
 import { cn } from "@/lib/utils";
 import {
   isPublicDemoDashboard,

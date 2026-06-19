@@ -4,7 +4,7 @@ import { AlertCircle, X } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import type { WorkspaceReadResult } from "@/lib/orchestration";
+import type { WorkspaceReadResult } from "@/lib/orchestration/workspace";
 
 const DISMISSED_STATUS_KEY_PREFIX =
   "codex-orchestrator-dashboard:workspace-status-dismissed";

@@ -1,6 +1,6 @@
 "use client";
 
-import type { GraphMarker } from "@/lib/orchestration-graph";
+import type { GraphMarker } from "@/lib/graph/orchestration-graph";
 import { EntityLinks } from "../shared";
 import {
   createNodePanelHeader,

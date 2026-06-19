@@ -14,10 +14,10 @@ import {
   type GraphSourceLayer,
   type GraphStatus,
   type OrchestrationGraph,
-} from "@/lib/orchestration-graph";
-import { ORCHESTRATION_DIR } from "@/lib/orchestration";
-import { inspectGraphProjectionQuality } from "@/lib/graph-projection-quality.mjs";
-import { readShapeStrategyProjection } from "@/lib/shape-strategy-adapter";
+} from "@/lib/graph/orchestration-graph";
+import { ORCHESTRATION_DIR } from "@/lib/orchestration/workspace";
+import { inspectGraphProjectionQuality } from "@/lib/graph/projection-quality.mjs";
+import { readShapeStrategyProjection } from "@/lib/strategies/shape-strategy-adapter";
 
 export const GRAPH_PROJECTION_FILENAME = "graph-projection.json";
 

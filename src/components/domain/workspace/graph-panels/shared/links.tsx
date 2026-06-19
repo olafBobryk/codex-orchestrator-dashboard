@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { GraphDetailLink } from "@/lib/orchestration-graph";
+import type { GraphDetailLink } from "@/lib/graph/orchestration-graph";
 import { createVsCodeDocHref } from "../../canvas/graph-adapter";
 import type { GraphMarkdownReference } from "../../canvas/types";
 

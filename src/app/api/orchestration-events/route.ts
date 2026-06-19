@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import {
   createPublicDemoDisabledResponse,
   isPublicDemoMode,
-} from "@/lib/public-demo-mode";
+} from "@/lib/demo/public-demo-mode";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

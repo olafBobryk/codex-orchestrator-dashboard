@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CodexProjectReadResult } from "@/lib/codex-projects";
-import type { GraphProjectionQualityWarning } from "@/lib/graph-projection";
-import type { OrchestrationGraph } from "@/lib/orchestration-graph";
+import type { CodexProjectReadResult } from "@/lib/codex/projects";
+import type { GraphProjectionQualityWarning } from "@/lib/graph/projection";
+import type { OrchestrationGraph } from "@/lib/graph/orchestration-graph";
 import type {
   GraphCanvasCommandAction,
   GraphCanvasStats,

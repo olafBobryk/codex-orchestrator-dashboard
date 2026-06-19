@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { toast } from "sonner";
-import type { GraphProjectionQualityWarning } from "@/lib/graph-projection";
-import type { WorkspaceReadResult } from "@/lib/orchestration";
+import type { GraphProjectionQualityWarning } from "@/lib/graph/projection";
+import type { WorkspaceReadResult } from "@/lib/orchestration/workspace";
 
 export function WorkspaceStatusToast({
   result,

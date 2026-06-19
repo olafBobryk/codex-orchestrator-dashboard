@@ -116,7 +116,5 @@ npm run service:install-app
 ## Docs
 
 - [docs/architecture.md](docs/architecture.md)
-- [docs/implementation-plan.md](docs/implementation-plan.md)
-- [docs/discussion-handoff.md](docs/discussion-handoff.md)
 
 Agents: read [AGENTS.md](AGENTS.md) before working in this repo.

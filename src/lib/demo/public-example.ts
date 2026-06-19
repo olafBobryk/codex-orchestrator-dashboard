@@ -1,9 +1,9 @@
 import projection from "@/data/public-example-projection.json";
-import type { CodexProjectReadResult } from "@/lib/codex-projects";
+import type { CodexProjectReadResult } from "@/lib/codex/projects";
 import {
   buildProjectionGraph,
   type RawProjection,
-} from "@/lib/graph-projection";
+} from "@/lib/graph/projection";
 
 export const PUBLIC_EXAMPLE_WORKSPACE = "/public/generic-orchestration-map";
 

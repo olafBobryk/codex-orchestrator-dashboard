@@ -1,4 +1,4 @@
-import type { CodexProjectReadResult } from "@/lib/codex-projects";
+import type { CodexProjectReadResult } from "@/lib/codex/projects";
 import type { DashboardMode } from "../dashboard-mode";
 
 export type WorkspaceSidebarProps = {

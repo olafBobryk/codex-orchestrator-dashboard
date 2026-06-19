@@ -1,10 +1,10 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { readGraphProjection } from "@/lib/graph-projection";
+import { readGraphProjection } from "@/lib/graph/projection";
 import {
   ORCHESTRATION_DIR,
   readWorkspace,
-} from "@/lib/orchestration";
+} from "@/lib/orchestration/workspace";
 import type {
   GraphDetailBlock,
   GraphEdge,
@@ -12,7 +12,7 @@ import type {
   GraphNode,
   GraphRegion,
   OrchestrationGraph,
-} from "@/lib/orchestration-graph";
+} from "@/lib/graph/orchestration-graph";
 
 export type MarkdownReferenceReadResult =
   | {

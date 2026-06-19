@@ -1,8 +1,8 @@
-import { readCodexProjectActivity } from "@/lib/codex-projects";
+import { readCodexProjectActivity } from "@/lib/codex/projects";
 import {
   createPublicDemoDisabledResponse,
   isPublicDemoMode,
-} from "@/lib/public-demo-mode";
+} from "@/lib/demo/public-demo-mode";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

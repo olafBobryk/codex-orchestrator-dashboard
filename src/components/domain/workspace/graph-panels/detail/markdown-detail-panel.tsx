@@ -1,6 +1,6 @@
 import { CheckCircle2, GitCommitHorizontal, Radio } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { GraphDetailLink } from "@/lib/orchestration-graph";
+import type { GraphDetailLink } from "@/lib/graph/orchestration-graph";
 import {
   uniqueRuntimeAnnotations,
   uniqueStrings,

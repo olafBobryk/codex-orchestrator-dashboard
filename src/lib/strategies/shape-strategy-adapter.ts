@@ -3,10 +3,10 @@ import path from "node:path";
 import type {
   GraphProjectionQualityWarning,
   RawProjection,
-} from "@/lib/graph-projection";
-import { readCodexThreadActivity } from "./codex-threads.ts";
+} from "@/lib/graph/projection";
+import { readCodexThreadActivity } from "../codex/threads.ts";
+import { ORCHESTRATION_DIR } from "../orchestration/workspace.ts";
 
-const ORCHESTRATION_DIR = ".codex-orchestration";
 const NESTED_SHAPE_STRATEGY_DIR = "strategies/shape-strategy";
 const SHAPE_STRATEGY_FILE = "map.md";
 const WORK_COLOR = "#737373";

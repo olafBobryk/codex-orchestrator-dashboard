@@ -1,4 +1,4 @@
-import type { CodexProjectReadResult } from "@/lib/codex-projects";
+import type { CodexProjectReadResult } from "@/lib/codex/projects";
 import type {
   GraphEdge,
   GraphDetailLink,
@@ -6,7 +6,7 @@ import type {
   GraphNode,
   GraphRegion,
   OrchestrationGraph,
-} from "@/lib/orchestration-graph";
+} from "@/lib/graph/orchestration-graph";
 import type { GraphMarkdownReference } from "./canvas/types";
 import {
   isPublicDemoDashboard,

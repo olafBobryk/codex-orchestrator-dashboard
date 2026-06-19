@@ -11,8 +11,8 @@ import type {
   GraphPacketGroup,
   GraphRegion,
   OrchestrationGraph,
-} from "@/lib/orchestration-graph";
-import type { GraphProjectionQualityWarning } from "@/lib/graph-projection";
+} from "@/lib/graph/orchestration-graph";
+import type { GraphProjectionQualityWarning } from "@/lib/graph/projection";
 import type { DashboardMode } from "../dashboard-mode";
 
 export type CanvasNode = GraphNode & {

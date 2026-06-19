@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import {
   createPublicDemoDisabledResponse,
   isPublicDemoMode,
-} from "@/lib/public-demo-mode";
-import { readDashboardServiceStatus } from "@/lib/service-status";
+} from "@/lib/demo/public-demo-mode";
+import { readDashboardServiceStatus } from "@/lib/service/status";
 
 export async function GET() {
   if (isPublicDemoMode()) {

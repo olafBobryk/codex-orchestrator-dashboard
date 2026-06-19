@@ -1,8 +1,8 @@
-import { readShapeStrategyMarkerActivity } from "@/lib/shape-strategy-adapter";
+import { readShapeStrategyMarkerActivity } from "@/lib/strategies/shape-strategy-adapter";
 import {
   createPublicDemoDisabledResponse,
   isPublicDemoMode,
-} from "@/lib/public-demo-mode";
+} from "@/lib/demo/public-demo-mode";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
