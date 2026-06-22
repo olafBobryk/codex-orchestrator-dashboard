@@ -52,6 +52,9 @@ export type RawProjection = {
   edges?: unknown;
   markers?: unknown;
   regions?: unknown;
+  disconnectedComponents?: unknown;
+  intentionalDisconnectedComponents?: unknown;
+  quality?: unknown;
 };
 
 type RawLegendItem = {

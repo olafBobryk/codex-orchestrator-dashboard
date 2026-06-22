@@ -2,6 +2,8 @@
 
 Status: planned | reached | accepted | superseded
 
+Role: template | executable-path | reference | none
+
 Guide: ../_guides/artifacts/checkpoint.md
 
 ## Transition

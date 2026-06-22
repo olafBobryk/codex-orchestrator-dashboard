@@ -17,6 +17,10 @@ reference a commit as evidence, but Git does not define the checkpoint.
 `Status:` is architecture-level strategy state for the checkpoint. It is not a
 dashboard rendering instruction.
 
+`Role:` is optional usage metadata. Use `Role: template` only when the
+checkpoint belongs to reusable planning or route-template infrastructure. Status
+continues to describe lifecycle state.
+
 ## Relationship To Shapes, Workpieces, Runs, And Commits
 
 - A shape defines the work boundary affected by the transition.
@@ -75,6 +79,8 @@ It should be short and specific.
 # Checkpoint: <name>
 
 Status: planned | reached | accepted | superseded
+
+Role: template | executable-path | reference | none
 
 ## Transition
 

@@ -37,10 +37,16 @@ it.
 
 ### Start
 
-Start references the checkpoint or artifact that anchors the visible beginning
-of the map when one exists.
+Start references the checkpoint that anchors the visible beginning of the map
+when one exists. Use `Start:` for the primary or legacy single start.
 
 Start can be `none` when the graph intentionally has no single beginning.
+
+Additional starts may be declared with `Starts:` or repeated `Start:` lines.
+The adapter treats `Start:` and `Starts:` values as additive and dedupes them.
+Each authored start is projected with the same start chronology. Multiple starts
+are useful when a map has an intentionally disconnected planning component that
+should still be visually anchored.
 
 ### Shape References
 
@@ -129,6 +135,7 @@ Status: active | planning | paused | accepted | archived
 ## Start
 
 - Start: `<checkpoint-id>` | none
+- Starts: `<checkpoint-id>`, `<checkpoint-id>` | none
 
 ## Shape References
 
