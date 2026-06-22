@@ -25,6 +25,8 @@ Status: accepted-surface-only
   `strategies/shape-strategy/map.md`
 - Projection notes:
   `strategies/shape-strategy/_guides/dashboard-contract-notes.md`
+- Learning harness future research:
+  `strategies/shape-strategy/_guides/concepts/learning-harness-future-research.md`
 - Strategy templates:
   `strategies/shape-strategy/_templates/`
 - Return workflow skill:
