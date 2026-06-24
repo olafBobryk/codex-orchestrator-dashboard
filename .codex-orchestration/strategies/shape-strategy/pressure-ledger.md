@@ -11,7 +11,7 @@ Promotion path:
 pressure entry -> discussion -> accepted decision -> strategy doc update
 ```
 
-## Entry: Averlo Legacy Provenance Migration
+## Entry: Legacy Provenance Migration
 
 Date: 2026-06-11
 Status: open
@@ -20,9 +20,8 @@ Pressure:
 upper + sideways
 
 Signal:
-The first real target repo for shape-strategy initialization is Averlo Rebrand,
-but the repo still contains Webvizion/template-intelligence flavored worklogs
-and active unrelated design-system work.
+The first real target repo for shape-strategy initialization contains legacy
+template/product worklogs and active unrelated design-system work.
 
 Why It Matters:
 The strategy needs to support project identity and legacy provenance without
@@ -30,9 +29,9 @@ forcing old docs into the new shape model too early or mixing docs migration
 with active app changes.
 
 Affected Artifacts:
-- `/Users/olafbobryk/Documents/Code/Averlo/2026/averlo-rebrand`
-- `docs/worklogs/*` in Averlo Rebrand
-- `.codex/tmp/*` in Averlo Rebrand
+- `<target-project>`
+- `docs/worklogs/*` in the target project
+- `.codex/tmp/*` in the target project
 - `strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
 
 Recommended Response:
@@ -51,9 +50,9 @@ Pressure:
 lower + sideways
 
 Signal:
-A delegated worker was doing substantive visible work inside an Averlo shape,
-but the map had no active run or agent references, so the work did not appear
-as an active worker lane or marker.
+A delegated worker was doing substantive visible work inside a project shape,
+but the map had no active run or agent references, so the work did not appear as
+an active worker lane or marker.
 
 Why It Matters:
 The strategy said agent docs were optional, which was true for low-ceremony
@@ -81,7 +80,7 @@ Pressure:
 lower
 
 Signal:
-Preview-only Averlo work used `Status: muted` to ask for a quieter visual
+Preview-only product work used `Status: muted` to ask for a quieter visual
 surface, but `muted` reads like UI/projection language rather than architecture
 status.
 
@@ -93,8 +92,8 @@ Affected Artifacts:
 - `strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
 - `strategies/shape-strategy/_guides/artifacts/shape.md`
 - `strategies/shape-strategy/_guides/artifacts/workpiece.md`
-- `src/lib/shape-strategy-adapter.ts`
-- `src/lib/graph-projection.ts`
+- `src/lib/strategies/shape-strategy-adapter.ts`
+- `src/lib/graph/projection.ts`
 
 Recommended Response:
 Use `Status: planning` for visible but not yet solidified work. Keep `muted` as
@@ -123,7 +122,7 @@ disposition, durable docs, and verification were final.
 Affected Artifacts:
 - `strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
 - `.codex-orchestration/architecture.md`
-- `/Users/olafbobryk/.codex/skills/shape-run-return/SKILL.md`
+- `$CODEX_HOME/skills/shape-run-return/SKILL.md`
 
 Recommended Response:
 Backport the lifecycle into the canonical strategy guide and expose the
@@ -151,7 +150,7 @@ The graph blurred run history, checkpoint/project state, and live operational
 presence. Dead worker markers make accepted or returned work look active.
 
 Affected Artifacts:
-- `src/lib/shape-strategy-adapter.ts`
+- `src/lib/strategies/shape-strategy-adapter.ts`
 - `strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
 - `strategies/shape-strategy/_guides/artifacts/agent.md`
 - `strategies/shape-strategy/_guides/dashboard-contract-notes.md`
@@ -223,8 +222,8 @@ Affected Artifacts:
 - `strategies/shape-strategy/_guides/concepts/strategies/approaches.md`
 - `strategies/shape-strategy/_guides/artifacts/run.md`
 - `strategies/shape-strategy/_templates/run.md`
-- `/Users/olafbobryk/.codex/skills/preview-restart/SKILL.md`
-- `/Users/olafbobryk/.codex/skills/shape-run-return/SKILL.md`
+- `$CODEX_HOME/skills/preview-restart/SKILL.md`
+- `$CODEX_HOME/skills/shape-run-return/SKILL.md`
 
 Recommended Response:
 Keep preview state linked to runs. Prefer sidecar/steward-owned review URLs for

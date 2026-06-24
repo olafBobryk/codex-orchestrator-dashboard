@@ -25,10 +25,14 @@ Status: accepted-surface-only
   `strategies/shape-strategy/map.md`
 - Projection notes:
   `strategies/shape-strategy/_guides/dashboard-contract-notes.md`
+- Learning harness future research:
+  `strategies/shape-strategy/_guides/concepts/learning-harness-future-research.md`
+- Orchestration source repo direction:
+  `strategies/shape-strategy/_guides/concepts/orchestration-source-repo-direction.md`
 - Strategy templates:
   `strategies/shape-strategy/_templates/`
 - Return workflow skill:
-  `$shape-run-return` in `/Users/olafbobryk/.codex/skills/shape-run-return/`
+  `$shape-run-return` in `$CODEX_HOME/skills/shape-run-return/`
 - Runtime architecture:
   `runtime-architecture.md`
 - Local fixtures:

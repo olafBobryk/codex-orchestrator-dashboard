@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CodexProjectReadResult } from "@/lib/codex-projects";
-import type { GraphProjectionQualityWarning } from "@/lib/graph-projection";
-import type { OrchestrationGraph } from "@/lib/orchestration-graph";
+import type { CodexProjectReadResult } from "@/lib/codex/projects";
+import type { GraphProjectionQualityWarning } from "@/lib/graph/projection";
+import type { OrchestrationGraph } from "@/lib/graph/orchestration-graph";
 import type {
   GraphCanvasCommandAction,
   GraphCanvasStats,
@@ -16,18 +16,26 @@ import {
 } from "./dashboard-surface-map";
 import { WorkspaceCanvas } from "./canvas";
 import { WorkspaceSidebar } from "./sidebar";
+import {
+  isPublicDemoDashboard,
+  type DashboardMode,
+} from "./dashboard-mode";
 import { GraphProjectionQualityToast } from "./status";
 
 export function WorkspaceDashboard({
   codexProjects,
+  dashboardMode = "local",
   graph,
+  orchestrationWorkspace,
   projectionQualityWarnings,
   resolvedWorkspace,
   stats,
   workspace,
 }: {
   codexProjects: CodexProjectReadResult;
+  dashboardMode?: DashboardMode;
   graph: OrchestrationGraph;
+  orchestrationWorkspace: string;
   projectionQualityWarnings: GraphProjectionQualityWarning[];
   resolvedWorkspace: string;
   stats: GraphCanvasStats;
@@ -43,10 +51,11 @@ export function WorkspaceDashboard({
       buildDashboardSurfaceMap({
         codexProjects,
         currentWorkspace: resolvedWorkspace,
+        dashboardMode,
         graph,
-        workspace: resolvedWorkspace,
+        workspace: orchestrationWorkspace,
       }),
-    [codexProjects, graph, resolvedWorkspace]
+    [codexProjects, dashboardMode, graph, orchestrationWorkspace, resolvedWorkspace]
   );
   const closeCommand = () => {
     setCommandOpen(false);
@@ -60,7 +69,9 @@ export function WorkspaceDashboard({
     }
 
     if (action.type === "open-external-link") {
-      window.location.href = action.href;
+      if (!isPublicDemoDashboard(dashboardMode)) {
+        window.location.href = action.href;
+      }
       closeCommand();
       return;
     }
@@ -121,6 +132,7 @@ export function WorkspaceDashboard({
         codexProjects={codexProjects}
         workspace={workspace}
         resolvedWorkspace={resolvedWorkspace}
+        dashboardMode={dashboardMode}
         commandOpen={commandOpen}
         onOpenCommand={() => setCommandOpen(true)}
       />
@@ -135,12 +147,13 @@ export function WorkspaceDashboard({
 
       <div className="min-h-screen min-w-0 bg-background lg:h-screen lg:overflow-hidden">
         <GraphProjectionQualityToast
-          workspace={resolvedWorkspace}
+          workspace={orchestrationWorkspace}
           warnings={projectionQualityWarnings}
         />
         <WorkspaceCanvas
           graph={graph}
-          workspace={resolvedWorkspace}
+          dashboardMode={dashboardMode}
+          workspace={orchestrationWorkspace}
           stats={stats}
           projectionQualityWarnings={projectionQualityWarnings}
           commandAction={graphCommand}

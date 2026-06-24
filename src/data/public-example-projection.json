@@ -1,373 +1,568 @@
 {
-  "title": "Linear Shape Strategy Map",
+  "title": "Generic Orchestration Map",
   "legend": [
-    {
-      "key": "work",
-      "label": "Workpiece",
-      "color": "#737373"
-    },
     {
       "key": "checkpoint",
       "label": "Checkpoint",
       "color": "#d97706"
     },
     {
-      "key": "setup",
-      "label": "Setup Shape",
+      "key": "core",
+      "label": "Core Workpiece",
+      "color": "#737373"
+    },
+    {
+      "key": "branch",
+      "label": "Branch Workpiece",
       "color": "#2563eb"
     },
     {
-      "key": "public-proof",
-      "label": "Public Proof Shape",
+      "key": "review",
+      "label": "Review / Gate",
+      "color": "#9333ea"
+    },
+    {
+      "key": "ready",
+      "label": "Ready Baseline",
       "color": "#16a34a"
     }
   ],
   "nodes": [
     {
-      "id": "cp-start",
+      "id": "start",
       "kind": "checkpoint",
-      "label": "Steward Start",
+      "label": "Start",
       "legendKey": "checkpoint",
       "icon": "flag",
       "chronology": "start",
       "status": "verified",
+      "summary": "entry checkpoint",
       "detail": [
         {
-          "id": "transition",
-          "name": "Transition",
+          "id": "summary",
+          "name": "Checkpoint",
           "icon": "flag",
-          "summary": "outbound",
+          "summary": "start condition accepted",
           "color": "#d97706",
-          "body": "The steward opens a small, bounded shape-strategy pass."
+          "body": "The map begins from an explicit start checkpoint before any branch work opens."
         }
       ]
     },
     {
-      "id": "workspace-contract",
-      "label": "Workspace Contract",
-      "legendKey": "work",
-      "status": "verified",
+      "id": "project-framing",
+      "label": "Project Framing",
+      "legendKey": "core",
+      "status": "complete",
+      "summary": "scope and constraints",
       "detail": [
         {
-          "id": "intent",
-          "name": "Intent",
-          "icon": "eye",
-          "summary": "local sidecar boundary",
-          "color": "#2563eb",
-          "body": "Keep the dashboard as a local visualization sidecar, not a Codex replacement."
-        },
-        {
-          "id": "tests",
-          "name": "Tests",
-          "icon": "check",
-          "summary": "2/2",
-          "color": "#16a34a",
-          "body": "- Dashboard reads a selected workspace.\n- Public demo contains no private filesystem paths."
+          "id": "summary",
+          "name": "Workpiece",
+          "icon": "file-text",
+          "summary": "scope written down",
+          "color": "#737373",
+          "body": "Define the useful boundary, the current strategy, and what the demo should prove."
         }
       ]
     },
     {
-      "id": "markdown-source",
-      "label": "Markdown Source",
-      "legendKey": "work",
-      "status": "verified",
+      "id": "strategy-outline",
+      "label": "Strategy Outline",
+      "legendKey": "core",
+      "status": "complete",
+      "summary": "shape strategy sketched",
       "detail": [
         {
-          "id": "intent",
-          "name": "Intent",
-          "icon": "eye",
-          "summary": "plain docs",
-          "color": "#2563eb",
-          "body": "Use plain Markdown artifacts under .codex-orchestration as the durable source."
-        },
-        {
-          "id": "artifacts",
-          "name": "Artifacts",
-          "icon": "link",
-          "summary": "3 links",
-          "color": "#2563eb",
-          "links": [
-            {
-              "label": "map.md",
-              "relativePath": "map.md",
-              "kind": "artifact"
-            },
-            {
-              "label": "shapes/",
-              "relativePath": "shapes/README.md",
-              "kind": "artifact"
-            },
-            {
-              "label": "workpieces/",
-              "relativePath": "workpieces/README.md",
-              "kind": "artifact"
-            }
-          ]
+          "id": "summary",
+          "name": "Workpiece",
+          "icon": "map",
+          "summary": "strategy becomes visible",
+          "color": "#737373",
+          "body": "Translate the initial notes into a small graph shape with clear handoff points."
         }
       ]
     },
     {
-      "id": "strategy-template",
-      "label": "Strategy Template",
-      "legendKey": "work",
-      "status": "verified",
-      "detail": [
-        {
-          "id": "intent",
-          "name": "Intent",
-          "icon": "eye",
-          "summary": "repeatable init",
-          "color": "#2563eb",
-          "body": "Give new repos a clean starter map, guides, templates, and pressure ledger."
-        }
-      ]
-    },
-    {
-      "id": "projection-adapter",
-      "label": "Projection Adapter",
-      "legendKey": "work",
-      "status": "in_progress",
-      "detail": [
-        {
-          "id": "intent",
-          "name": "Intent",
-          "icon": "eye",
-          "summary": "Markdown to graph",
-          "color": "#2563eb",
-          "body": "Translate authored strategy docs into the dashboard graph projection in memory."
-        },
-        {
-          "id": "tests",
-          "name": "Tests",
-          "icon": "check",
-          "summary": "4/4",
-          "color": "#16a34a",
-          "body": "- Workpieces render as primary nodes.\n- Shapes render as regions.\n- Checkpoints render as checkpoint nodes.\n- Missing references warn without crashing."
-        }
-      ]
-    },
-    {
-      "id": "graph-legibility",
-      "label": "Graph Legibility",
-      "legendKey": "work",
-      "status": "in_progress",
-      "detail": [
-        {
-          "id": "intent",
-          "name": "Intent",
-          "icon": "eye",
-          "summary": "readable trunk",
-          "color": "#2563eb",
-          "body": "Prefer a chronological trunk that is easy to scan before adding advanced branch complexity."
-        },
-        {
-          "id": "return-evidence",
-          "name": "Return Evidence",
-          "icon": "archive",
-          "summary": "linear map requested",
-          "color": "#16a34a",
-          "body": "The public example should make the dashboard understandable before it demonstrates complex detours."
-        }
-      ]
-    },
-    {
-      "id": "public-example",
-      "label": "Public Example",
-      "legendKey": "work",
-      "status": "queued",
-      "detail": [
-        {
-          "id": "intent",
-          "name": "Intent",
-          "icon": "eye",
-          "summary": "static dashboard",
-          "color": "#2563eb",
-          "body": "Deploy the real dashboard surface with a static projection JSON instead of private local data."
-        },
-        {
-          "id": "commit-evidence",
-          "name": "Commit Evidence",
-          "icon": "git-branch",
-          "summary": "branch source",
-          "color": "#9333ea",
-          "body": "codex/public-static-example"
-        }
-      ]
-    },
-    {
-      "id": "readme-link",
-      "label": "README Link",
-      "legendKey": "work",
-      "status": "queued",
-      "detail": [
-        {
-          "id": "acceptance",
-          "name": "Acceptance",
-          "icon": "check",
-          "summary": "2 criteria",
-          "color": "#16a34a",
-          "body": "- README points to the stable public Vercel URL.\n- README states that the public example is static."
-        }
-      ]
-    },
-    {
-      "id": "cp-return",
+      "id": "framing-checkpoint",
       "kind": "checkpoint",
-      "label": "Public Proof Return",
+      "label": "Framing Checkpoint",
       "legendKey": "checkpoint",
       "icon": "flag",
-      "status": "queued",
+      "status": "verified",
+      "summary": "parallel work can begin",
       "detail": [
         {
-          "id": "return-evidence",
-          "name": "Return Evidence",
-          "icon": "archive",
-          "summary": "ready for review",
+          "id": "summary",
+          "name": "Checkpoint",
+          "icon": "flag",
+          "summary": "initial shape accepted",
+          "color": "#d97706",
+          "body": "The initialization shape has enough clarity for parallel branches to start."
+        }
+      ]
+    },
+    {
+      "id": "canvas-navigation",
+      "label": "Canvas Navigation",
+      "legendKey": "branch",
+      "status": "complete",
+      "summary": "graph movement and selection",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Nested child shape",
+          "icon": "mouse-pointer",
+          "summary": "navigation behavior",
+          "color": "#2563eb",
+          "body": "Prove panning, zooming, selection, and shape hit targets inside the dashboard canvas."
+        }
+      ]
+    },
+    {
+      "id": "node-detail-panels",
+      "label": "Node Detail Panels",
+      "legendKey": "branch",
+      "status": "complete",
+      "summary": "details and markers",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Nested child shape",
+          "icon": "panel-right",
+          "summary": "selected node context",
+          "color": "#2563eb",
+          "body": "Show the supporting detail panel for selected workpieces, checkpoints, and markers."
+        }
+      ]
+    },
+    {
+      "id": "summary-panel",
+      "label": "Summary Panel",
+      "legendKey": "branch",
+      "status": "complete",
+      "summary": "status overview",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Nested child shape",
+          "icon": "layout-dashboard",
+          "summary": "high-level graph context",
+          "color": "#2563eb",
+          "body": "Provide a compact overview for people who have not read the underlying orchestration notes."
+        }
+      ]
+    },
+    {
+      "id": "search-surface",
+      "label": "Search Surface",
+      "legendKey": "branch",
+      "status": "complete",
+      "summary": "quick navigation",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Nested child shape",
+          "icon": "search",
+          "summary": "find graph entities",
+          "color": "#2563eb",
+          "body": "Keep search and command navigation scoped to public, in-memory graph data."
+        }
+      ]
+    },
+    {
+      "id": "fixture-contract",
+      "label": "Fixture Contract",
+      "legendKey": "branch",
+      "status": "complete",
+      "summary": "public graph shape",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Parallel shape",
+          "icon": "braces",
+          "summary": "safe data contract",
+          "color": "#2563eb",
+          "body": "Model the demo from a generic projection so the dashboard can render without private project context."
+        }
+      ]
+    },
+    {
+      "id": "public-safety-pass",
+      "label": "Public Safety Pass",
+      "legendKey": "branch",
+      "status": "complete",
+      "summary": "public-safe review",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Parallel shape",
+          "icon": "shield-check",
+          "summary": "unsafe context removed",
+          "color": "#2563eb",
+          "body": "Remove private paths, real services, runtime identifiers, and project-specific copy from the public fixture."
+        }
+      ]
+    },
+    {
+      "id": "integration-checkpoint",
+      "kind": "checkpoint",
+      "label": "Integration Checkpoint",
+      "legendKey": "checkpoint",
+      "icon": "flag",
+      "status": "verified",
+      "summary": "parallel tracks joined",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Checkpoint",
+          "icon": "flag",
+          "summary": "branches reconciled",
+          "color": "#d97706",
+          "body": "The nested dashboard track and fixture-contract track are joined outside their shapes."
+        }
+      ]
+    },
+    {
+      "id": "delivery-package",
+      "label": "Delivery Package",
+      "legendKey": "ready",
+      "status": "complete",
+      "summary": "final shape output",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Final shape",
+          "icon": "package-check",
+          "summary": "reviewable package",
           "color": "#16a34a",
-          "body": "The public example is deployed and the source branch contains the copied dashboard plus static JSON."
+          "body": "Collect the verified graph, capture-ready view, and README framing into one delivery package."
+        }
+      ]
+    },
+    {
+      "id": "readme-assets",
+      "label": "README Assets",
+      "legendKey": "ready",
+      "status": "complete",
+      "summary": "public preview assets",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Final shape",
+          "icon": "image",
+          "summary": "screenshots and diagrams",
+          "color": "#16a34a",
+          "body": "Prepare public-facing assets that explain the dashboard without exposing local runtime data."
+        }
+      ]
+    },
+    {
+      "id": "delivery-workpiece",
+      "label": "Delivery Workpiece",
+      "legendKey": "core",
+      "status": "complete",
+      "summary": "ship-ready workpiece",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Workpiece",
+          "icon": "send",
+          "summary": "ready for final review",
+          "color": "#737373",
+          "body": "A final concrete workpiece carries the verified demo and README updates into delivery review."
+        }
+      ]
+    },
+    {
+      "id": "delivery-checkpoint",
+      "kind": "checkpoint",
+      "label": "Delivery Checkpoint",
+      "legendKey": "checkpoint",
+      "icon": "flag",
+      "status": "signed_off",
+      "summary": "delivery accepted",
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Checkpoint",
+          "icon": "flag",
+          "summary": "public demo ready",
+          "color": "#d97706",
+          "body": "The simplified public demo is ready for README capture and public review."
         }
       ]
     }
   ],
   "edges": [
     {
-      "id": "start-to-contract",
-      "source": "cp-start",
-      "target": "workspace-contract",
-      "label": "starts",
+      "id": "start-to-project-framing",
+      "source": "start",
+      "target": "project-framing",
+      "label": "start initialization",
       "style": "solid",
+      "status": "complete",
       "directional": true
     },
     {
-      "id": "contract-to-markdown",
-      "source": "workspace-contract",
-      "target": "markdown-source",
-      "label": "defines",
+      "id": "project-framing-to-strategy-outline",
+      "source": "project-framing",
+      "target": "strategy-outline",
+      "label": "shape the strategy",
       "style": "solid",
+      "status": "complete",
       "directional": true
     },
     {
-      "id": "markdown-to-template",
-      "source": "markdown-source",
-      "target": "strategy-template",
-      "label": "informs",
+      "id": "strategy-outline-to-framing-checkpoint",
+      "source": "strategy-outline",
+      "target": "framing-checkpoint",
+      "label": "accept framing",
       "style": "solid",
+      "status": "verified",
       "directional": true
     },
     {
-      "id": "template-to-adapter",
-      "source": "strategy-template",
-      "target": "projection-adapter",
-      "label": "feeds",
+      "id": "framing-to-canvas-navigation",
+      "source": "framing-checkpoint",
+      "target": "canvas-navigation",
+      "label": "open dashboard track",
       "style": "solid",
+      "status": "complete",
       "directional": true
     },
     {
-      "id": "adapter-to-legibility",
-      "source": "projection-adapter",
-      "target": "graph-legibility",
-      "label": "renders",
+      "id": "canvas-navigation-to-node-detail-panels",
+      "source": "canvas-navigation",
+      "target": "node-detail-panels",
+      "label": "expand detail behavior",
       "style": "solid",
+      "status": "complete",
       "directional": true
     },
     {
-      "id": "legibility-to-public-example",
-      "source": "graph-legibility",
-      "target": "public-example",
-      "label": "publishes",
+      "id": "framing-to-summary-panel",
+      "source": "framing-checkpoint",
+      "target": "summary-panel",
+      "label": "open context track",
       "style": "solid",
+      "status": "complete",
       "directional": true
     },
     {
-      "id": "public-example-to-readme",
-      "source": "public-example",
-      "target": "readme-link",
-      "label": "documents",
+      "id": "summary-panel-to-search-surface",
+      "source": "summary-panel",
+      "target": "search-surface",
+      "label": "add navigation surface",
       "style": "solid",
+      "status": "complete",
       "directional": true
     },
     {
-      "id": "readme-to-return",
-      "source": "readme-link",
-      "target": "cp-return",
-      "label": "returns",
-      "style": "solid",
+      "id": "framing-to-fixture-contract",
+      "source": "framing-checkpoint",
+      "target": "fixture-contract",
+      "label": "open fixture track",
+      "style": "dashed",
+      "status": "complete",
       "directional": true
-    }
-  ],
-  "regions": [
-    {
-      "id": "shape-setup",
-      "label": "Setup Shape",
-      "legendKey": "setup",
-      "nodeIds": [
-        "workspace-contract",
-        "markdown-source",
-        "strategy-template",
-        "projection-adapter"
-      ],
-      "detail": [
-        {
-          "id": "fixed-decisions",
-          "name": "Fixed Decisions",
-          "icon": "lock",
-          "summary": "3 items",
-          "color": "#d97706",
-          "body": "Local sidecar boundary, plain Markdown source, and static public sample data."
-        },
-        {
-          "id": "autonomous-decisions",
-          "name": "Autonomous Decisions",
-          "icon": "user",
-          "summary": "1 item",
-          "color": "#2563eb",
-          "body": "The worker can choose the exact public sample labels and detail copy."
-        }
-      ]
     },
     {
-      "id": "shape-public-proof",
-      "label": "Public Proof Shape",
-      "legendKey": "public-proof",
-      "nodeIds": [
-        "graph-legibility",
-        "public-example",
-        "readme-link"
-      ],
-      "detail": [
-        {
-          "id": "fixed-decisions",
-          "name": "Fixed Decisions",
-          "icon": "lock",
-          "summary": "2 items",
-          "color": "#d97706",
-          "body": "Use the copied dashboard UI and keep the Vercel URL stable."
-        },
-        {
-          "id": "return-evidence",
-          "name": "Return Evidence",
-          "icon": "archive",
-          "summary": "deployed",
-          "color": "#16a34a",
-          "body": "The branch source and public Vercel deployment are the review artifacts."
-        }
-      ]
+      "id": "fixture-contract-to-public-safety-pass",
+      "source": "fixture-contract",
+      "target": "public-safety-pass",
+      "label": "sanitize fixture",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
+    },
+    {
+      "id": "node-detail-panels-to-integration",
+      "source": "node-detail-panels",
+      "target": "integration-checkpoint",
+      "label": "join detail track",
+      "style": "solid",
+      "status": "verified",
+      "directional": true
+    },
+    {
+      "id": "search-surface-to-integration",
+      "source": "search-surface",
+      "target": "integration-checkpoint",
+      "label": "join summary track",
+      "style": "solid",
+      "status": "verified",
+      "directional": true
+    },
+    {
+      "id": "public-safety-pass-to-integration",
+      "source": "public-safety-pass",
+      "target": "integration-checkpoint",
+      "label": "join fixture track",
+      "style": "solid",
+      "status": "verified",
+      "directional": true
+    },
+    {
+      "id": "integration-to-delivery-package",
+      "source": "integration-checkpoint",
+      "target": "delivery-package",
+      "label": "enter final shape",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
+    },
+    {
+      "id": "delivery-package-to-readme-assets",
+      "source": "delivery-package",
+      "target": "readme-assets",
+      "label": "prepare assets",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
+    },
+    {
+      "id": "readme-assets-to-delivery-workpiece",
+      "source": "readme-assets",
+      "target": "delivery-workpiece",
+      "label": "produce delivery workpiece",
+      "style": "solid",
+      "status": "complete",
+      "directional": true
+    },
+    {
+      "id": "delivery-workpiece-to-delivery-checkpoint",
+      "source": "delivery-workpiece",
+      "target": "delivery-checkpoint",
+      "label": "accept delivery",
+      "style": "solid",
+      "status": "signed_off",
+      "directional": true
     }
   ],
   "markers": [
     {
-      "id": "public-worker",
-      "targetId": "projection-adapter",
-      "label": "Worker",
-      "description": "Static public example worker is focused on the adapter-to-dashboard proof.",
-      "color": "#2563eb",
-      "icon": "user-cog",
-      "loader": true,
-      "links": [
+      "id": "review-gate-marker",
+      "targetId": "integration-checkpoint",
+      "label": "Review gate",
+      "description": "Parallel work joins here before the final delivery shape opens.",
+      "color": "#9333ea",
+      "icon": "check-circle"
+    },
+    {
+      "id": "preview-baseline-marker",
+      "targetId": "delivery-workpiece",
+      "label": "Preview baseline",
+      "description": "A stable public preview is ready for README asset capture.",
+      "color": "#16a34a",
+      "icon": "monitor-check"
+    }
+  ],
+  "regions": [
+    {
+      "id": "initialization-shape",
+      "label": "Initialization Shape",
+      "category": "core",
+      "color": "#737373",
+      "nodeIds": [
+        "project-framing",
+        "strategy-outline"
+      ],
+      "detail": [
         {
-          "label": "Static projection",
-          "relativePath": "src/data/public-example-projection.json",
-          "kind": "artifact"
+          "id": "summary",
+          "name": "Shape",
+          "summary": "initial framing shape",
+          "body": "A small opening shape turns the start checkpoint into a usable strategy map."
+        }
+      ]
+    },
+    {
+      "id": "dashboard-track-shape",
+      "label": "Dashboard Track",
+      "category": "branch",
+      "color": "#2563eb",
+      "regionIds": [
+        "canvas-detail-shape",
+        "context-navigation-shape"
+      ],
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Shape",
+          "summary": "parent shape with nested children",
+          "body": "This parent shape shows that a branch can contain smaller child shapes while still participating in the wider graph."
+        }
+      ]
+    },
+    {
+      "id": "canvas-detail-shape",
+      "label": "Canvas + Detail",
+      "category": "branch",
+      "color": "#2563eb",
+      "nodeIds": [
+        "canvas-navigation",
+        "node-detail-panels"
+      ],
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Child shape",
+          "summary": "canvas interaction child",
+          "body": "This nested child shape owns movement, selection, and detail-panel behavior."
+        }
+      ]
+    },
+    {
+      "id": "context-navigation-shape",
+      "label": "Context Navigation",
+      "category": "branch",
+      "color": "#2563eb",
+      "nodeIds": [
+        "summary-panel",
+        "search-surface"
+      ],
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Child shape",
+          "summary": "summary and search child",
+          "body": "This nested child shape keeps public viewers oriented without private project context."
+        }
+      ]
+    },
+    {
+      "id": "fixture-contract-shape",
+      "label": "Fixture Contract",
+      "category": "branch",
+      "color": "#2563eb",
+      "nodeIds": [
+        "fixture-contract",
+        "public-safety-pass"
+      ],
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Shape",
+          "summary": "parallel fixture branch",
+          "body": "A parallel shape proves the public fixture contract while dashboard behavior is prepared."
+        }
+      ]
+    },
+    {
+      "id": "delivery-prep-shape",
+      "label": "Delivery Preparation",
+      "category": "ready",
+      "color": "#16a34a",
+      "nodeIds": [
+        "delivery-package",
+        "readme-assets"
+      ],
+      "detail": [
+        {
+          "id": "summary",
+          "name": "Shape",
+          "summary": "final preparation shape",
+          "body": "The last shape prepares a concrete delivery workpiece and final checkpoint."
         }
       ]
     }

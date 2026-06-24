@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { DashboardCommandTrigger } from "../dashboard-command";
+import { isPublicDemoDashboard } from "../dashboard-mode";
 import { CodexProjectList } from "./project-list";
 import { ReloadButton } from "./reload-button";
 import { WorkspaceSidebarShell } from "./shell";
@@ -12,6 +13,7 @@ import { WorkspacePathMenu } from "./workspace-menu";
 
 export function WorkspaceSidebar({
   codexProjects,
+  dashboardMode = "local",
   workspace,
   resolvedWorkspace,
   onOpenCommand,
@@ -19,6 +21,7 @@ export function WorkspaceSidebar({
 }: WorkspaceSidebarProps) {
   const isHome = !workspace;
   const currentWorkspace = resolvedWorkspace ?? workspace;
+  const publicDemo = isPublicDemoDashboard(dashboardMode);
 
   return (
     <WorkspaceSidebarShell
@@ -35,8 +38,12 @@ export function WorkspaceSidebar({
               onOpen={onOpenCommand}
             />
           ) : null}
-          <ReloadButton />
-          <WorkspacePathMenu workspace={workspace} />
+          {publicDemo ? null : (
+            <>
+              <ReloadButton />
+              <WorkspacePathMenu workspace={workspace} />
+            </>
+          )}
         </>
       }
     >
@@ -64,6 +71,7 @@ export function WorkspaceSidebar({
           <CodexProjectList
             projects={codexProjects.projects}
             currentWorkspace={currentWorkspace}
+            dashboardMode={dashboardMode}
           />
         </div>
       </ScrollArea>

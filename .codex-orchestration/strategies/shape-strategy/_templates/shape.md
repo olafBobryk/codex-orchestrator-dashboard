@@ -2,6 +2,8 @@
 
 Status: planning | planned | active | returned | accepted | paused
 
+Role: template | executable-path | reference | none
+
 Guide: ../_guides/artifacts/shape.md
 
 ## Intent
@@ -11,6 +13,14 @@ Guide: ../_guides/artifacts/shape.md
 ## Workpiece References
 
 - `<workpiece-id>`: <why this workpiece is inside the shape>
+
+## Checkpoint References
+
+- `<checkpoint-id>`: <why this checkpoint belongs inside the shape>
+
+## Nested Shape References
+
+- `<shape-id>`: <why this child shape belongs inside the shape>
 
 ## Fixed Decisions
 

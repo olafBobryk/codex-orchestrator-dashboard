@@ -1,5 +1,5 @@
-import type { CodexLiveThread } from "./codex-threads";
-import type { OrchestrationDoc } from "./orchestration";
+import type { CodexLiveThread } from "@/lib/codex/threads";
+import type { OrchestrationDoc } from "@/lib/orchestration/workspace";
 
 export const GRAPH_CONTRACT_VERSION = "p8-c1";
 
@@ -272,9 +272,9 @@ const STATUS_TAXONOMY: Record<GraphStatus, string> = {
 
 const SOURCE_LAYERS: Record<GraphSourceLayer, string> = {
   graph_projection:
-    "Project-local graph projection artifact read from .codex-orchestration/graph-projection.json.",
+    "Project-local graph projection artifact read from the selected orchestration root.",
   markdown:
-    "Durable source of truth from normalized .codex-orchestration Markdown.",
+    "Durable source of truth from normalized orchestration Markdown.",
   codex_runtime_annotation:
     "Optional live Codex thread annotation matched only by explicit thread IDs.",
   git_worktree_annotation:

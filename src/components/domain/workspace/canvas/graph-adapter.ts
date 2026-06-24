@@ -5,7 +5,7 @@ import type {
   GraphNode,
   GraphPacketGroup,
   OrchestrationGraph,
-} from "@/lib/orchestration-graph";
+} from "@/lib/graph/orchestration-graph";
 import {
   DEFAULT_GRAPH_NEUTRAL_STROKE,
   GRAPH_EDGE_SIGNAL_ORDER,
@@ -738,7 +738,7 @@ export function getNodeProvenanceFiles(node: GraphNode) {
 
 export function createVsCodeDocHref(workspace: string, relativePath: string) {
   const workspacePath = workspace.replace(/\/+$/, "");
-  const docPath = `${workspacePath}/.codex-orchestration/${relativePath}`;
+  const docPath = `${workspacePath}/${relativePath}`;
 
   return `vscode://file${encodeURI(docPath)}`;
 }

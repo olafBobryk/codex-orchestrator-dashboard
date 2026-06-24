@@ -2,31 +2,36 @@ import Link from "next/link";
 import {
   readWorkspace,
   type WorkspaceReadResult,
-} from "@/lib/orchestration";
+} from "@/lib/orchestration/workspace";
 import {
   type CodexProjectReadResult,
   readCodexProjects,
-} from "@/lib/codex-projects";
-import { readCodexLiveThreads } from "@/lib/codex-threads";
+} from "@/lib/codex/projects";
+import { readCodexLiveThreads } from "@/lib/codex/threads";
 import {
   WorkspaceDashboard,
   WorkspacePathMenu,
   WorkspaceSidebar,
   WorkspaceStatusToast,
 } from "@/components/domain/workspace";
-import { readGraphProjection } from "@/lib/graph-projection";
+import { readGraphProjection } from "@/lib/graph/projection";
 import { buildMarkdownGraph, readParam } from "@/lib/workspace-dashboard";
 import {
   PUBLIC_EXAMPLE_WORKSPACE,
   publicExampleGraph,
   publicExampleProjects,
-} from "@/lib/public-example";
+} from "@/lib/demo/public-example";
+import { isPublicDemoMode } from "@/lib/demo/public-demo-mode";
 
 type PageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function Home({ searchParams }: PageProps) {
+  if (isPublicDemoMode()) {
+    return <PublicExampleDashboard />;
+  }
+
   const params = (await searchParams) ?? {};
   const requestedWorkspace = readParam(params.workspace);
   const codexProjects = await readCodexProjects();
@@ -56,9 +61,10 @@ export default async function Home({ searchParams }: PageProps) {
   }
 
   const resolvedWorkspace = result.resolvedWorkspace ?? workspace;
+  const orchestrationWorkspace = result.orchestrationPath ?? resolvedWorkspace;
   const liveThreads = await readCodexLiveThreads(resolvedWorkspace);
   const projection =
-    await readGraphProjection(resolvedWorkspace);
+    await readGraphProjection(orchestrationWorkspace);
   const graph =
     projection?.state === "ready"
       ? projection.graph
@@ -71,6 +77,7 @@ export default async function Home({ searchParams }: PageProps) {
       <WorkspaceDashboard
         codexProjects={codexProjects}
         graph={graph}
+        orchestrationWorkspace={orchestrationWorkspace}
         projectionQualityWarnings={projectionQualityWarnings}
         resolvedWorkspace={resolvedWorkspace}
         workspace={workspace}
@@ -93,15 +100,17 @@ function PublicExampleDashboard() {
       <WorkspaceDashboard
         codexProjects={publicExampleProjects}
         graph={publicExampleGraph}
+        dashboardMode="public-demo"
+        orchestrationWorkspace={PUBLIC_EXAMPLE_WORKSPACE}
         projectionQualityWarnings={[]}
         resolvedWorkspace={PUBLIC_EXAMPLE_WORKSPACE}
         workspace={PUBLIC_EXAMPLE_WORKSPACE}
         stats={{
-          docs: 1,
+          docs: publicExampleGraph.nodes.length + publicExampleGraph.regions.length,
           packets: publicExampleGraph.packets.length,
           ledgers: 0,
           summaries: publicExampleGraph.nodes.length,
-          liveAgents: publicExampleGraph.markers.length,
+          liveAgents: 0,
           activeThreads: 0,
         }}
       />

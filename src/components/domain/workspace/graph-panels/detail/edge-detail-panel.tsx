@@ -1,5 +1,5 @@
 import type { GraphEdgePanelProps } from "../../canvas/types";
-import type { GraphDetailLink } from "@/lib/orchestration-graph";
+import type { GraphDetailLink } from "@/lib/graph/orchestration-graph";
 import { DetailField } from "../shared";
 import {
   createEdgePanelHeader,

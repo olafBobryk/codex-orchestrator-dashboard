@@ -14,5 +14,5 @@ Use the focused fixtures under `../canvas-layout-cases/` for diagnosis:
 Quick review URL:
 
 ```text
-http://127.0.0.1:26339/?workspace=/Users/olafbobryk/Documents/Code/Personal/2026/codex-orchestrator-dashboard/fixtures/marker-region-stress
+http://127.0.0.1:26339/?workspace=/absolute/path/to/codex-orchestrator-dashboard/fixtures/marker-region-stress
 ```

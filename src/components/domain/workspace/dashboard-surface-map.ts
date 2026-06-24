@@ -1,4 +1,4 @@
-import type { CodexProjectReadResult } from "@/lib/codex-projects";
+import type { CodexProjectReadResult } from "@/lib/codex/projects";
 import type {
   GraphEdge,
   GraphDetailLink,
@@ -6,8 +6,12 @@ import type {
   GraphNode,
   GraphRegion,
   OrchestrationGraph,
-} from "@/lib/orchestration-graph";
+} from "@/lib/graph/orchestration-graph";
 import type { GraphMarkdownReference } from "./canvas/types";
+import {
+  isPublicDemoDashboard,
+  type DashboardMode,
+} from "./dashboard-mode";
 
 export type DashboardSurfaceAction =
   | {
@@ -81,14 +85,17 @@ export type DashboardSurfaceIcon =
 export function buildDashboardSurfaceMap({
   codexProjects,
   currentWorkspace,
+  dashboardMode = "local",
   graph,
   workspace,
 }: {
   codexProjects: CodexProjectReadResult;
   currentWorkspace: string;
+  dashboardMode?: DashboardMode;
   graph?: OrchestrationGraph | null;
   workspace?: string | null;
 }): DashboardSurfaceNode[] {
+  const publicDemo = isPublicDemoDashboard(dashboardMode);
   const currentProject = findCurrentProject(codexProjects, currentWorkspace);
   const currentProjectLabel =
     currentProject?.name ?? workspaceName(currentWorkspace || workspace || "");
@@ -124,7 +131,9 @@ export function buildDashboardSurfaceMap({
             description: "Markdown and external references in the current graph",
             icon: "artifact" as const,
             order: 200,
-            children: createArtifactSurfaces({ graph, workspace }),
+            children: publicDemo
+              ? []
+              : createArtifactSurfaces({ graph, workspace }),
           },
           {
             id: "current-graph",
@@ -158,7 +167,7 @@ export function buildDashboardSurfaceMap({
       order: 100,
       children: currentProjectChildren,
     },
-    ...(otherProjects.length > 0
+    ...(!publicDemo && otherProjects.length > 0
       ? [
           {
             id: "switch-project",
@@ -676,7 +685,7 @@ function normalizePath(value: string) {
 
 function createVsCodeDocHref(workspace: string, relativePath: string) {
   const workspacePath = workspace.replace(/\/+$/, "");
-  const docPath = `${workspacePath}/.codex-orchestration/${relativePath}`;
+  const docPath = `${workspacePath}/${relativePath}`;
 
   return `vscode://file${encodeURI(docPath)}`;
 }

@@ -3,11 +3,14 @@ import path from "node:path";
 import type {
   GraphProjectionQualityWarning,
   RawProjection,
-} from "@/lib/graph-projection";
-import { readCodexThreadActivity } from "./codex-threads.ts";
+} from "@/lib/graph/projection";
+import { readCodexThreadActivity } from "../codex/threads.ts";
+import {
+  createWorkspaceRelativePath,
+  resolveOrchestrationRoot,
+  stripOrchestrationRootPrefix,
+} from "../orchestration/root.ts";
 
-const ORCHESTRATION_DIR = ".codex-orchestration";
-const NESTED_SHAPE_STRATEGY_DIR = "strategies/shape-strategy";
 const SHAPE_STRATEGY_FILE = "map.md";
 const WORK_COLOR = "#737373";
 const CHECKPOINT_COLOR = "#d97706";
@@ -28,7 +31,6 @@ type ShapeStrategyProjectionReadResult =
 
 type ShapeStrategySource = {
   rootDir: string;
-  baseRelativePath: string;
 };
 
 type MarkdownDoc = {
@@ -36,11 +38,13 @@ type MarkdownDoc = {
   id: string;
   title: string;
   status: string | null;
+  role: string | null;
   sections: Map<string, string>;
 };
 
 type ShapeDoc = MarkdownDoc & {
   workpieceRefs: string[];
+  checkpointRefs: string[];
   nestedShapeRefs: string[];
 };
 
@@ -99,6 +103,35 @@ export async function readShapeStrategyProjection(
   const checkpoints = await readCheckpoints(source, checkpointRefs, warnings);
   const agents = await readAgents(source, agentRefs, warnings);
   const artifacts = await readArtifactLinks(source, artifactRefs, warnings);
+  const startCheckpointIds = readStartCheckpointIds(mapDoc);
+  const visibleCheckpointIds = new Set(checkpoints.map((checkpoint) => checkpoint.id));
+
+  for (const startCheckpointId of startCheckpointIds) {
+    if (!visibleCheckpointIds.has(startCheckpointId)) {
+      warnings.push(
+        createWarning("shape-strategy-missing-start-checkpoint", startCheckpointId, [
+          `${mapDoc.relativePath} references start checkpoint ${startCheckpointId}, but it is not listed in Checkpoint References.`,
+          ARTIFACT_PATH_HINT,
+        ])
+      );
+    }
+  }
+
+  for (const shape of shapes) {
+    for (const checkpointRef of shape.checkpointRefs) {
+      const checkpointId = referenceToId(checkpointRef);
+
+      if (!visibleCheckpointIds.has(checkpointId)) {
+        warnings.push(
+          createWarning("shape-strategy-missing-shape-checkpoint", checkpointId, [
+            `${shape.relativePath} references checkpoint ${checkpointId}, but it is not listed in map Checkpoint References.`,
+            ARTIFACT_PATH_HINT,
+          ])
+        );
+      }
+    }
+  }
+
   const shapeColors = new Map(
     shapes.map((shape, index) => [
       shape.id,
@@ -163,7 +196,7 @@ export async function readShapeStrategyProjection(
         status: checkpoint.status ?? "active",
         muted: isPlanningLikeStatus(checkpoint.status),
         kind: "checkpoint",
-        chronology: readStartCheckpointId(mapDoc) === checkpoint.id ? "start" : null,
+        chronology: startCheckpointIds.has(checkpoint.id) ? "start" : null,
         summary: readSectionSummary(checkpoint.sections.get("transition")),
         detail: readDocDetailBlocks(source, checkpoint, [
           "transition",
@@ -231,6 +264,9 @@ export async function readShapeStrategyProjection(
       markerTargetIds,
       warnings
     ),
+    disconnectedComponents: {
+      intentional: readIntentionalDisconnectedComponents(mapDoc),
+    },
     regions: shapes.map((shape) => ({
       id: shape.id,
       label: shape.title,
@@ -320,6 +356,7 @@ async function readShapes(
     shapes.push({
       ...doc,
       workpieceRefs: readReferencePaths(doc.sections.get("workpiece references")),
+      checkpointRefs: readReferencePaths(doc.sections.get("checkpoint references")),
       nestedShapeRefs: readReferencePaths(
         doc.sections.get("nested shape references")
       ),
@@ -341,12 +378,18 @@ function createShapeRegionNodeIds(shapes: ShapeDoc[]) {
     }
 
     if (ancestry.has(shape.id)) {
-      return shape.workpieceRefs.map(referenceToId);
+      return [
+        ...shape.workpieceRefs.map(referenceToId),
+        ...shape.checkpointRefs.map(referenceToId),
+      ];
     }
 
     const nextAncestry = new Set(ancestry);
     nextAncestry.add(shape.id);
-    const nodeIds = new Set(shape.workpieceRefs.map(referenceToId));
+    const nodeIds = new Set([
+      ...shape.workpieceRefs.map(referenceToId),
+      ...shape.checkpointRefs.map(referenceToId),
+    ]);
 
     for (const nestedShapeRef of shape.nestedShapeRefs) {
       const nestedShape = shapesById.get(referenceToId(nestedShapeRef));
@@ -642,6 +685,7 @@ function parseMarkdownDoc(relativePath: string, content: string): MarkdownDoc {
   const title =
     content.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? referenceToId(relativePath);
   const status = content.match(/^Status:\s*(.+)$/m)?.[1]?.trim() ?? null;
+  const role = content.match(/^Role:\s*(.+)$/m)?.[1]?.trim() ?? null;
   const sections = new Map<string, string>();
   const sectionPattern = /^##\s+(.+)$/gm;
   const matches = [...content.matchAll(sectionPattern)];
@@ -658,6 +702,7 @@ function parseMarkdownDoc(relativePath: string, content: string): MarkdownDoc {
     id: referenceToId(relativePath),
     title: simplifyTitle(title),
     status,
+    role,
     sections,
   };
 }
@@ -727,8 +772,63 @@ function readScalarSection(section: string | undefined) {
   return line ?? null;
 }
 
-function readStartCheckpointId(mapDoc: MarkdownDoc) {
-  return readNamedReference(mapDoc.sections.get("start"), "start");
+function readStartCheckpointIds(mapDoc: MarkdownDoc) {
+  const section = mapDoc.sections.get("start");
+  const startIds = new Set<string>();
+
+  if (!section) {
+    return startIds;
+  }
+
+  for (const line of section.split("\n")) {
+    const normalizedLine = normalizeMarkdownListLine(line);
+    const match = normalizedLine.match(/^starts?\s*:\s*(.+)$/i);
+
+    if (!match?.[1]) {
+      continue;
+    }
+
+    for (const reference of readStartLineReferences(match[1])) {
+      const id = referenceToId(reference);
+
+      if (id !== "none") {
+        startIds.add(id);
+      }
+    }
+  }
+
+  return startIds;
+}
+
+function readStartLineReferences(value: string) {
+  const backtickReferences = [...value.matchAll(/`([^`]+)`/g)]
+    .map((match) => match[1]?.trim())
+    .filter(Boolean) as string[];
+
+  if (backtickReferences.length > 0) {
+    return backtickReferences;
+  }
+
+  return value
+    .split(",")
+    .map((reference) => reference.trim())
+    .filter(Boolean);
+}
+
+function readIntentionalDisconnectedComponents(mapDoc: MarkdownDoc) {
+  const section = mapDoc.sections.get("intentional disconnected components");
+
+  if (!section) {
+    return false;
+  }
+
+  return section.split("\n").some((line) => {
+    const normalizedLine = normalizeMarkdownListLine(line);
+    const match = normalizedLine.match(/^intentional\s*:\s*(.+)$/i);
+    const value = normalizeStatusToken(match?.[1]);
+
+    return value === "yes" || value === "true";
+  });
 }
 
 function createNodeReferenceResolver(
@@ -839,6 +939,7 @@ function readDocDetailBlocks(
   sectionNames: string[]
 ) {
   const statusBlock = readStatusDetailBlock(doc);
+  const roleBlock = readRoleDetailBlock(doc);
   const sectionBlocks = sectionNames.flatMap((sectionName) => {
     const body = doc.sections.get(sectionName);
     const normalizedBody = normalizeMarkdownListBody(body);
@@ -865,7 +966,9 @@ function readDocDetailBlocks(
     ];
   });
 
-  return statusBlock ? [statusBlock, ...sectionBlocks] : sectionBlocks;
+  return [statusBlock, roleBlock, ...sectionBlocks].filter(
+    (block): block is NonNullable<typeof block> => Boolean(block)
+  );
 }
 
 function readStatusDetailBlock(doc: MarkdownDoc) {
@@ -882,6 +985,35 @@ function readStatusDetailBlock(doc: MarkdownDoc) {
     body: `Status: ${doc.status}`,
     links: [],
   };
+}
+
+function readRoleDetailBlock(doc: MarkdownDoc) {
+  if (!doc.role) {
+    return null;
+  }
+
+  return {
+    id: `${doc.id}-role`,
+    name: "Role",
+    icon: "tag",
+    summary: doc.role,
+    color: readRoleDetailColor(doc.role),
+    body: `Role: ${doc.role}`,
+    links: [],
+  };
+}
+
+function readRoleDetailColor(role: string) {
+  switch (normalizeStatusToken(role)) {
+    case "template":
+      return "#9333ea";
+    case "reference":
+      return "#64748b";
+    case "executable_path":
+      return "#2563eb";
+    default:
+      return "#94a3b8";
+  }
 }
 
 function readDetailBlockBody(
@@ -1219,57 +1351,22 @@ function normalizeDetailReference(
 async function resolveShapeStrategySource(
   workspace: string
 ): Promise<ShapeStrategySource | null> {
-  const orchestrationRoot = path.join(
-    /*turbopackIgnore: true*/ workspace,
-    ORCHESTRATION_DIR
-  );
-  const rootSource = {
-    rootDir: orchestrationRoot,
-    baseRelativePath: "",
-  };
+  const root = await resolveOrchestrationRoot(workspace);
 
-  if (await docExists(rootSource, SHAPE_STRATEGY_FILE)) {
-    return rootSource;
-  }
-
-  const nestedSource = {
-    rootDir: path.join(orchestrationRoot, NESTED_SHAPE_STRATEGY_DIR),
-    baseRelativePath: NESTED_SHAPE_STRATEGY_DIR,
-  };
-
-  if (await docExists(nestedSource, SHAPE_STRATEGY_FILE)) {
-    return nestedSource;
-  }
-
-  return null;
+  return root ? { rootDir: root.rootDir } : null;
 }
 
-async function docExists(source: ShapeStrategySource, relativePath: string) {
-  return Boolean(
-    await readDoc(source.rootDir, relativePath, displayRelativePath(source, relativePath))
+function displayRelativePath(_source: ShapeStrategySource, relativePath: string) {
+  return createWorkspaceRelativePath(
+    { relativePathFromWorkspace: "" },
+    relativePath
   );
 }
 
-function displayRelativePath(source: ShapeStrategySource, relativePath: string) {
-  const normalized = relativePath.replace(/\\/g, "/").replace(/^\.\//, "");
-
-  if (!source.baseRelativePath) {
-    return normalized;
-  }
-
-  return `${source.baseRelativePath}/${normalized}`;
-}
-
-function stripSourcePrefix(source: ShapeStrategySource, relativePath: string) {
-  const normalized = relativePath.replace(/\\/g, "/").replace(/^\.\//, "");
-
-  if (!source.baseRelativePath) {
-    return normalized;
-  }
-
-  return normalized.replace(
-    new RegExp(`^${escapeRegExp(source.baseRelativePath)}/`),
-    ""
+function stripSourcePrefix(_source: ShapeStrategySource, relativePath: string) {
+  return stripOrchestrationRootPrefix(
+    { relativePathFromWorkspace: "" },
+    relativePath
   );
 }
 

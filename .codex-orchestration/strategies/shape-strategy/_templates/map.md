@@ -11,6 +11,7 @@ Guide: ../_guides/artifacts/map.md
 ## Start
 
 - Start: `<checkpoint-id>` | none
+- Starts: `<checkpoint-id>`, `<checkpoint-id>` | none
 
 ## Shape References
 

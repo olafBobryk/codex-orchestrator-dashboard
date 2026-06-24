@@ -1,4 +1,4 @@
-import type { GraphEdge, GraphNode, GraphStatus } from "@/lib/orchestration-graph";
+import type { GraphEdge, GraphNode, GraphStatus } from "@/lib/graph/orchestration-graph";
 import type { CanvasLink, CanvasTheme, SignalMeta } from "./types";
 
 export const PACKET_PALETTE = [

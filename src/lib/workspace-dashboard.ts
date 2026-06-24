@@ -2,14 +2,14 @@ import {
   readCodexThreadAnnotations,
   readCodexLiveThreads,
   type CodexLiveThread,
-} from "@/lib/codex-threads";
-import { readGitWorktreeAnnotations } from "@/lib/git-worktree";
-import { readWorkspace } from "@/lib/orchestration";
+} from "@/lib/codex/threads";
+import { readGitWorktreeAnnotations } from "@/lib/git/worktree";
+import { readWorkspace } from "@/lib/orchestration/workspace";
 import {
   buildOrchestrationGraph,
   getPrimaryChunkIds,
   getRecordedThreadIds,
-} from "@/lib/orchestration-graph";
+} from "@/lib/graph/orchestration-graph";
 
 export function readParam(value: string | string[] | undefined) {
   if (Array.isArray(value)) {

@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
-import { readDashboardServiceStatus } from "@/lib/service-status";
+import {
+  createPublicDemoDisabledResponse,
+  isPublicDemoMode,
+} from "@/lib/demo/public-demo-mode";
+import { readDashboardServiceStatus } from "@/lib/service/status";
 
 export async function GET() {
+  if (isPublicDemoMode()) {
+    return createPublicDemoDisabledResponse();
+  }
+
   return NextResponse.json(await readDashboardServiceStatus());
 }

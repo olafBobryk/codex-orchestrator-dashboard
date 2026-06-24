@@ -19,6 +19,10 @@ preview or speculative work that is not yet solidified. The dashboard may render
 planning workpieces as muted or deferred nodes, but `muted` should not be used
 as an authored workpiece status.
 
+`Role:` is optional usage metadata. Use `Role: template` for reusable planning
+or route-template workpieces that are visible as infrastructure, not executable
+project scope. Status remains lifecycle state.
+
 ## Relationship To Shapes And Runs
 
 - A shape is the boundary around work.
@@ -68,6 +72,8 @@ They should not become a second implementation plan.
 # Workpiece: <name>
 
 Status: planning | planned | active | returned | accepted | paused
+
+Role: template | executable-path | reference | none
 
 ## Intent
 

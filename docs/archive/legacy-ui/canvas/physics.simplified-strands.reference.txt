@@ -1,6 +1,6 @@
 import type { Force, ForceLink } from "d3-force";
 import { forceCollide, forceManyBody } from "d3-force";
-import type { GraphEdge, GraphNodeChronology } from "@/lib/orchestration-graph";
+import type { GraphEdge, GraphNodeChronology } from "@/lib/graph/orchestration-graph";
 import { GRAPH_VERTICAL_CENTER_Y } from "./constants";
 import type { CanvasNode, GraphMethods } from "./types";
 

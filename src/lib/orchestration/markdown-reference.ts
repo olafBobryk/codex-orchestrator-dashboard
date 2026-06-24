@@ -1,10 +1,8 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { readGraphProjection } from "@/lib/graph-projection";
-import {
-  ORCHESTRATION_DIR,
-  readWorkspace,
-} from "@/lib/orchestration";
+import { readGraphProjection } from "@/lib/graph/projection";
+import { resolveOrchestrationRoot } from "@/lib/orchestration/root";
+import { readWorkspace } from "@/lib/orchestration/workspace";
 import type {
   GraphDetailBlock,
   GraphEdge,
@@ -12,7 +10,7 @@ import type {
   GraphNode,
   GraphRegion,
   OrchestrationGraph,
-} from "@/lib/orchestration-graph";
+} from "@/lib/graph/orchestration-graph";
 
 export type MarkdownReferenceReadResult =
   | {
@@ -51,10 +49,13 @@ export async function readMarkdownReference({
     );
   }
 
-  const orchestrationPath = path.join(
-    /*turbopackIgnore: true*/ resolvedWorkspace,
-    ORCHESTRATION_DIR
-  );
+  const orchestrationRoot = await resolveOrchestrationRoot(resolvedWorkspace);
+
+  if (!orchestrationRoot) {
+    return unavailable(normalizedPath, "No orchestration root is available.");
+  }
+
+  const orchestrationPath = orchestrationRoot.rootDir;
   const targetPath = path.resolve(
     /*turbopackIgnore: true*/ orchestrationPath,
     normalizedPath

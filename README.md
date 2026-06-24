@@ -1,66 +1,89 @@
 # Codex Orchestrator Dashboard
 
-A narrow local Next.js + shadcn/ui sidecar for reading project-local Codex
-orchestration Markdown docs.
+![Codex Orchestrator Dashboard banner](docs/assets/readme-banner.png)
 
-Public static example:
+A local-first orchestration visualizer for Codex-heavy projects.
 
-- Live demo: https://codex-orchestrator-public-example.vercel.app
-- Source: https://github.com/olafBobryk/codex-orchestrator-dashboard/tree/main
+This is a personal/internal tool made public for visibility, reference, and
+reuse. There is no formal contribution or support process yet.
 
-The public example is a static, hardcoded demo. The real sidecar remains a
-local filesystem-backed app that reads project `.codex-orchestration/` docs.
+## How It Works
 
-The app reads from:
+The strategy is replaceable. The dashboard is reusable. The adapter is the
+contract between them.
+
+The point is to let each project evolve its own orchestration strategy without
+making the visual layer obsolete every time. Strategy docs can change shape; the
+adapter translates them into the stable dashboard model.
+
+![Codex Orchestrator layered model](docs/assets/readme-layered-model.png)
+
+- **Strategy + Docs:** project-local Markdown under `.codex-orchestration/`.
+- **Adapter:** strategy-specific interpretation into the dashboard graph shape.
+- **Dashboard:** graph navigation, summaries, search, details, and project
+  switching.
+
+Codex chat remains where work happens. The dashboard is only a visual sidecar
+for durable orchestration docs.
+
+## Public Preview
+
+- Public preview: <https://codex-orchestrator-public-example.vercel.app>
+- Source: <https://github.com/olafBobryk/codex-orchestrator-dashboard>
+
+![Public demo overview](docs/assets/readme-demo-overview.png)
+
+![Nested shape view](docs/assets/readme-demo-nested-shape.png)
+
+![Selected checkpoint with marker](docs/assets/readme-demo-marker-detail.png)
+
+The public demo uses committed fixture data. It does not read a local project or
+expose filesystem access, Codex runtime state, service controls, editor links,
+or private project data.
+
+## Quickstart
+
+```bash
+npm install
+npm run dev
+```
+
+Open <http://localhost:3000>. The local app reads orchestration docs from:
 
 ```text
 <project>/.codex-orchestration/
 ```
 
-V1 is intentionally limited:
+## Strategy Setup
 
-- Plain Markdown only.
-- Summary dashboard for architecture, packets, ledgers, handoffs, concerns,
-  gates, verification, and preview notes.
-- Markdown editing happens in VS Code, opened to the selected Markdown file.
-- No prompt generation.
-- No Codex chat replacement.
-- No implementation execution.
-- No agent tracker or separate concern/gate workflow system.
-- No in-app Markdown editor and no `/editor` route.
-
-Run locally:
-
-```bash
-npm run dev
-```
-
-Initialize the current shape strategy in another repo:
+Initialize the included shape strategy in another repo:
 
 ```bash
 npm run init:shape-strategy -- /absolute/path/to/target-repo
 ```
 
-Use `--force` only when intentionally replacing existing shape strategy state.
+Use `--force` only when intentionally replacing existing strategy state.
 
-The init command creates a clean project-local starter. It copies shared
-`_guides/` and `_templates/` strategy docs, writes a blank map and pressure
-ledger, and creates starter artifact/checkpoint/edge/run/shape/workpiece
-folders at the root of `.codex-orchestration/`. It does not copy this repo's
-example graph into the target.
-
-Update an already-initialized repo with the latest shared strategy support
-docs:
+Refresh shared strategy support docs in an already-initialized repo:
 
 ```bash
 npm run update:shape-strategy -- /absolute/path/to/target-repo
 ```
 
-The update command refreshes shared `_guides/` and `_templates/` strategy docs and
-creates a missing `pressure-ledger.md`. It preserves project-authored maps,
-shapes, workpieces, runs, checkpoints, artifacts, and existing pressure ledger
-entries. It updates only recognized shape strategy installs; ambiguous
-`.codex-orchestration/` folders are left untouched.
+The update command preserves project-authored maps, shapes, workpieces, runs,
+checkpoints, artifacts, and pressure ledger entries.
+
+## Public Demo Mode
+
+Public demo deployments should set:
+
+```bash
+NEXT_PUBLIC_DEMO=true
+```
+
+This keeps the deployment fixture-based instead of reading local project docs.
+
+## Local Service
 
 Run the dashboard as a local macOS service:
 
@@ -69,10 +92,10 @@ npm run service:install
 npm run service:start
 ```
 
-The service uses `http://127.0.0.1:26339` by default. It is local-only, fails
-on port conflict, writes runtime files under `.codex/tmp/orchestrator-service/`,
-and can be managed with `service:stop`, `service:restart`, `service:status`,
-`service:open`, and `service:uninstall`.
+The service uses `http://127.0.0.1:26339`, writes runtime files under
+`.codex/tmp/orchestrator-service/`, and can be managed with `service:stop`,
+`service:restart`, `service:status`, `service:open`, and `service:uninstall`.
+
 The always-on service runs `next start`; run `npm run build` after code changes
 before restarting it.
 
@@ -82,26 +105,16 @@ Install a Spotlight-launchable local app wrapper:
 npm run service:install-app
 ```
 
-This creates `~/Applications/Codex Orchestration Dashboard.app`. Launching it
-starts the service if needed and opens the Chrome app window.
+## Boundaries
 
-Migrating older orchestration docs should be a prep-ledger pass, not an
-automatic conversion. Use `goal-ledger-prep` to create a temporary ignored
-ledger, inventory old packet/chunk/handoff docs, map them into shape strategy
-artifacts, and produce a goal-ready migration prompt.
+- Plain Markdown docs are the durable V1 format.
+- Markdown editing happens in VS Code.
+- The dashboard visualizes orchestration docs; it does not execute work.
+- No prompt generation, Codex chat replacement, agent tracker, or in-app editor.
+- Public demo mode stays fixture-based and sanitized.
 
-Useful docs:
+## Docs
 
-- `docs/architecture.md`
-- `docs/implementation-plan.md`
-- `docs/discussion-handoff.md`
-- `.codex-orchestration/strategies/shape-strategy/_guides/orchestration-shape-strategy.md`
-- `.codex-orchestration/strategies/shape-strategy/_guides/artifacts/pressure-ledger.md`
-- `.codex-orchestration/strategies/shape-strategy/_templates/workpiece.md`
-- `.codex-orchestration/strategies/shape-strategy/pressure-ledger.md`
-- `.codex-orchestration/strategies/shape-strategy/map.md`
+- [docs/architecture.md](docs/architecture.md)
 
-This dashboard repo is the canonical strategy source, so it keeps strategy
-material under `.codex-orchestration/strategies/shape-strategy/`. Normal target
-projects initialized by the commands use root-level `.codex-orchestration/`
-docs instead.
+Agents: read [AGENTS.md](AGENTS.md) before working in this repo.

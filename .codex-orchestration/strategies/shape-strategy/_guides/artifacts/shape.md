@@ -20,6 +20,10 @@ preview or speculative work that is not yet solidified. The dashboard may render
 planning shapes as muted regions, but `muted` should not be used as an authored
 shape status.
 
+`Role:` is optional usage metadata. Use `Role: template` when a shape represents
+reusable planning or route-template infrastructure instead of executable project
+scope. Status remains lifecycle state; do not combine role and status.
+
 ## Required Sections
 
 ### Intent
@@ -47,6 +51,22 @@ inside the shape.
 
 The minimal workpiece document is described in
 `workpiece.md`.
+
+### Checkpoint References
+
+A shape may reference checkpoints that belong inside the same visual boundary.
+The dashboard projects these checkpoint references into the shape region, just
+like workpieces and nested shape nodes.
+
+Use checkpoint references sparingly. They are useful when a checkpoint is part
+of the shape's internal routing or return structure, not merely a distant graph
+dependency.
+
+### Nested Shape References
+
+A shape may reference child shapes when a larger boundary contains route,
+subsystem, or repeated-pattern boundaries. Nested shapes contribute their nodes
+to the parent region.
 
 ### Fixed Decisions
 
@@ -99,6 +119,8 @@ not define the shape boundary.
 
 Status: planning | planned | active | returned | accepted | paused
 
+Role: template | executable-path | reference | none
+
 ## Intent
 
 <Why this shape exists, what boundary it creates, and what outcome it should
@@ -107,6 +129,14 @@ make possible.>
 ## Workpiece References
 
 - `<workpiece-id>`: <why this workpiece is inside the shape>
+
+## Checkpoint References
+
+- `<checkpoint-id>`: <why this checkpoint belongs inside the shape>
+
+## Nested Shape References
+
+- `<shape-id>`: <why this child shape belongs inside the shape>
 
 ## Fixed Decisions
 

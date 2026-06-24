@@ -6,7 +6,7 @@ import process from "node:process";
 import {
   formatSamples,
   inspectGraphProjectionQuality,
-} from "../src/lib/graph-projection-quality.mjs";
+} from "../src/lib/graph/projection-quality.mjs";
 
 const ORCHESTRATION_DIR = ".codex-orchestration";
 const PROJECTION_FILENAME = "graph-projection.json";

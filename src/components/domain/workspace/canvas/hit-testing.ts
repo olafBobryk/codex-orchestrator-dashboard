@@ -1,5 +1,5 @@
 import type { NodeObject } from "react-force-graph-2d";
-import type { GraphMarker } from "@/lib/orchestration-graph";
+import type { GraphMarker } from "@/lib/graph/orchestration-graph";
 import {
   getLinkEndpoint,
   getMarkerIslandRect,

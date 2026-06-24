@@ -5,7 +5,7 @@ import type {
   GraphDetailBlock,
   GraphDetailLink,
   GraphMarker,
-} from "@/lib/orchestration-graph";
+} from "@/lib/graph/orchestration-graph";
 import type { GraphMarkdownReference } from "../../canvas/types";
 import {
   DetailField,

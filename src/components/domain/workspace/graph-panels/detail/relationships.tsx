@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import type { GraphEdge, GraphNode } from "@/lib/orchestration-graph";
+import type { GraphEdge, GraphNode } from "@/lib/graph/orchestration-graph";
 import { LINK_COLORS } from "../../canvas/constants";
 
 export function ProjectionRelationshipList({

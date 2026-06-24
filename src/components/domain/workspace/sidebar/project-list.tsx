@@ -5,8 +5,12 @@ import { Folder } from "lucide-react";
 import type { SVGProps } from "react";
 import { useEffect, useState } from "react";
 import { Loader } from "@/components/ui/loader";
-import type { CodexProject, CodexProjectActivity } from "@/lib/codex-projects";
+import type { CodexProject, CodexProjectActivity } from "@/lib/codex/projects";
 import { cn } from "@/lib/utils";
+import {
+  isPublicDemoDashboard,
+  type DashboardMode,
+} from "../dashboard-mode";
 
 const ACTIVITY_POLL_INTERVAL_MS = 5_000;
 
@@ -17,21 +21,28 @@ type ProjectActivityResponse = {
 export function CodexProjectList({
   projects,
   currentWorkspace,
+  dashboardMode = "local",
 }: {
   projects: CodexProject[];
   currentWorkspace: string;
+  dashboardMode?: DashboardMode;
 }) {
   const [activityByPath, setActivityByPath] = useState<
     Record<string, CodexProjectActivity>
   >({});
-  const [runtimeReady, setRuntimeReady] = useState(false);
+  const [activityPollingReady, setActivityPollingReady] = useState(false);
+  const publicDemo = isPublicDemoDashboard(dashboardMode);
 
   useEffect(() => {
+    if (publicDemo) {
+      return;
+    }
+
     let cancelled = false;
 
     const refreshActivity = async () => {
       if (!cancelled) {
-        setRuntimeReady(true);
+        setActivityPollingReady(true);
       }
 
       if (document.visibilityState === "hidden") {
@@ -74,7 +85,7 @@ export function CodexProjectList({
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, []);
+  }, [publicDemo]);
 
   if (projects.length === 0) {
     return (
@@ -88,9 +99,9 @@ export function CodexProjectList({
   return (
     <nav aria-label="Codex projects" className="grid gap-1">
       {projects.map((project) => {
-        const activity = runtimeReady
-          ? activityByPath[project.path] ?? project.activity
-          : project.activity;
+        const activity = publicDemo || !activityPollingReady
+          ? project.activity
+          : activityByPath[project.path] ?? project.activity;
 
         return (
           <CodexProjectLink
@@ -100,6 +111,7 @@ export function CodexProjectList({
               activity,
             }}
             isCurrent={project.path === currentWorkspace}
+            dashboardMode={dashboardMode}
           />
         );
       })}
@@ -110,18 +122,23 @@ export function CodexProjectList({
 function CodexProjectLink({
   project,
   isCurrent,
+  dashboardMode,
 }: {
   project: CodexProject;
   isCurrent: boolean;
+  dashboardMode: DashboardMode;
 }) {
   const hasReadyOrchestration = project.state === "ready";
   const Icon = hasReadyOrchestration ? FilledFolderCheckIcon : Folder;
   const activityTitle = getProjectActivityTitle(project);
   const orchestrationTitle = getProjectStateTitle(project);
+  const href = isPublicDemoDashboard(dashboardMode)
+    ? "/"
+    : `/?workspace=${encodeURIComponent(project.path)}`;
 
   return (
     <Link
-      href={`/?workspace=${encodeURIComponent(project.path)}`}
+      href={href}
       prefetch={false}
       title={[project.path, orchestrationTitle, activityTitle]
         .filter(Boolean)
@@ -210,7 +227,7 @@ function getProjectStateTitle(project: CodexProject) {
   }
 
   if (project.state === "missing_docs") {
-    return "Missing .codex-orchestration";
+    return "Missing orchestration root";
   }
 
   return "Missing project directory";

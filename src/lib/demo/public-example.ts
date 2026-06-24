@@ -1,11 +1,11 @@
 import projection from "@/data/public-example-projection.json";
-import type { CodexProjectReadResult } from "@/lib/codex-projects";
+import type { CodexProjectReadResult } from "@/lib/codex/projects";
 import {
   buildProjectionGraph,
   type RawProjection,
-} from "@/lib/graph-projection";
+} from "@/lib/graph/projection";
 
-export const PUBLIC_EXAMPLE_WORKSPACE = "/public/static-shape-strategy-example";
+export const PUBLIC_EXAMPLE_WORKSPACE = "/public/generic-orchestration-map";
 
 export const publicExampleGraph = buildProjectionGraph(
   projection as RawProjection,
@@ -14,9 +14,9 @@ export const publicExampleGraph = buildProjectionGraph(
     sourceLabel: "Public static projection",
     sourceLayer: "graph_projection",
     extractionRules: [
-      "This public example feeds a static JSON projection into the real dashboard graph renderer.",
-      "The production sidecar still reads local project Markdown from .codex-orchestration/.",
-      "Local filesystem, Codex runtime, service, and VS Code actions are disabled for this public demo.",
+      "This public demo feeds a sanitized static JSON fixture into the real dashboard graph renderer.",
+      "The local sidecar reads project Markdown from docked docs/orchestration roots or legacy .codex-orchestration roots outside public demo mode.",
+      "Filesystem reads, Codex runtime polling, service controls, API-backed actions, and editor links are disabled for this public demo.",
     ],
   }
 );
@@ -24,18 +24,18 @@ export const publicExampleGraph = buildProjectionGraph(
 export const publicExampleProjects: CodexProjectReadResult = {
   state: "ready",
   sourcePath: "public-example-projection.json",
-  message: "Public static example data.",
+  message: "Public demo fixture data.",
   projects: [
     {
       path: PUBLIC_EXAMPLE_WORKSPACE,
-      name: "Static Shape Strategy",
+      name: "Generic Orchestration Map",
       isActive: true,
       order: 0,
       state: "ready",
       activity: {
-        activeThreads: 2,
+        activeThreads: 0,
         unreadThreads: 0,
-        workingAgentThreads: 2,
+        workingAgentThreads: 0,
         updatedAt: null,
       },
     },

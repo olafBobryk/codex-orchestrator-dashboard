@@ -237,6 +237,8 @@ async function ensureArchitecturePointer(architecturePath) {
       );
     }
 
+    nextContent = normalizeReturnWorkflowSkillLine(nextContent);
+
     for (const line of [
       ACCEPTED_STRATEGY_LINE,
       STRATEGY_GUIDE_LINE,
@@ -266,6 +268,30 @@ Status: initialized
 ${shapeStrategyBlock}`,
     "utf8"
   );
+}
+
+function normalizeReturnWorkflowSkillLine(content) {
+  const normalized = content.replace(
+    /- Return workflow skill: `\$shape-run-return` in `\/Users\/[^`]+\/\.codex\/skills\/shape-run-return\/`/g,
+    SHAPE_RUN_RETURN_LINE
+  );
+  const lines = normalized.split(/\r?\n/);
+  const seen = new Set();
+
+  return lines
+    .filter((line) => {
+      if (line !== SHAPE_RUN_RETURN_LINE) {
+        return true;
+      }
+
+      if (seen.has(line)) {
+        return false;
+      }
+
+      seen.add(line);
+      return true;
+    })
+    .join("\n");
 }
 
 async function assertDirectoryExists(directory, message) {

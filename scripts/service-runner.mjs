@@ -1,7 +1,15 @@
 #!/usr/bin/env node
 
 import { spawn, spawnSync } from "node:child_process";
-import { access, mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import net from "node:net";
 import path from "node:path";
 import process from "node:process";
@@ -12,6 +20,7 @@ const REPO_ROOT = path.resolve(
   ".."
 );
 const NEXT_DEV_LOCK_PATH = path.join(REPO_ROOT, ".next", "dev", "lock");
+const NEXT_DIR = path.join(REPO_ROOT, ".next");
 const NEXT_BUILD_ID_PATH = path.join(REPO_ROOT, ".next", "BUILD_ID");
 const SERVICE_DIR = path.join(REPO_ROOT, ".codex", "tmp", "orchestrator-service");
 const CONFIG_PATH = path.join(SERVICE_DIR, "config.json");
@@ -131,9 +140,16 @@ async function exitIfAnotherNextDevServerIsRunning() {
 }
 
 async function ensureProductionBuild(nextBin) {
-  if (await exists(NEXT_BUILD_ID_PATH)) {
+  const initialHealth = await inspectProductionBuild();
+
+  if (initialHealth.ok) {
     return;
   }
+
+  console.error(
+    `Production build needs refresh: ${formatBuildHealth(initialHealth)}`
+  );
+  await removeInvalidBuildFiles(initialHealth.invalidFiles);
 
   const result = spawnSync(process.execPath, [nextBin, "build"], {
     cwd: REPO_ROOT,
@@ -147,6 +163,17 @@ async function ensureProductionBuild(nextBin) {
 
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
+  }
+
+  const rebuiltHealth = await inspectProductionBuild();
+
+  if (!rebuiltHealth.ok) {
+    console.error(
+      `Production build is still invalid after rebuild: ${formatBuildHealth(
+        rebuiltHealth
+      )}`
+    );
+    process.exit(1);
   }
 }
 
@@ -300,6 +327,100 @@ async function exists(targetPath) {
   } catch {
     return false;
   }
+}
+
+async function inspectProductionBuild() {
+  const issues = [];
+  const invalidFiles = [];
+
+  if (!(await exists(NEXT_BUILD_ID_PATH))) {
+    issues.push("missing .next/BUILD_ID");
+  } else {
+    const content = await readFile(NEXT_BUILD_ID_PATH, "utf8").catch(() => "");
+    if (!content.trim()) {
+      issues.push("empty .next/BUILD_ID");
+      invalidFiles.push(NEXT_BUILD_ID_PATH);
+    }
+  }
+
+  const manifestFiles = await findProductionManifestFiles();
+
+  for (const filePath of manifestFiles) {
+    const relativePath = path.relative(REPO_ROOT, filePath);
+    const stats = await stat(filePath).catch(() => null);
+
+    if (!stats || stats.size === 0) {
+      issues.push(`empty ${relativePath}`);
+      invalidFiles.push(filePath);
+      continue;
+    }
+
+    if (filePath.endsWith(".json")) {
+      try {
+        JSON.parse(await readFile(filePath, "utf8"));
+      } catch {
+        issues.push(`invalid JSON in ${relativePath}`);
+        invalidFiles.push(filePath);
+      }
+    }
+  }
+
+  return {
+    ok: issues.length === 0,
+    issues,
+    invalidFiles,
+    manifestCount: manifestFiles.length,
+  };
+}
+
+async function findProductionManifestFiles() {
+  if (!(await exists(NEXT_DIR))) {
+    return [];
+  }
+
+  const files = [];
+  await collectManifestFiles(NEXT_DIR, files);
+
+  return files.filter((filePath) => {
+    const relativePath = path.relative(NEXT_DIR, filePath);
+    return !relativePath.split(path.sep).includes("dev");
+  });
+}
+
+async function collectManifestFiles(directory, files) {
+  const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
+
+  for (const entry of entries) {
+    const entryPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      await collectManifestFiles(entryPath, files);
+      continue;
+    }
+
+    if (
+      entry.isFile() &&
+      entry.name.includes("manifest") &&
+      (entry.name.endsWith(".json") || entry.name.endsWith(".js"))
+    ) {
+      files.push(entryPath);
+    }
+  }
+}
+
+async function removeInvalidBuildFiles(filePaths) {
+  for (const filePath of filePaths) {
+    if (filePath.startsWith(`${NEXT_DIR}${path.sep}`) || filePath === NEXT_BUILD_ID_PATH) {
+      await rm(filePath, { force: true });
+    }
+  }
+}
+
+function formatBuildHealth(health) {
+  const issueText = health.issues.slice(0, 4).join("; ");
+  const suffix = health.issues.length > 4 ? `; +${health.issues.length - 4} more` : "";
+
+  return `${issueText}${suffix || ""}`;
 }
 
 function wait(ms) {

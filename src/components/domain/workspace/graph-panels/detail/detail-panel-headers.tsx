@@ -6,7 +6,7 @@ import type {
   GraphMarker,
   GraphNode,
   GraphRegion,
-} from "@/lib/orchestration-graph";
+} from "@/lib/graph/orchestration-graph";
 import { KIND_META, STATUS_META } from "../../canvas/constants";
 import { renderGraphPanelIcon } from "../preview";
 import type { DetailPanelHeader, DetailPanelHeaderAction } from "./detail-panel-layout";

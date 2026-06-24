@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { GitWorktreeAnnotation } from "./orchestration-graph";
+import type { GitWorktreeAnnotation } from "@/lib/graph/orchestration-graph";
 
 export type GitWorktreeReadResult = {
   state: "ready" | "not_git" | "git_missing" | "error";

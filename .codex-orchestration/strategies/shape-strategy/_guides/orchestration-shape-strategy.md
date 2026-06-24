@@ -182,6 +182,11 @@ Checkpoints do not require Git evidence.
   history, but should not produce graph markers.
 - Other badge-like concepts should not overload markers without being named as
   a separate concept.
+- `Role:` describes how an artifact is used, not where it is in its lifecycle.
+  Use `Role: template` for reusable route or planning infrastructure that is
+  intentionally visible but not executable project scope. `executable-path` and
+  `reference` are acceptable only when that distinction is needed; do not create
+  combined lifecycle statuses such as `template-planning`.
 
 ## Visibility-Required Delegation
 

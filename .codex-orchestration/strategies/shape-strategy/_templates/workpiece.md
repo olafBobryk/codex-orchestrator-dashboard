@@ -2,6 +2,8 @@
 
 Status: planning | planned | active | returned | accepted | paused
 
+Role: template | executable-path | reference | none
+
 Guide: ../_guides/artifacts/workpiece.md
 
 ## Intent

@@ -1,9 +1,17 @@
-import { readShapeStrategyMarkerActivity } from "@/lib/shape-strategy-adapter";
+import { readShapeStrategyMarkerActivity } from "@/lib/strategies/shape-strategy-adapter";
+import {
+  createPublicDemoDisabledResponse,
+  isPublicDemoMode,
+} from "@/lib/demo/public-demo-mode";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
+  if (isPublicDemoMode()) {
+    return createPublicDemoDisabledResponse();
+  }
+
   const { searchParams } = new URL(request.url);
   const workspace = searchParams.get("workspace")?.trim();
 
