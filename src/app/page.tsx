@@ -61,9 +61,10 @@ export default async function Home({ searchParams }: PageProps) {
   }
 
   const resolvedWorkspace = result.resolvedWorkspace ?? workspace;
+  const orchestrationWorkspace = result.orchestrationPath ?? resolvedWorkspace;
   const liveThreads = await readCodexLiveThreads(resolvedWorkspace);
   const projection =
-    await readGraphProjection(resolvedWorkspace);
+    await readGraphProjection(orchestrationWorkspace);
   const graph =
     projection?.state === "ready"
       ? projection.graph
@@ -76,6 +77,7 @@ export default async function Home({ searchParams }: PageProps) {
       <WorkspaceDashboard
         codexProjects={codexProjects}
         graph={graph}
+        orchestrationWorkspace={orchestrationWorkspace}
         projectionQualityWarnings={projectionQualityWarnings}
         resolvedWorkspace={resolvedWorkspace}
         workspace={workspace}
@@ -99,6 +101,7 @@ function PublicExampleDashboard() {
         codexProjects={publicExampleProjects}
         graph={publicExampleGraph}
         dashboardMode="public-demo"
+        orchestrationWorkspace={PUBLIC_EXAMPLE_WORKSPACE}
         projectionQualityWarnings={[]}
         resolvedWorkspace={PUBLIC_EXAMPLE_WORKSPACE}
         workspace={PUBLIC_EXAMPLE_WORKSPACE}

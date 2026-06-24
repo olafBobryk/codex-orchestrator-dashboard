@@ -227,7 +227,7 @@ function getProjectStateTitle(project: CodexProject) {
   }
 
   if (project.state === "missing_docs") {
-    return "Missing .codex-orchestration";
+    return "Missing orchestration root";
   }
 
   return "Missing project directory";

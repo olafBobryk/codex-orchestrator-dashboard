@@ -5,11 +5,11 @@ import {
   createPublicDemoDisabledResponse,
   isPublicDemoMode,
 } from "@/lib/demo/public-demo-mode";
+import { resolveOrchestrationRoot } from "@/lib/orchestration/root";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const ORCHESTRATION_DIR = ".codex-orchestration";
 const REFRESH_DEBOUNCE_MS = 500;
 const REFRESH_FILE_EXTENSIONS = new Set([".json", ".md"]);
 const IGNORED_REFRESH_PATH_PREFIXES = [
@@ -23,16 +23,14 @@ export async function GET(request: NextRequest) {
 
   const workspace = request.nextUrl.searchParams.get("workspace") ?? "";
   const workspacePath = path.resolve(/*turbopackIgnore: true*/ workspace);
-  const orchestrationPath = path.join(
-    /*turbopackIgnore: true*/ workspacePath,
-    ORCHESTRATION_DIR
-  );
+  const orchestrationRoot = await resolveOrchestrationRoot(workspacePath);
+  const orchestrationPath = orchestrationRoot?.rootDir;
 
-  if (!workspace.trim() || !existsSync(orchestrationPath)) {
+  if (!workspace.trim() || !orchestrationPath || !existsSync(orchestrationPath)) {
     return Response.json(
       {
         state: "unavailable",
-        message: ".codex-orchestration could not be watched.",
+        message: "No orchestration root could be watched.",
       },
       { status: 404 }
     );
@@ -62,12 +60,12 @@ export async function GET(request: NextRequest) {
 
         refreshTimer = setTimeout(() => {
           send("changed", {
-            path: filename ?? ORCHESTRATION_DIR,
+            path: filename ?? orchestrationRoot.relativePathFromWorkspace,
           });
         }, REFRESH_DEBOUNCE_MS);
       };
 
-      send("ready", { path: ORCHESTRATION_DIR });
+      send("ready", { path: orchestrationRoot.relativePathFromWorkspace });
 
       try {
         watcher = watch(

@@ -26,6 +26,7 @@ export function WorkspaceDashboard({
   codexProjects,
   dashboardMode = "local",
   graph,
+  orchestrationWorkspace,
   projectionQualityWarnings,
   resolvedWorkspace,
   stats,
@@ -34,6 +35,7 @@ export function WorkspaceDashboard({
   codexProjects: CodexProjectReadResult;
   dashboardMode?: DashboardMode;
   graph: OrchestrationGraph;
+  orchestrationWorkspace: string;
   projectionQualityWarnings: GraphProjectionQualityWarning[];
   resolvedWorkspace: string;
   stats: GraphCanvasStats;
@@ -51,9 +53,9 @@ export function WorkspaceDashboard({
         currentWorkspace: resolvedWorkspace,
         dashboardMode,
         graph,
-        workspace: resolvedWorkspace,
+        workspace: orchestrationWorkspace,
       }),
-    [codexProjects, dashboardMode, graph, resolvedWorkspace]
+    [codexProjects, dashboardMode, graph, orchestrationWorkspace, resolvedWorkspace]
   );
   const closeCommand = () => {
     setCommandOpen(false);
@@ -145,13 +147,13 @@ export function WorkspaceDashboard({
 
       <div className="min-h-screen min-w-0 bg-background lg:h-screen lg:overflow-hidden">
         <GraphProjectionQualityToast
-          workspace={resolvedWorkspace}
+          workspace={orchestrationWorkspace}
           warnings={projectionQualityWarnings}
         />
         <WorkspaceCanvas
           graph={graph}
           dashboardMode={dashboardMode}
-          workspace={resolvedWorkspace}
+          workspace={orchestrationWorkspace}
           stats={stats}
           projectionQualityWarnings={projectionQualityWarnings}
           commandAction={graphCommand}

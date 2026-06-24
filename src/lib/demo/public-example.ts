@@ -15,7 +15,7 @@ export const publicExampleGraph = buildProjectionGraph(
     sourceLayer: "graph_projection",
     extractionRules: [
       "This public demo feeds a sanitized static JSON fixture into the real dashboard graph renderer.",
-      "The local sidecar reads project Markdown from .codex-orchestration/ only outside public demo mode.",
+      "The local sidecar reads project Markdown from docked docs/orchestration roots or legacy .codex-orchestration roots outside public demo mode.",
       "Filesystem reads, Codex runtime polling, service controls, API-backed actions, and editor links are disabled for this public demo.",
     ],
   }

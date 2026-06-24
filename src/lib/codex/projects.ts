@@ -3,7 +3,7 @@ import { readFile, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { ORCHESTRATION_DIR } from "@/lib/orchestration/workspace";
+import { resolveOrchestrationRoot } from "@/lib/orchestration/root";
 
 export type CodexProject = {
   path: string;
@@ -209,15 +209,7 @@ async function readProjectState(
     return "missing_directory";
   }
 
-  try {
-    const orchestrationDirectory = await stat(
-      path.join(projectPath, ORCHESTRATION_DIR)
-    );
-
-    return orchestrationDirectory.isDirectory() ? "ready" : "missing_docs";
-  } catch {
-    return "missing_docs";
-  }
+  return (await resolveOrchestrationRoot(projectPath)) ? "ready" : "missing_docs";
 }
 
 export async function readCodexProjectActivity() {

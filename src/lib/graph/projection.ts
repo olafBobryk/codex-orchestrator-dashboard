@@ -16,6 +16,7 @@ import {
   type OrchestrationGraph,
 } from "@/lib/graph/orchestration-graph";
 import { ORCHESTRATION_DIR } from "@/lib/orchestration/workspace";
+import { resolveOrchestrationRoot } from "@/lib/orchestration/root";
 import { inspectGraphProjectionQuality } from "@/lib/graph/projection-quality.mjs";
 import { readShapeStrategyProjection } from "@/lib/strategies/shape-strategy-adapter";
 
@@ -193,7 +194,7 @@ export async function readGraphProjection(
         sourceLabel: "Shape strategy Markdown",
         sourceLayer: "markdown",
         extractionRules: [
-          "Read .codex-orchestration/map.md first, then fall back to .codex-orchestration/strategies/shape-strategy/map.md for the source repo and older projects.",
+          "Read the selected orchestration root first, then docked docs/orchestration, legacy .codex-orchestration, and the dashboard source strategy fallback.",
           "Translate map, shape, workpiece, edge, checkpoint, and artifact Markdown into the existing dashboard projection in memory.",
           "Keep shapes as dashboard regions; resolve shape-to-shape flow through the first and last workpieces inside each shape.",
           "Use graph-projection.json only when the authored shape strategy is absent.",
@@ -207,9 +208,16 @@ export async function readGraphProjection(
     };
   }
 
+  const resolvedWorkspace = path.resolve(/*turbopackIgnore: true*/ workspace);
+  const orchestrationRoot = await resolveOrchestrationRoot(resolvedWorkspace);
   const projectionPath = path.join(
-    /*turbopackIgnore: true*/ workspace,
-    ORCHESTRATION_DIR,
+    /*turbopackIgnore: true*/ resolvedWorkspace,
+    orchestrationRoot?.rootDir
+      ? path.relative(
+          /*turbopackIgnore: true*/ resolvedWorkspace,
+          orchestrationRoot.rootDir
+        )
+      : ORCHESTRATION_DIR,
     GRAPH_PROJECTION_FILENAME
   );
 
@@ -285,7 +293,7 @@ export function buildProjectionGraph(
     ...FALLBACK_GRAPH,
     sourceLayers: FALLBACK_GRAPH.sourceLayers,
     extractionRules: options.extractionRules ?? [
-      "Read .codex-orchestration/graph-projection.json as a project-local dashboard projection.",
+      "Read graph-projection.json from the selected orchestration root as a project-local dashboard projection.",
       "Render projected nodes, edges, markers, regions, legend colors, muted states, detail blocks, and links without executing project adapters.",
       "Fall back to Markdown-derived graph behavior when the projection artifact is absent or invalid.",
     ],
@@ -614,6 +622,7 @@ function normalizeReferencePath(value: string | null) {
 
   return value
     .replace(/\\/g, "/")
+    .replace(/^\.?\/?docs\/orchestration\//, "")
     .replace(/^\.?\/?\.codex-orchestration\//, "");
 }
 

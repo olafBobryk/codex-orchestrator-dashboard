@@ -5,9 +5,12 @@ import type {
   RawProjection,
 } from "@/lib/graph/projection";
 import { readCodexThreadActivity } from "../codex/threads.ts";
-import { ORCHESTRATION_DIR } from "../orchestration/workspace.ts";
+import {
+  createWorkspaceRelativePath,
+  resolveOrchestrationRoot,
+  stripOrchestrationRootPrefix,
+} from "../orchestration/root.ts";
 
-const NESTED_SHAPE_STRATEGY_DIR = "strategies/shape-strategy";
 const SHAPE_STRATEGY_FILE = "map.md";
 const WORK_COLOR = "#737373";
 const CHECKPOINT_COLOR = "#d97706";
@@ -28,7 +31,6 @@ type ShapeStrategyProjectionReadResult =
 
 type ShapeStrategySource = {
   rootDir: string;
-  baseRelativePath: string;
 };
 
 type MarkdownDoc = {
@@ -1349,57 +1351,22 @@ function normalizeDetailReference(
 async function resolveShapeStrategySource(
   workspace: string
 ): Promise<ShapeStrategySource | null> {
-  const orchestrationRoot = path.join(
-    /*turbopackIgnore: true*/ workspace,
-    ORCHESTRATION_DIR
-  );
-  const rootSource = {
-    rootDir: orchestrationRoot,
-    baseRelativePath: "",
-  };
+  const root = await resolveOrchestrationRoot(workspace);
 
-  if (await docExists(rootSource, SHAPE_STRATEGY_FILE)) {
-    return rootSource;
-  }
-
-  const nestedSource = {
-    rootDir: path.join(orchestrationRoot, NESTED_SHAPE_STRATEGY_DIR),
-    baseRelativePath: NESTED_SHAPE_STRATEGY_DIR,
-  };
-
-  if (await docExists(nestedSource, SHAPE_STRATEGY_FILE)) {
-    return nestedSource;
-  }
-
-  return null;
+  return root ? { rootDir: root.rootDir } : null;
 }
 
-async function docExists(source: ShapeStrategySource, relativePath: string) {
-  return Boolean(
-    await readDoc(source.rootDir, relativePath, displayRelativePath(source, relativePath))
+function displayRelativePath(_source: ShapeStrategySource, relativePath: string) {
+  return createWorkspaceRelativePath(
+    { relativePathFromWorkspace: "" },
+    relativePath
   );
 }
 
-function displayRelativePath(source: ShapeStrategySource, relativePath: string) {
-  const normalized = relativePath.replace(/\\/g, "/").replace(/^\.\//, "");
-
-  if (!source.baseRelativePath) {
-    return normalized;
-  }
-
-  return `${source.baseRelativePath}/${normalized}`;
-}
-
-function stripSourcePrefix(source: ShapeStrategySource, relativePath: string) {
-  const normalized = relativePath.replace(/\\/g, "/").replace(/^\.\//, "");
-
-  if (!source.baseRelativePath) {
-    return normalized;
-  }
-
-  return normalized.replace(
-    new RegExp(`^${escapeRegExp(source.baseRelativePath)}/`),
-    ""
+function stripSourcePrefix(_source: ShapeStrategySource, relativePath: string) {
+  return stripOrchestrationRootPrefix(
+    { relativePathFromWorkspace: "" },
+    relativePath
   );
 }
 

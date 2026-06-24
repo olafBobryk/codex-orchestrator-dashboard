@@ -176,7 +176,7 @@ export function MarkdownReferenceViewer({
 function createMarkdownDocumentPath(workspace: string, relativePath: string) {
   const workspacePath = workspace.replace(/\/+$/, "");
 
-  return `${workspacePath}/.codex-orchestration/${relativePath}`;
+  return `${workspacePath}/${relativePath}`;
 }
 
 function MarkdownDocument({ content }: { content: string }) {

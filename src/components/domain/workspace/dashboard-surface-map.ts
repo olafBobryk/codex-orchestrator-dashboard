@@ -685,7 +685,7 @@ function normalizePath(value: string) {
 
 function createVsCodeDocHref(workspace: string, relativePath: string) {
   const workspacePath = workspace.replace(/\/+$/, "");
-  const docPath = `${workspacePath}/.codex-orchestration/${relativePath}`;
+  const docPath = `${workspacePath}/${relativePath}`;
 
   return `vscode://file${encodeURI(docPath)}`;
 }

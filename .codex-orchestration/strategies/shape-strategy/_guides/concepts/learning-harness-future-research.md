@@ -30,6 +30,25 @@ After enough projects complete, decide how learnings should be separated across:
 - Revisit this only after project completion or after repeated returned evidence
   shows the same learning classification problem across multiple shapes.
 
+## Graph Linearity Questions
+
+Future architecture work should revisit whether orchestration graphs need a
+stricter directed acyclic graph contract.
+
+The current Markdown edge model is intentionally explainable, but explicit edge
+documents can add overhead when the relationship is only simple progress flow.
+A lighter flow definition may be enough for common linear work.
+
+The graph may also need DAG-shaped constraints so progress order stays legible:
+work should generally move forward through checkpoints and workpieces rather
+than loop back or branch without a clear return. This matters because agents can
+drift away from the intended linearity unless the strategy, adapter, or review
+surface makes ordering violations visible.
+
+Do not enforce this yet. Collect evidence first on whether DAG validation,
+simpler edge authoring, or agent-facing warnings would reduce orchestration
+churn without making the docs heavier.
+
 ## Evidence To Collect Later
 
 - Which lessons repeated across multiple pages or shapes.
@@ -37,6 +56,8 @@ After enough projects complete, decide how learnings should be separated across:
 - Which review loops saved implementation churn.
 - Which routing decisions created unnecessary ceremony.
 - Which dashboard or graph affordances made future work easier to steer.
+- Whether simpler edge authoring would reduce doc overhead.
+- Whether DAG-like validation would make agent progress easier to steer.
 - Which agent-harness ideas would have helped without replacing Codex chat or
   turning the dashboard into an executor.
 
@@ -48,3 +69,7 @@ After enough projects complete, decide how learnings should be separated across:
   path-level and project-level notes.
 - Whether any self-teaching behavior should be automated, prompted, or remain a
   human/steward review activity.
+- Whether orchestration maps should become DAGs by default, and what exceptions
+  should be allowed for returns, review loops, or template/reference components.
+- Whether common flow edges should be authored inline instead of as separate
+  edge documents.

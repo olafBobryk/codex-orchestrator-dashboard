@@ -55,6 +55,7 @@ const SOURCE_STRATEGY_DIR = path.join(
 );
 const SOURCE_GUIDE_DIR = path.join(SOURCE_STRATEGY_DIR, GUIDE_DIR);
 const SOURCE_TEMPLATES_DIR = path.join(SOURCE_STRATEGY_DIR, TEMPLATES_DIR);
+const DOCKED_ORCHESTRATION_RELATIVE_DIR = "docs/orchestration";
 
 const args = process.argv.slice(2);
 const targetArg = args[0];
@@ -65,12 +66,12 @@ if (!targetArg) {
 }
 
 const targetRepo = path.resolve(targetArg);
-const targetOrchestrationDir = path.join(targetRepo, ORCHESTRATION_DIR);
-const targetNestedStrategyDir = path.join(
+let targetOrchestrationDir = path.join(targetRepo, ORCHESTRATION_DIR);
+let targetNestedStrategyDir = path.join(
   targetOrchestrationDir,
   LEGACY_STRATEGY_RELATIVE_DIR
 );
-const targetArchitecturePath = path.join(
+let targetArchitecturePath = path.join(
   targetOrchestrationDir,
   ARCHITECTURE_FILENAME
 );
@@ -92,6 +93,16 @@ try {
     console.log(`Strategy source: ${SOURCE_STRATEGY_DIR}`);
     process.exit(0);
   }
+
+  targetOrchestrationDir = await resolveTargetOrchestrationDir();
+  targetNestedStrategyDir = path.join(
+    targetOrchestrationDir,
+    LEGACY_STRATEGY_RELATIVE_DIR
+  );
+  targetArchitecturePath = path.join(
+    targetOrchestrationDir,
+    ARCHITECTURE_FILENAME
+  );
 
   const rootValid = await isRootShapeStrategy();
   const nestedValid = await isNestedShapeStrategy();
@@ -127,7 +138,7 @@ try {
       : `Preserved pressure ledger: ${path.join(targetOrchestrationDir, PRESSURE_LEDGER_FILENAME)}`
   );
   if (!rootValid && nestedValid) {
-    console.log("Migrated nested shape strategy to root .codex-orchestration.");
+    console.log("Migrated nested shape strategy to the selected orchestration root.");
   }
   if (createdStarterDirectories.length > 0) {
     console.log(
@@ -151,6 +162,20 @@ async function updateSupportDocs(strategyDir) {
     recursive: true,
     force: true,
   });
+}
+
+async function resolveTargetOrchestrationDir() {
+  if (await isShapeStrategyRoot(targetRepo)) {
+    return targetRepo;
+  }
+
+  const dockedRoot = path.join(targetRepo, DOCKED_ORCHESTRATION_RELATIVE_DIR);
+
+  if (await isShapeStrategyRoot(dockedRoot)) {
+    return dockedRoot;
+  }
+
+  return path.join(targetRepo, ORCHESTRATION_DIR);
 }
 
 async function migrateNestedShapeStrategyToRoot() {
@@ -250,6 +275,8 @@ async function ensureArchitecturePointer(architecturePath) {
       nextContent = nextContent.replace(from, to);
     }
 
+    nextContent = normalizeReturnWorkflowSkillLine(nextContent);
+
     for (const line of [
       STRATEGY_MAP_LINE,
       ACCEPTED_STRATEGY_LINE,
@@ -281,6 +308,30 @@ ${shapeStrategyBlock}`,
   );
 }
 
+function normalizeReturnWorkflowSkillLine(content) {
+  const normalized = content.replace(
+    /- Return workflow skill: `\$shape-run-return` in `\/Users\/[^`]+\/\.codex\/skills\/shape-run-return\/`/g,
+    SHAPE_RUN_RETURN_LINE
+  );
+  const lines = normalized.split(/\r?\n/);
+  const seen = new Set();
+
+  return lines
+    .filter((line) => {
+      if (line !== SHAPE_RUN_RETURN_LINE) {
+        return true;
+      }
+
+      if (seen.has(line)) {
+        return false;
+      }
+
+      seen.add(line);
+      return true;
+    })
+    .join("\n");
+}
+
 async function removeLegacySupportFolders(strategyDir) {
   for (const directory of [LEGACY_META_DIR, "guide", "templates"]) {
     await rm(path.join(strategyDir, directory), {
@@ -297,6 +348,16 @@ async function isRootShapeStrategy() {
       path.join(targetOrchestrationDir, GUIDE_DIR, "orchestration-shape-strategy.md")
     )) ||
       (await architectureContainsShapeStrategyRootPointer()))
+  );
+}
+
+async function isShapeStrategyRoot(candidateDir) {
+  return (
+    (await exists(path.join(candidateDir, "map.md"))) &&
+    ((await exists(
+      path.join(candidateDir, GUIDE_DIR, "orchestration-shape-strategy.md")
+    )) ||
+      (await exists(path.join(candidateDir, ARCHITECTURE_FILENAME))))
   );
 }
 

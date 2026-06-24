@@ -1,7 +1,11 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import {
+  LEGACY_ORCHESTRATION_DIR,
+  resolveOrchestrationRoot,
+} from "@/lib/orchestration/root";
 
-export const ORCHESTRATION_DIR = ".codex-orchestration";
+export const ORCHESTRATION_DIR = LEGACY_ORCHESTRATION_DIR;
 
 export type DocKind =
   | "architecture"
@@ -113,14 +117,23 @@ export async function readWorkspace(
   }
 
   const resolvedWorkspace = path.resolve(/*turbopackIgnore: true*/ workspace);
-  const orchestrationPath = path.join(
-    /*turbopackIgnore: true*/ resolvedWorkspace,
-    ORCHESTRATION_DIR
-  );
+  const orchestrationRoot = await resolveOrchestrationRoot(workspace);
+
+  if (!orchestrationRoot) {
+    return emptyResult({
+      workspace,
+      resolvedWorkspace,
+      orchestrationPath: null,
+      state: "missing_directory",
+      message:
+        "No orchestration root found. Expected docs/orchestration, .codex-orchestration, or a selected orchestration root.",
+    });
+  }
+
+  const orchestrationPath = orchestrationRoot.rootDir;
 
   try {
     const directory = await stat(/*turbopackIgnore: true*/ orchestrationPath);
-
     if (!directory.isDirectory()) {
       return emptyResult({
         workspace,
@@ -140,8 +153,8 @@ export async function readWorkspace(
       state: "ready",
       message:
         docs.length > 0
-          ? "Workspace loaded from project-local Markdown."
-          : `${ORCHESTRATION_DIR} is present but no Markdown docs were found.`,
+          ? `Workspace loaded from ${orchestrationRoot.relativePathFromWorkspace || "selected orchestration root"}.`
+          : `${orchestrationPath} is present but no Markdown docs were found.`,
       docs,
       counts: countDocs(docs),
     };
@@ -154,7 +167,7 @@ export async function readWorkspace(
         resolvedWorkspace,
         orchestrationPath,
         state: "missing_directory",
-        message: `No ${ORCHESTRATION_DIR} directory found in this workspace.`,
+        message: `No readable orchestration root found at ${orchestrationPath}.`,
       });
     }
 
