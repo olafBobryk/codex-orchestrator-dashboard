@@ -112,3 +112,24 @@ surface area.
   the pointer file exists.
 - Whether this should become the default for all target repos or only projects
   with active parallel worktrees.
+
+## Deferred Cleanup: Averlo Pilot
+
+The Averlo Rebrand pilot has a docked `docs/orchestration/` root and the
+dashboard can read it through the product repo path.
+
+Do not remove the product-tracked `.codex-orchestration/` tree while the
+product checkout still has active implementation/orchestration changes mixed
+into it. Treat removal as a later cleanup packet:
+
+- confirm the docked orchestration repo contains the latest accepted projection
+  truth;
+- commit and push any needed `orchestration` branch updates;
+- keep or update the tracked `docs/ORCHESTRATION.md` pointer in the product
+  repo;
+- remove the tracked `.codex-orchestration/` tree in a clean product commit;
+- verify the dashboard still resolves the product path to `docs/orchestration/`.
+
+Until that cleanup packet is done, `docs/orchestration/` is the intended
+projection source and product-worktree `.codex-orchestration/` edits should be
+treated as legacy/evidence, not dashboard truth.

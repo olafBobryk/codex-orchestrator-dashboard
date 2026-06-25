@@ -10,7 +10,7 @@
     "check:graph-components": "node scripts/check-graph-projection-components.mjs",
     "check:shape-strategy-adapter": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-shape-strategy-adapter.mjs",
     "init:shape-strategy": "node scripts/init-shape-strategy.mjs",
-    "init:orchestration-dock": "node scripts/init-orchestration-dock.mjs",
+    "orchestration-setup": "node scripts/orchestration-setup.mjs",
     "update:shape-strategy": "node scripts/update-shape-strategy.mjs",
     "service:install": "node scripts/service.mjs install",
     "service:start": "node scripts/service.mjs start",

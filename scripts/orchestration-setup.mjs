@@ -46,11 +46,23 @@ const SOURCE_TEMPLATES_DIR = path.join(SOURCE_STRATEGY_DIR, TEMPLATES_DIR);
 const args = process.argv.slice(2);
 const force = args.includes("--force");
 const targetArg = args.find((arg) => arg !== "--force");
+const usage = "Usage: npm run orchestration-setup -- <product-repo> [--force]";
+
+if (args.includes("--help") || args.includes("-h")) {
+  console.log(`${usage}
+
+Creates a docked docs/orchestration/ root for a product repo.
+
+The command updates the product repo's .gitignore and docs/ORCHESTRATION.md,
+initializes docs/orchestration/ as an independent Git repo on the orchestration
+branch, then writes or copies shape-strategy docs into that docked root.
+
+It does not commit, push, or remove legacy .codex-orchestration docs.`);
+  process.exit(0);
+}
 
 if (!targetArg) {
-  console.error(
-    "Usage: npm run init:orchestration-dock -- <product-repo> [--force]"
-  );
+  console.error(usage);
   process.exit(1);
 }
 
