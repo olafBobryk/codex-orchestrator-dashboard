@@ -29,6 +29,7 @@ Useful scripts:
 - `npm run check:shape-strategy-adapter`
 - `npm run init:shape-strategy -- /absolute/path/to/target-repo`
 - `npm run orchestration-setup -- /absolute/path/to/product-repo`
+- `npm run update:orchestration-cli -- /absolute/path/to/target-repo`
 - `npm run update:shape-strategy -- /absolute/path/to/target-repo`
 - `npm run service:install && npm run service:start`
 - `npm run service:install-app`
