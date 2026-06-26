@@ -22,6 +22,8 @@ adapter translates them into the stable dashboard model.
 - **Adapter:** strategy-specific interpretation into the dashboard graph shape.
 - **Dashboard:** graph navigation, summaries, search, details, and project
   switching.
+- **Context Command:** read-only `npm run orchestration-state` preflight for
+  agents before acting.
 
 Codex chat remains where work happens. The dashboard is only a visual sidecar
 for durable orchestration docs.
@@ -72,6 +74,18 @@ npm run update:shape-strategy -- /absolute/path/to/target-repo
 
 The update command preserves project-authored maps, shapes, workpieces, runs,
 checkpoints, artifacts, and pressure ledger entries.
+
+Install or refresh the read-only context command in a target repo:
+
+```bash
+npm run update:orchestration-cli -- /absolute/path/to/target-repo
+```
+
+`npm run orchestration-state` compresses the current orchestration root,
+matched or candidate agent/run, current node or workpiece, read-next docs,
+warnings, and identity confidence for agents before they act. It is a
+lightweight context layer, not a lifecycle wrapper or replacement for the docs
+or dashboard.
 
 ## Public Demo Mode
 
