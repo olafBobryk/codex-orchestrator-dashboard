@@ -16,7 +16,7 @@ The point is to let each project evolve its own orchestration strategy without
 making the visual layer obsolete every time. Strategy docs can change shape; the
 adapter translates them into the stable dashboard model.
 
-![Codex Orchestrator layered model](docs/assets/readme-layered-model.png)
+![Codex Orchestrator layered model](docs/assets/readme-layered-model-frame-3.png)
 
 - **Strategy + Docs:** project-local Markdown under `.codex-orchestration/`.
 - **Adapter:** strategy-specific interpretation into the dashboard graph shape.
