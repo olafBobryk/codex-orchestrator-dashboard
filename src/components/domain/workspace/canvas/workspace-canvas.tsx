@@ -7,6 +7,7 @@ import {
 } from "./graph-canvas-shell";
 import type { GraphProjectionQualityWarning } from "@/lib/graph/projection";
 import type { GraphMarker, OrchestrationGraph } from "@/lib/graph/orchestration-graph";
+import type { CanvasLayoutMode } from "./layout-mode";
 import type { GraphCanvasCommandAction } from "./types";
 import {
   isPublicDemoDashboard,
@@ -28,6 +29,7 @@ type MarkerActivityResponse = {
 
 export type WorkspaceCanvasProps = {
   graph: OrchestrationGraph;
+  layoutMode: CanvasLayoutMode;
   dashboardMode?: DashboardMode;
   workspace: string;
   stats: GraphCanvasStats;
@@ -37,6 +39,7 @@ export type WorkspaceCanvasProps = {
 
 export function WorkspaceCanvas({
   graph,
+  layoutMode,
   dashboardMode = "local",
   workspace,
   stats,
@@ -129,6 +132,7 @@ export function WorkspaceCanvas({
     <>
       <OrchestrationGraphCanvas
         graph={liveGraph}
+        layoutMode={layoutMode}
         dashboardMode={dashboardMode}
         workspace={workspace}
         stats={stats}

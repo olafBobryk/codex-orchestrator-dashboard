@@ -14,6 +14,7 @@ import type {
 } from "@/lib/graph/orchestration-graph";
 import type { GraphProjectionQualityWarning } from "@/lib/graph/projection";
 import type { DashboardMode } from "../dashboard-mode";
+import type { CanvasLayoutMode } from "./layout-mode";
 
 export type CanvasNode = GraphNode & {
   color: string;
@@ -39,6 +40,7 @@ export type CanvasLink = GraphEdge & {
   width: number;
   dash: number[] | null;
   crossesRegionBoundary: boolean;
+  physicsMode: "structural" | "weak" | "ambient";
 };
 
 export type CanvasRegion = GraphRegion & {
@@ -64,6 +66,7 @@ export type SignalMeta = {
 
 export type OrchestrationGraphCanvasProps = {
   graph: OrchestrationGraph;
+  layoutMode: CanvasLayoutMode;
   dashboardMode?: DashboardMode;
   workspace: string;
   stats: GraphCanvasStats;

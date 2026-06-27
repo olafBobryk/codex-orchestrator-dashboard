@@ -16,10 +16,13 @@ import type {
 const METABALL_BRIDGE_PADDING = 58;
 const METABALL_THRESHOLD = 1;
 const METABALL_GRID_SIZE = 18;
+const METABALL_MAX_GRID_CELLS = 12_000;
 const METABALL_GEOMETRY_CACHE_LIMIT = 180;
 const METABALL_GEOMETRY_CACHE_PRECISION = 4;
 const NODE_LABEL_FADE_START_SCALE = 0.42;
 const NODE_LABEL_FADE_END_SCALE = 0.74;
+const LOW_PRIORITY_NODE_LABEL_FADE_START_SCALE = 1.55;
+const LOW_PRIORITY_NODE_LABEL_FADE_END_SCALE = 2.25;
 const NODE_ICON_FADE_START_SCALE = 0.34;
 const NODE_ICON_FADE_END_SCALE = 0.66;
 const NODE_ICON_DIAMETER_RATIO = 0.5;
@@ -29,6 +32,8 @@ const REGION_COVER_START_SCREEN_FILL = 0.1;
 const REGION_COVER_FULL_SCREEN_FILL = 0.06;
 const REGION_COVER_VISIBLE_ALPHA = 0.02;
 const REGION_ABSTRACTION_SKIP_ALPHA = 0.5;
+const OVERSIZED_REGION_SKIP_SCREEN_FILL = 0.68;
+const OVERSIZED_REGION_MIN_BLOBS = 4;
 const REGION_NODE_BASE_PADDING = 58;
 const REGION_NODE_DEPTH_PADDING = 8;
 const REGION_NODE_MAX_PADDING = 82;
@@ -38,6 +43,7 @@ const REGION_CHILD_MAX_PADDING = 54;
 const REGION_INSIDE_LABEL_FONT_SIZE = 18;
 const REGION_INSIDE_LABEL_MIN_FONT_SIZE = 10;
 const REGION_INSIDE_LABEL_AREA_FONT_RATIO = 0.055;
+const LOW_PRIORITY_REGION_LABEL_MIN_SCREEN_AREA = 52_000;
 const REGION_LABEL_COLLISION_GAP = 14;
 const PROMOTED_MARKER_BADGE_SCREEN_SIZE = 34;
 const PROMOTED_MARKER_BADGE_MIN_SIZE = 26;
@@ -138,9 +144,10 @@ export function drawNode({
   const x = node.x ?? 0;
   const y = node.y ?? 0;
   const label = node.label;
+  const labelFade = getNodeLabelFade(node);
   const labelAlpha = smoothStep(
-    NODE_LABEL_FADE_START_SCALE,
-    NODE_LABEL_FADE_END_SCALE,
+    labelFade.start,
+    labelFade.end,
     globalScale
   );
   const iconAlpha =
@@ -196,6 +203,31 @@ export function drawNode({
   context.restore();
 }
 
+function getNodeLabelFade(node: NodeObject<CanvasNode>) {
+  if (isLowPriorityNodeLabel(node)) {
+    return {
+      start: LOW_PRIORITY_NODE_LABEL_FADE_START_SCALE,
+      end: LOW_PRIORITY_NODE_LABEL_FADE_END_SCALE,
+    };
+  }
+
+  return {
+    start: NODE_LABEL_FADE_START_SCALE,
+    end: NODE_LABEL_FADE_END_SCALE,
+  };
+}
+
+function isLowPriorityNodeLabel(node: NodeObject<CanvasNode>) {
+  const rawStatus = node.rawStatus?.trim().toLowerCase();
+
+  return (
+    rawStatus === "planning" ||
+    rawStatus === "muted" ||
+    rawStatus === "unsolidified" ||
+    node.status === "deferred"
+  );
+}
+
 export function drawRegions({
   regions,
   nodes,
@@ -219,6 +251,10 @@ export function drawRegions({
   });
 
   for (const regionField of regionState.regionFields) {
+    if (shouldSkipOversizedRegionRender(regionField, context)) {
+      continue;
+    }
+
     if (
       getRegionCoveredAncestorDepthCount({
         region: regionField.region,
@@ -270,6 +306,10 @@ export function drawRegionOverlays({
   for (const regionField of [...regionState.regionFields].sort(
     compareRegionCoverOrder
   )) {
+    if (shouldSkipOversizedRegionRender(regionField, context)) {
+      continue;
+    }
+
     if (
       getRegionCoveredAncestorDepthCount({
         region: regionField.region,
@@ -314,6 +354,10 @@ export function drawRegionOverlays({
   for (const regionField of [...regionState.regionFields].sort(
     compareRegionCoverOrder
   )) {
+    if (shouldSkipOversizedRegionRender(regionField, context)) {
+      continue;
+    }
+
     const coverAlpha =
       regionState.coverAlphaByRegionId.get(regionField.region.id) ?? 0;
 
@@ -530,6 +574,11 @@ function drawFilledRegionLabel({
     1,
     fieldWidth * fieldHeight * globalScale * globalScale
   );
+
+  if (region.muted && screenArea < LOW_PRIORITY_REGION_LABEL_MIN_SCREEN_AREA) {
+    return;
+  }
+
   const screenFontSize = clamp(
     Math.sqrt(screenArea) * REGION_INSIDE_LABEL_AREA_FONT_RATIO,
     REGION_INSIDE_LABEL_MIN_FONT_SIZE,
@@ -1995,6 +2044,20 @@ function getRegionScreenFill(
   return Math.min(1, visibleScreenArea / viewportScreenArea);
 }
 
+function shouldSkipOversizedRegionRender(
+  regionField: RegionField,
+  context: CanvasRenderingContext2D
+) {
+  if (regionField.field.blobs.length < OVERSIZED_REGION_MIN_BLOBS) {
+    return false;
+  }
+
+  return (
+    getRegionScreenFill(regionField.field, context) >=
+    OVERSIZED_REGION_SKIP_SCREEN_FILL
+  );
+}
+
 function projectCanvasPoint(
   transform: DOMMatrix,
   x: number,
@@ -2354,7 +2417,13 @@ function getMetaballGeometry(
   field: MetaballField,
   globalScale: number
 ): MetaballGeometry {
-  const step = METABALL_GRID_SIZE / Math.max(0.72, Math.min(1.3, globalScale));
+  const baseStep = METABALL_GRID_SIZE / Math.max(0.72, Math.min(1.3, globalScale));
+  const width = Math.max(1, field.bounds.right - field.bounds.left);
+  const height = Math.max(1, field.bounds.bottom - field.bounds.top);
+  const step = Math.max(
+    baseStep,
+    Math.sqrt((width * height) / METABALL_MAX_GRID_CELLS)
+  );
   const left = Math.floor(field.bounds.left / step) * step;
   const right = Math.ceil(field.bounds.right / step) * step;
   const top = Math.floor(field.bounds.top / step) * step;

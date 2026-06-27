@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { DashboardCommandTrigger } from "../dashboard-command";
 import { isPublicDemoDashboard } from "../dashboard-mode";
+import { DEFAULT_CANVAS_LAYOUT_MODE } from "../canvas/layout-mode";
 import { CodexProjectList } from "./project-list";
 import { ReloadButton } from "./reload-button";
 import { WorkspaceSidebarShell } from "./shell";
@@ -14,6 +15,7 @@ import { WorkspacePathMenu } from "./workspace-menu";
 export function WorkspaceSidebar({
   codexProjects,
   dashboardMode = "local",
+  layoutMode = DEFAULT_CANVAS_LAYOUT_MODE,
   workspace,
   resolvedWorkspace,
   onOpenCommand,
@@ -41,7 +43,7 @@ export function WorkspaceSidebar({
           {publicDemo ? null : (
             <>
               <ReloadButton />
-              <WorkspacePathMenu workspace={workspace} />
+              <WorkspacePathMenu layoutMode={layoutMode} workspace={workspace} />
             </>
           )}
         </>

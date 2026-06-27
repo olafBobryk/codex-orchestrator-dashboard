@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { GraphData } from "react-force-graph-2d";
 import { AnimatePresence } from "motion/react";
 import { PanelRightOpen } from "lucide-react";
 import {
@@ -22,7 +23,7 @@ import {
   findRelatedDetailNodes,
   getVisibleSourceStatus,
 } from "./graph-adapter";
-import { installGraphForces } from "./physics";
+import { installCanvasLayoutForces } from "./layout-forces";
 import {
   drawPromotedMarkerIslands,
   drawRegionOverlays,
@@ -47,6 +48,9 @@ import { GraphSidePanel } from "./graph-side-panel";
 import { type GraphHitResult, resolveGraphHit } from "./hit-testing";
 import { ReadmeScreenshotStageControls } from "./readme-screenshot-stage-controls";
 import type {
+  CanvasLink,
+  CanvasNode,
+  CanvasRegion,
   GraphMarkdownReference,
   GraphMethods,
   GraphProps,
@@ -73,9 +77,14 @@ const MAX_INITIAL_ZOOM = 2.5;
 const MARKER_LOADER_TRANSITION_REDRAW_MS = 760;
 const PROMOTED_MARKER_TRANSITION_REDRAW_MS = 280;
 const README_STAGE_CAPTURE_ENABLED = process.env.NEXT_PUBLIC_CAPTURE === "true";
+const CONTEXT_NODE_VISUAL_RADIUS = 34;
+const CONTEXT_NODE_RADIUS = 78;
+const CONTEXT_NODE_COLOR = "#475569";
+const CONTEXT_LINK_COLOR = "rgba(100,116,139,0.28)";
 
 export function OrchestrationGraphCanvas({
   graph,
+  layoutMode,
   dashboardMode = "local",
   workspace,
   stats,
@@ -141,14 +150,21 @@ export function OrchestrationGraphCanvas({
     packetColors,
     visiblePackets,
     layoutKey,
-  } = useMemo(() => createCanvasGraph(graph), [graph]);
+  } = useMemo(() => createCanvasGraph(graph, layoutMode), [graph, layoutMode]);
+  const visualGraph = useMemo(
+    () => createFullDocsVisualGraph({ data, layoutKey, layoutMode, regions }),
+    [data, layoutKey, layoutMode, regions]
+  );
+  const canvasData = visualGraph.data;
+  const canvasRegions = visualGraph.regions;
+  const canvasLayoutKey = visualGraph.layoutKey ?? layoutKey;
   const runtimeAnnotationCount = countRuntimeAnnotations(graph);
   const sourceStatus = getVisibleSourceStatus(graph);
   const flowSignalCounts = countFlowSignals(graph.edges);
-  const hasLoadingMarkers = data.nodes.some((node) =>
+  const hasLoadingMarkers = canvasData.nodes.some((node) =>
     node.markers.some((marker) => marker.loader)
   );
-  const markerLoaderSnapshot = data.nodes
+  const markerLoaderSnapshot = canvasData.nodes
     .flatMap((node) =>
       node.markers.map((marker) => `${marker.id}:${marker.loader ? 1 : 0}`)
     )
@@ -196,7 +212,7 @@ export function OrchestrationGraphCanvas({
         : statusPanelOpen
           ? "status"
           : null;
-  const initialFocusKey = `${layoutKey}:${size.width}x${size.height}`;
+  const initialFocusKey = `${canvasLayoutKey}:${size.width}x${size.height}`;
   const publicDemo = isPublicDemoDashboard(dashboardMode);
   const readmeStageMode = README_STAGE_CAPTURE_ENABLED;
 
@@ -204,11 +220,11 @@ export function OrchestrationGraphCanvas({
     const instance = graphRef.current;
     const container = containerRef.current;
 
-    if (!instance || !container || data.nodes.length === 0) {
+    if (!instance || !container || canvasData.nodes.length === 0) {
       return false;
     }
 
-    const graphBounds = getGraphFitBounds(data.nodes);
+    const graphBounds = getGraphFitBounds(canvasData.nodes);
 
     if (!graphBounds) {
       return false;
@@ -240,7 +256,7 @@ export function OrchestrationGraphCanvas({
     instance.zoom(zoom, durationMs);
 
     return true;
-  }, [data.nodes, size]);
+  }, [canvasData.nodes, size]);
 
   const fitSettledInitialGraph = useCallback(() => {
     if (
@@ -425,16 +441,16 @@ export function OrchestrationGraphCanvas({
       }
 
       return resolveGraphHit({
-        nodes: data.nodes,
-        links: data.links,
-        regions,
+        nodes: canvasData.nodes,
+        links: canvasData.links,
+        regions: canvasRegions,
         promotedMarkerHitAreas: promotedMarkerHitAreasRef.current,
         graph: graphRef.current,
         screenX: point.x,
         screenY: point.y,
       });
     },
-    [data.links, data.nodes, regions]
+    [canvasData.links, canvasData.nodes, canvasRegions]
   );
 
   const refreshGraphTooltip = useCallback(
@@ -447,9 +463,9 @@ export function OrchestrationGraphCanvas({
       }
 
       const hit = resolveGraphHit({
-        nodes: data.nodes,
-        links: data.links,
-        regions,
+        nodes: canvasData.nodes,
+        links: canvasData.links,
+        regions: canvasRegions,
         promotedMarkerHitAreas: promotedMarkerHitAreasRef.current,
         graph: graphRef.current,
         screenX: point.x,
@@ -467,7 +483,7 @@ export function OrchestrationGraphCanvas({
         y: point.y,
       });
     },
-    [data.links, data.nodes, regions]
+    [canvasData.links, canvasData.nodes, canvasRegions]
   );
 
   useEffect(() => {
@@ -509,8 +525,13 @@ export function OrchestrationGraphCanvas({
       return;
     }
 
-    return installGraphForces({ instance, regions });
-  }, [data, graphMountVersion, regions]);
+    return installCanvasLayoutForces({
+      instance,
+      links: canvasData.links,
+      layoutMode,
+      regions: canvasRegions,
+    });
+  }, [canvasData.links, canvasRegions, graphMountVersion, layoutMode]);
 
   useEffect(() => {
     if (!commandAction) {
@@ -644,12 +665,12 @@ export function OrchestrationGraphCanvas({
           setHoveredGraphTooltip(null);
         }}
       >
-        {data.nodes.length > 0 ? (
+        {canvasData.nodes.length > 0 ? (
           <div className="h-full">
             <ForceGraph2D
-              key={layoutKey}
+              key={canvasLayoutKey}
               ref={bindGraphRef}
-              graphData={data}
+              graphData={canvasData}
               width={size.width}
               height={size.height}
               backgroundColor="rgba(0,0,0,0)"
@@ -664,23 +685,23 @@ export function OrchestrationGraphCanvas({
               nodeLabel={() => ""}
               onRenderFramePre={(context, globalScale) => {
                 drawRegions({
-                  regions,
-                  nodes: data.nodes,
+                  regions: canvasRegions,
+                  nodes: canvasData.nodes,
                   context,
                   globalScale,
                 });
               }}
               onRenderFramePost={(context, globalScale) => {
                 const labelRects = drawRegionOverlays({
-                  regions,
-                  nodes: data.nodes,
+                  regions: canvasRegions,
+                  nodes: canvasData.nodes,
                   context,
                   theme: canvasTheme,
                   globalScale,
                 });
                 const promotedMarkerHitAreas = drawPromotedMarkerIslands({
-                  regions,
-                  nodes: data.nodes,
+                  regions: canvasRegions,
+                  nodes: canvasData.nodes,
                   context,
                   globalScale,
                   selectedMarkerId,
@@ -712,8 +733,8 @@ export function OrchestrationGraphCanvas({
                 if (
                   isNodeCoveredByActiveRegion({
                     node,
-                    regions,
-                    nodes: data.nodes,
+                    regions: canvasRegions,
+                    nodes: canvasData.nodes,
                     context,
                     globalScale,
                   })
@@ -738,8 +759,8 @@ export function OrchestrationGraphCanvas({
                 if (
                   isLinkCoveredByActiveRegions({
                     link,
-                    regions,
-                    nodes: data.nodes,
+                    regions: canvasRegions,
+                    nodes: canvasData.nodes,
                     context,
                     globalScale,
                   })
@@ -910,6 +931,143 @@ export function OrchestrationGraphCanvas({
       </div>
     </section>
   );
+}
+
+function createFullDocsVisualGraph({
+  data,
+  layoutKey,
+  layoutMode,
+  regions,
+}: {
+  data: GraphData<CanvasNode, CanvasLink>;
+  layoutKey: string;
+  layoutMode: OrchestrationGraphCanvasProps["layoutMode"];
+  regions: CanvasRegion[];
+}) {
+  if (layoutMode !== "lanes") {
+    return {
+      data,
+      regions,
+      layoutKey: null,
+    };
+  }
+
+  const contextNodeIds = new Set(
+    data.nodes
+      .filter((node) => isContextVisualNode(node))
+      .map((node) => node.id)
+  );
+
+  if (contextNodeIds.size === 0) {
+    return {
+      data,
+      regions,
+      layoutKey: null,
+    };
+  }
+
+  const nodes = data.nodes.map((node) => {
+    if (!contextNodeIds.has(node.id)) {
+      return node;
+    }
+
+    return {
+      ...node,
+      primary: false,
+      color: CONTEXT_NODE_COLOR,
+      radius: Math.min(node.radius, CONTEXT_NODE_RADIUS),
+      visualRadius: Math.min(node.visualRadius, CONTEXT_NODE_VISUAL_RADIUS),
+    };
+  });
+  const links = data.links.map((link) => {
+    if (!contextNodeIds.has(readCanvasLinkEndpointId(link.source) ?? "")) {
+      if (!contextNodeIds.has(readCanvasLinkEndpointId(link.target) ?? "")) {
+        return link;
+      }
+    }
+
+    return {
+      ...link,
+      color: CONTEXT_LINK_COLOR,
+      width: Math.min(link.width, 1),
+      dash: link.dash ?? [4, 8],
+    };
+  });
+  const visualRegions = regions.map((region) => {
+    const contextNodeCount = region.nodeIds.filter((nodeId) =>
+      contextNodeIds.has(nodeId)
+    ).length;
+    const regionIsContext =
+      contextNodeCount > 0 && contextNodeCount >= region.nodeIds.length * 0.6;
+
+    return regionIsContext
+      ? {
+          ...region,
+          muted: true,
+        }
+      : region;
+  });
+
+  return {
+    data: {
+      nodes,
+      links,
+    },
+    regions: visualRegions,
+    layoutKey: `${layoutKey}:full-docs-tier:${data.nodes.length}:${data.links.length}:${visualRegions.length}`,
+  };
+}
+
+function isContextVisualNode(node: CanvasNode) {
+  if (node.chronology === "start") {
+    return false;
+  }
+
+  if (node.markers.some((marker) => marker.loader || marker.threadIds.length > 0)) {
+    return false;
+  }
+
+  if (isTemplateVisualNode(node)) {
+    return true;
+  }
+
+  const rawStatus = normalizeVisualText(node.rawStatus);
+
+  return (
+    rawStatus.includes("planning") ||
+    rawStatus.includes("planned") ||
+    rawStatus.includes("optional") ||
+    rawStatus.includes("superseded") ||
+    node.status === "queued" ||
+    node.status === "deferred" ||
+    node.status === "superseded"
+  );
+}
+
+function isTemplateVisualNode(node: CanvasNode) {
+  const visualText = normalizeVisualText(
+    `${node.id} ${node.label} ${node.rawStatus ?? ""} ${node.detail.summary ?? ""}`
+  );
+
+  return visualText.includes("template") || visualText.includes("floating");
+}
+
+function readCanvasLinkEndpointId(endpoint: unknown) {
+  if (typeof endpoint === "string") {
+    return endpoint;
+  }
+
+  if (endpoint && typeof endpoint === "object" && "id" in endpoint) {
+    const id = (endpoint as { id?: unknown }).id;
+
+    return typeof id === "string" ? id : null;
+  }
+
+  return null;
+}
+
+function normalizeVisualText(value: string | null | undefined) {
+  return (value ?? "").toLowerCase().replace(/[_-]+/g, " ");
 }
 
 function getGraphFitBounds(

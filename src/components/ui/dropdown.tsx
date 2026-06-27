@@ -61,6 +61,7 @@ type DropdownSide = NonNullable<DropdownProps["side"]>;
 
 const DEFAULT_MENU_MIN_WIDTH = 220;
 const COLLISION_PADDING = 16;
+const DROPDOWN_LAYER_Z_INDEX = 1000;
 
 const disclosureTransition: Transition = {
   duration: 0.26,
@@ -415,7 +416,7 @@ export function Dropdown({
         position: "fixed",
         top,
         left,
-        zIndex: 90,
+        zIndex: DROPDOWN_LAYER_Z_INDEX,
         width: explicitWidth,
         minWidth: resolvedMinWidth,
         maxHeight: constrainedHeight,
@@ -450,7 +451,7 @@ export function Dropdown({
       top,
       bottom,
       left: clampedLeft,
-      zIndex: 90,
+      zIndex: DROPDOWN_LAYER_Z_INDEX,
       width: explicitWidth,
       minWidth: resolvedMinWidth,
       maxHeight: constrainedHeight,
@@ -594,7 +595,7 @@ export function Dropdown({
   );
 
   const baseMenuClassName = [
-    "min-w-[220px] w-fit rounded-[10px] bg-background border border-border shadow-[2px_4px_15px_-2px_rgba(1,1,3,0.05)] z-[91] overflow-hidden",
+    "isolate min-w-[220px] w-fit rounded-[10px] bg-popover border border-border shadow-2xl z-[1000] overflow-hidden",
     positionStrategy === "fixed" ? "fixed" : "absolute",
   ]
     .filter(Boolean)

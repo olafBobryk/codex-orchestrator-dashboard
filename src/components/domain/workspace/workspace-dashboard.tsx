@@ -9,6 +9,7 @@ import type {
   GraphCanvasCommandAction,
   GraphCanvasStats,
 } from "./canvas/types";
+import type { CanvasLayoutMode } from "./canvas/layout-mode";
 import { DashboardCommandSearch } from "./dashboard-command";
 import {
   buildDashboardSurfaceMap,
@@ -26,6 +27,7 @@ export function WorkspaceDashboard({
   codexProjects,
   dashboardMode = "local",
   graph,
+  layoutMode,
   orchestrationWorkspace,
   projectionQualityWarnings,
   resolvedWorkspace,
@@ -35,6 +37,7 @@ export function WorkspaceDashboard({
   codexProjects: CodexProjectReadResult;
   dashboardMode?: DashboardMode;
   graph: OrchestrationGraph;
+  layoutMode: CanvasLayoutMode;
   orchestrationWorkspace: string;
   projectionQualityWarnings: GraphProjectionQualityWarning[];
   resolvedWorkspace: string;
@@ -133,6 +136,7 @@ export function WorkspaceDashboard({
         workspace={workspace}
         resolvedWorkspace={resolvedWorkspace}
         dashboardMode={dashboardMode}
+        layoutMode={layoutMode}
         commandOpen={commandOpen}
         onOpenCommand={() => setCommandOpen(true)}
       />
@@ -152,6 +156,7 @@ export function WorkspaceDashboard({
         />
         <WorkspaceCanvas
           graph={graph}
+          layoutMode={layoutMode}
           dashboardMode={dashboardMode}
           workspace={orchestrationWorkspace}
           stats={stats}

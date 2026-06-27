@@ -14,6 +14,11 @@ import {
   WorkspaceSidebar,
   WorkspaceStatusToast,
 } from "@/components/domain/workspace";
+import {
+  DEFAULT_CANVAS_LAYOUT_MODE,
+  readCanvasLayoutMode,
+  type CanvasLayoutMode,
+} from "@/components/domain/workspace/canvas/layout-mode";
 import { readGraphProjection } from "@/lib/graph/projection";
 import { buildMarkdownGraph, readParam } from "@/lib/workspace-dashboard";
 import {
@@ -28,11 +33,13 @@ type PageProps = {
 };
 
 export default async function Home({ searchParams }: PageProps) {
+  const params = (await searchParams) ?? {};
+  const layoutMode = readCanvasLayoutMode(readParam(params.layout));
+
   if (isPublicDemoMode()) {
-    return <PublicExampleDashboard />;
+    return <PublicExampleDashboard layoutMode={layoutMode} />;
   }
 
-  const params = (await searchParams) ?? {};
   const requestedWorkspace = readParam(params.workspace);
   const codexProjects = await readCodexProjects();
   const workspace = requestedWorkspace.trim();
@@ -41,11 +48,11 @@ export default async function Home({ searchParams }: PageProps) {
     workspace === PUBLIC_EXAMPLE_WORKSPACE ||
     (!workspace && codexProjects.state === "missing_file")
   ) {
-    return <PublicExampleDashboard />;
+    return <PublicExampleDashboard layoutMode={layoutMode} />;
   }
 
   if (!workspace) {
-    return <HomePage codexProjects={codexProjects} />;
+    return <HomePage codexProjects={codexProjects} layoutMode={layoutMode} />;
   }
 
   const result = await readWorkspace(workspace);
@@ -54,6 +61,7 @@ export default async function Home({ searchParams }: PageProps) {
     return (
       <HomePage
         codexProjects={codexProjects}
+        layoutMode={layoutMode}
         statusResult={result}
         workspacePathMenuValue={workspace}
       />
@@ -77,6 +85,7 @@ export default async function Home({ searchParams }: PageProps) {
       <WorkspaceDashboard
         codexProjects={codexProjects}
         graph={graph}
+        layoutMode={layoutMode}
         orchestrationWorkspace={orchestrationWorkspace}
         projectionQualityWarnings={projectionQualityWarnings}
         resolvedWorkspace={resolvedWorkspace}
@@ -94,13 +103,18 @@ export default async function Home({ searchParams }: PageProps) {
   );
 }
 
-function PublicExampleDashboard() {
+function PublicExampleDashboard({
+  layoutMode = DEFAULT_CANVAS_LAYOUT_MODE,
+}: {
+  layoutMode?: CanvasLayoutMode;
+}) {
   return (
     <main className="relative min-h-screen bg-background lg:h-screen lg:overflow-hidden">
       <WorkspaceDashboard
         codexProjects={publicExampleProjects}
         graph={publicExampleGraph}
         dashboardMode="public-demo"
+        layoutMode={layoutMode}
         orchestrationWorkspace={PUBLIC_EXAMPLE_WORKSPACE}
         projectionQualityWarnings={[]}
         resolvedWorkspace={PUBLIC_EXAMPLE_WORKSPACE}
@@ -120,10 +134,12 @@ function PublicExampleDashboard() {
 
 function HomePage({
   codexProjects,
+  layoutMode = DEFAULT_CANVAS_LAYOUT_MODE,
   statusResult,
   workspacePathMenuValue = "",
 }: {
   codexProjects: CodexProjectReadResult;
+  layoutMode?: CanvasLayoutMode;
   statusResult?: WorkspaceReadResult;
   workspacePathMenuValue?: string;
 }) {
@@ -131,11 +147,13 @@ function HomePage({
     <main className="relative min-h-screen bg-background lg:h-screen lg:overflow-hidden">
       <WorkspaceSidebar
         codexProjects={codexProjects}
+        layoutMode={layoutMode}
         workspace=""
         resolvedWorkspace={null}
       />
       <HomeSurface
         codexProjects={codexProjects}
+        layoutMode={layoutMode}
         statusResult={statusResult}
         workspacePathMenuValue={workspacePathMenuValue}
       />
@@ -145,10 +163,12 @@ function HomePage({
 
 function HomeSurface({
   codexProjects,
+  layoutMode = DEFAULT_CANVAS_LAYOUT_MODE,
   statusResult,
   workspacePathMenuValue = "",
 }: {
   codexProjects: CodexProjectReadResult;
+  layoutMode?: CanvasLayoutMode;
   statusResult?: WorkspaceReadResult;
   workspacePathMenuValue?: string;
 }) {
@@ -174,16 +194,29 @@ function HomeSurface({
         <div className="mt-6 flex flex-wrap items-center gap-2">
           {firstReadyProject ? (
             <Link
-              href={`/?workspace=${encodeURIComponent(firstReadyProject.path)}`}
+              href={createWorkspaceHref(firstReadyProject.path, layoutMode)}
               prefetch={false}
               className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               Open first project
             </Link>
           ) : null}
-          <WorkspacePathMenu workspace={workspacePathMenuValue} />
+          <WorkspacePathMenu
+            layoutMode={layoutMode}
+            workspace={workspacePathMenuValue}
+          />
         </div>
       </div>
     </section>
   );
+}
+
+function createWorkspaceHref(workspace: string, layoutMode: CanvasLayoutMode) {
+  const params = new URLSearchParams({ workspace });
+
+  if (layoutMode === "physics") {
+    params.set("layout", "physics");
+  }
+
+  return `/?${params.toString()}`;
 }

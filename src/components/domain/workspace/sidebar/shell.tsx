@@ -45,6 +45,10 @@ export function WorkspaceSidebarShell({
         </div>
       </div>
       {children}
+      <div
+        id="workspace-sidebar-overlay-root"
+        className="pointer-events-none absolute inset-0 z-[80] group-data-[collapsed=true]/sidebar:hidden [&>*]:pointer-events-auto"
+      />
     </aside>
   );
 }
